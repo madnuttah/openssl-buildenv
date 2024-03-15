@@ -1,0 +1,270 @@
+name: Manually Build Multiarch OpenSSL BuildEnv Docker Image
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - '!**'
+      - '.github/workflows/manually-build-openssl-buildenv.yaml'
+        
+env:
+  DOCKERHUB_SLUG: "madnuttah/openssl-buildenv"
+  VERSION: "3.2.1-0" 
+
+jobs:
+  buildvars:
+    # if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    outputs:
+      BUILDENV_BUILD_DATE: ${{ steps.IMPORT_BUILDVARS.outputs.BUILDENV_BUILD_DATE }}
+      OPENSSL_VERSION: ${{ steps.IMPORT_BUILDVARS.outputs.OPENSSL_VERSION }}
+      OPENSSL_SHA256: ${{ steps.IMPORT_BUILDVARS.outputs.OPENSSL_SHA256 }}
+      
+    steps:             
+      - name: Checkout source
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Import build variables from buildvars file
+        id: IMPORT_BUILDVARS
+        run: |
+          echo BUILDENV_BUILD_DATE=$(date -u) >> $GITHUB_OUTPUT
+          cat buildvars | grep OPENSSL_VERSION >> $GITHUB_OUTPUT
+          cat buildvars | grep OPENSSL_SHA256 >> $GITHUB_OUTPUT       
+
+  linux_386:
+    runs-on: ubuntu-latest
+    needs: buildvars
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+            
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+      
+      - name: Set up Docker Buildx
+        id: buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Dockerhub
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+  
+      - name: linux_386
+        uses: docker/build-push-action@v5
+        with:
+          platforms: linux/386
+          builder: ${{ steps.buildx.outputs.name }}
+          build-args: |
+            OPENSSL_SHA256=${{ needs.buildvars.outputs.OPENSSL_SHA256  }} 
+            BUILDENV_BUILD_DATE=${{ needs.buildvars.outputs.BUILDENV_BUILD_DATE }} 
+            OPENSSL_VERSION=${{ needs.buildvars.outputs.OPENSSL_VERSION }} 
+            OPENSSL_BUILDENV_VERSION=${{ env.VERSION }}
+          file: ./openssl/linux_386.Dockerfile   
+          push: ${{ github.event_name != 'pull_request' }}
+          load: ${{ github.event_name == 'pull_request' }} 
+          tags: |
+            ${{ env.DOCKERHUB_SLUG }}:${{ env.VERSION }}-386   
+          
+  linux_arm_v6:
+    runs-on: ubuntu-latest
+    needs: buildvars
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3    
+      
+      - name: Set up Docker Buildx
+        id: buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Login to Dockerhub
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          
+      - name: linux_arm_v6
+        uses: docker/build-push-action@v5
+        with:
+          platforms: linux/arm/v6
+          builder: ${{ steps.buildx.outputs.name }}
+          build-args: |
+            OPENSSL_SHA256=${{ needs.buildvars.outputs.OPENSSL_SHA256  }} 
+            BUILDENV_BUILD_DATE=${{ needs.buildvars.outputs.BUILDENV_BUILD_DATE }} 
+            OPENSSL_VERSION=${{ needs.buildvars.outputs.OPENSSL_VERSION }} 
+            OPENSSL_BUILDENV_VERSION=${{ env.VERSION }}
+          file: ./openssl/linux_32.Dockerfile          
+          push: ${{ github.event_name != 'pull_request' }}
+          load: ${{ github.event_name == 'pull_request' }} 
+          tags: |
+            ${{ env.DOCKERHUB_SLUG }}:${{ env.VERSION }}-armv6
+      
+  linux_arm_v7:
+    runs-on: ubuntu-latest
+    needs: buildvars
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+      
+      - name: Set up Docker Buildx
+        id: buildx
+        uses: docker/setup-buildx-action@v3
+            
+      - name: Login to Dockerhub
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}      
+      
+      - name: linux_arm_v7
+        uses: docker/build-push-action@v5
+        with:
+          platforms: linux/arm/v7
+          builder: ${{ steps.buildx.outputs.name }}
+          build-args: |
+            OPENSSL_SHA256=${{ needs.buildvars.outputs.OPENSSL_SHA256  }} 
+            BUILDENV_BUILD_DATE=${{ needs.buildvars.outputs.BUILDENV_BUILD_DATE }} 
+            OPENSSL_VERSION=${{ needs.buildvars.outputs.OPENSSL_VERSION }} 
+            OPENSSL_BUILDENV_VERSION=${{ env.VERSION }}
+          file: ./openssl/linux_32.Dockerfile           
+          push: ${{ github.event_name != 'pull_request' }}
+          load: ${{ github.event_name == 'pull_request' }} 
+          tags: |
+            ${{ env.DOCKERHUB_SLUG }}:${{ env.VERSION }}-armv7
+                      
+  linux_arm64:
+    runs-on: ubuntu-latest
+    needs: buildvars
+    steps:          
+      - name: Checkout source
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+      
+      - name: Set up Docker Buildx
+        id: buildx
+        uses: docker/setup-buildx-action@v3
+              
+      - name: Login to Dockerhub
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: linux_arm64
+        uses: docker/build-push-action@v5
+        with:
+          platforms: linux/arm64
+          builder: ${{ steps.buildx.outputs.name }}
+          build-args: |
+            OPENSSL_SHA256=${{ needs.buildvars.outputs.OPENSSL_SHA256  }} 
+            BUILDENV_BUILD_DATE=${{ needs.buildvars.outputs.BUILDENV_BUILD_DATE }} 
+            OPENSSL_VERSION=${{ needs.buildvars.outputs.OPENSSL_VERSION }} 
+            OPENSSL_BUILDENV_VERSION=${{ env.VERSION }}
+          file: ./openssl/linux_64.Dockerfile     
+          push: ${{ github.event_name != 'pull_request' }}
+          load: ${{ github.event_name == 'pull_request' }} 
+          tags: |
+            ${{ env.DOCKERHUB_SLUG }}:${{ env.VERSION }}-arm64
+
+  linux_amd64:
+    runs-on: ubuntu-latest
+    needs: buildvars
+    steps:         
+      - name: Checkout source
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+      
+      - name: Set up Docker Buildx
+        id: buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Login to Dockerhub
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }} 
+ 
+      - name: linux_amd64
+        uses: docker/build-push-action@v5
+        with:
+          platforms: linux/amd64
+          builder: ${{ steps.buildx.outputs.name }}
+          build-args: |
+            OPENSSL_SHA256=${{ needs.buildvars.outputs.OPENSSL_SHA256  }} 
+            BUILDENV_BUILD_DATE=${{ needs.buildvars.outputs.BUILDENV_BUILD_DATE }} 
+            OPENSSL_VERSION=${{ needs.buildvars.outputs.OPENSSL_VERSION }} 
+            OPENSSL_BUILDENV_VERSION=${{ env.VERSION }}
+          file: ./openssl/linux_64.Dockerfile     
+          push: ${{ github.event_name != 'pull_request' }}
+          load: ${{ github.event_name == 'pull_request' }}     
+          tags: |
+            ${{ env.DOCKERHUB_SLUG }}:${{ env.VERSION }}-amd64
+        
+  create-manifest-list:
+    runs-on: ubuntu-latest
+    needs:
+      - buildvars
+      - linux_386
+      - linux_arm_v6
+      - linux_arm_v7
+      - linux_arm64
+      - linux_amd64
+      
+    steps:        
+      - name: Checkout source
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          
+      - name: Login to Dockerhub        
+        if: github.event_name != 'pull_request'   
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+        
+      - name: Create and push multiarch manifests
+        if: github.event_name != 'pull_request'
+        run: |
+          docker manifest create ${{ env.DOCKERHUB_SLUG }}:${{ env.VERSION }} \
+            --amend ${{ env.DOCKERHUB_SLUG }}:${{ env.VERSION }}-386 \
+            --amend ${{ env.DOCKERHUB_SLUG }}:${{ env.VERSION }}-arm64 \
+            --amend ${{ env.DOCKERHUB_SLUG }}:${{ env.VERSION }}-amd64 \
+            --amend ${{ env.DOCKERHUB_SLUG }}:${{ env.VERSION }}-armv6 \
+            --amend ${{ env.DOCKERHUB_SLUG }}:${{ env.VERSION }}-armv7
+          docker manifest push ${{ env.DOCKERHUB_SLUG }}:${{ env.VERSION }}             
+          docker manifest create ${{ env.DOCKERHUB_SLUG }}:latest \
+            --amend ${{ env.DOCKERHUB_SLUG }}:${{ env.VERSION }}-386 \
+            --amend ${{ env.DOCKERHUB_SLUG }}:${{ env.VERSION }}-arm64 \
+            --amend ${{ env.DOCKERHUB_SLUG }}:${{ env.VERSION }}-amd64 \
+            --amend ${{ env.DOCKERHUB_SLUG }}:${{ env.VERSION }}-armv6 \
+            --amend ${{ env.DOCKERHUB_SLUG }}:${{ env.VERSION }}-armv7
+          docker manifest push ${{ env.DOCKERHUB_SLUG }}:latest  
