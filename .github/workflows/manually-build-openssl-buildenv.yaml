@@ -69,7 +69,7 @@ jobs:
           file: ./openssl/linux_386.Dockerfile   
           push: ${{ github.event_name != 'pull_request' }}
           load: ${{ github.event_name == 'pull_request' }} 
-          provenance: ${{ github.event_name != 'pull_request' }}
+          provenance: ${{ github.event_name == 'pull_request' }}
           tags: |
             ${{ env.DOCKERHUB_SLUG }}:${{ env.VERSION }}-386   
           
@@ -109,7 +109,7 @@ jobs:
           file: ./openssl/linux_32.Dockerfile          
           push: ${{ github.event_name != 'pull_request' }}
           load: ${{ github.event_name == 'pull_request' }}
-          provenance: ${{ github.event_name != 'pull_request' }}
+          provenance: ${{ github.event_name == 'pull_request' }}
           tags: |
             ${{ env.DOCKERHUB_SLUG }}:${{ env.VERSION }}-armv6
       
@@ -149,7 +149,7 @@ jobs:
           file: ./openssl/linux_32.Dockerfile           
           push: ${{ github.event_name != 'pull_request' }}
           load: ${{ github.event_name == 'pull_request' }}
-          provenance: ${{ github.event_name != 'pull_request' }}          
+          provenance: ${{ github.event_name == 'pull_request' }}          
           tags: |
             ${{ env.DOCKERHUB_SLUG }}:${{ env.VERSION }}-armv7
                       
@@ -189,7 +189,7 @@ jobs:
           file: ./openssl/linux_64.Dockerfile     
           push: ${{ github.event_name != 'pull_request' }}
           load: ${{ github.event_name == 'pull_request' }} 
-          provenance: ${{ github.event_name != 'pull_request' }}
+          provenance: ${{ github.event_name == 'pull_request' }}
           tags: |
             ${{ env.DOCKERHUB_SLUG }}:${{ env.VERSION }}-arm64
 
@@ -229,7 +229,7 @@ jobs:
           file: ./openssl/linux_64.Dockerfile     
           push: ${{ github.event_name != 'pull_request' }}
           load: ${{ github.event_name == 'pull_request' }}
-          provenance: ${{ github.event_name != 'pull_request' }}
+          provenance: ${{ github.event_name == 'pull_request' }}
           tags: |
             ${{ env.DOCKERHUB_SLUG }}:${{ env.VERSION }}-amd64
         
