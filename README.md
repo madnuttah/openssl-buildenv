@@ -4,15 +4,9 @@
 
 # OpenSSL Build Environment
 
-[![CD Check OpenSSL release](https://img.shields.io/github/actions/workflow/status/madnuttah/openssl-buildenv/cd-check-openssl-release.yaml?branch=main&label=CD%OpenSSL%20Release&style=flat-square)](https://github.com/madnuttah/openssl/blob/main/.github/workflows/cd-check-openssl-release.yaml)
-[![CD Build OpenSSL Buildenv](https://img.shields.io/github/actions/workflow/status/madnuttah/openssl-buildenv/cd-build-openssl-buildenv.yaml?branch=main&label=CD%20madnuttah/openssl-buildenv%20build%20status&style=flat-square)](https://github.com/madnuttah/openssl/blob/main/.github/workflows/cd-build-openssl-buildenv.yaml)
-[![Manual Build OpenSSL Buildenv](https://img.shields.io/github/actions/workflow/status/madnuttah/openssl-buildenv/manually-build-openssl-buildenv.yaml?branch=main&label=Manually%20madnuttah/openssl-buildenv%20build%20status&style=flat-square)](https://github.com/madnuttah/openssl-buildenv/blob/main/.github/workflows/manually-build-openssl-buildenv.yaml)
+**This is an optimized OpenSSL build environment used by [`madnuttah/unbound-docker`](https://github.com/madnuttah/unbound-docker/).**
 
-[![GitHub version](https://img.shields.io/github/v/release/madnuttah/openssl-buildenv?include_prereleases&label=madnuttah/openssl-buildenv%20release&style=flat-square)](https://github.com/madnuttah/openssl-buildenv/releases)
-
-**This is the optimized OpenSSL build environment for [`madnuttah/unbound-docker`](https://github.com/madnuttah/unbound-docker/).**
-
-It doesn't contain any OpenSSL binaries, only libraries.
+It doesn't contain any OpenSSL binaries, only necessary libraries to build and run Unbound.
  
 ## Acknowledgements
 
