@@ -41,7 +41,7 @@ jobs:
           OPENSSL_VERSION="$(cat ./buildvars | grep "^OPENSSL_VERSION=" | cut -d"=" -f2-)"
           OPENSSL_BUILDENV_VERSION="$OPENSSL_VERSION-0"
           RELEASE_TAG="v$OPENSSL_BUILDENV_VERSION"
-          RELEASE_NOTE=$(echo -e "\x23\x23 $(date '+%Y-%m-%d') <madnuttah-bot>\n\x23\x23 What's Changed?\n\x2A Updated OpenSSL to version $OPENSSL_VERSION")
+          RELEASE_NOTE=$(echo -e "\x23\x23 $(date '+%Y-%m-%d') <madnuttah-bot>\n\x23\x23 What's Changed?\n\x2A Updated OpenSSL to version $OPENSSL_VERSION\n\n\x2A\x2AOpenSSL changelog\x2A\x2A: https://github.com/openssl/openssl/releases/tag/openssl-$OPENSSL_VERSION")
           git tag -a "$RELEASE_TAG" -m "$RELEASE_TAG"
           git push -u origin "$RELEASE_TAG"
           git fetch --all --tags
