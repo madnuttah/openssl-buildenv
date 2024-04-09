@@ -3,6 +3,7 @@ name: CD Check OpenSSL Release
 on:
   schedule:
     - cron: '0 15 * * mon-fri'
+  workflow_dispatch:
        
 jobs:
   openssl-update:
@@ -29,7 +30,7 @@ jobs:
             exit 1
           else
             echo "Update found"
-            echo OPENSSL_SHA256="$(curl -s https://openssl.org/source/openssl-"${{ steps.GET_VERSIONS.outputs.OPENSSL_VERSION }}".tar.gz.sha256)" >> $GITHUB_OUTPUT
+            echo OPENSSL_SHA256="$(curl -s https://openssl.org/source/openssl-"${{ steps.GET_VERSIONS.outputs.OPENSSL_VERSION }}".tar.gz.sha256 | tr -d '')" >> $GITHUB_OUTPUT
           fi 
 
       - name: Checkout source
