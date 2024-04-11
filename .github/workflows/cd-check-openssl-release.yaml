@@ -31,7 +31,7 @@ jobs:
           else
             echo "Update found"
             OPENSSL_SHA256="$(curl -s https://openssl.org/source/openssl-"${{ steps.GET_VERSIONS.outputs.OPENSSL_VERSION }}".tar.gz.sha256)"
-            echo $OPENSSL_SHA256 | tr -d '' >> $GITHUB_OUTPUT
+            echo OPENSSL_SHA256=$OPENSSL_SHA256 | tr -d '' >> $GITHUB_OUTPUT
           fi 
 
       - name: Checkout source
