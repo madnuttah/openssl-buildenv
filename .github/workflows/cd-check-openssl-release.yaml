@@ -25,15 +25,15 @@ jobs:
       - name: Is update available
         id: IS_UPDATE_AVAILABLE
         run: |
-          if [[ "${{ steps.GET_VERSIONS.outputs.OPENSSL_VERSION }}" = "${{ steps.GET_VERSIONS.outputs.OPENSSL_BUILDENV_VERSION }}" ]]; then
-            echo "No update found"
-            exit 1
-          else
+          if $(dpkg --compare-versions "${{ steps.GET_VERSIONS.outputs.OPENSSL_BUILDENV_VERSION }}" "lt" "${{ steps.GET_VERSIONS.outputs.OPENSSL_VERSION }}"); then  
             echo "Update found"
             OPENSSL_SHA256="$(curl -s https://openssl.org/source/openssl-"${{ steps.GET_VERSIONS.outputs.OPENSSL_VERSION }}".tar.gz.sha256)"
             echo OPENSSL_SHA256=$OPENSSL_SHA256 | tr -d '' >> $GITHUB_OUTPUT
-          fi 
-
+          else 
+            echo "No update found"
+            exit 1
+          fi
+          
       - name: Checkout source
         uses: actions/checkout@v4
         with:
