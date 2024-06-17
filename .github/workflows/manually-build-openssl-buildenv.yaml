@@ -53,7 +53,7 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
   
       - name: linux_386
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           platforms: linux/386
           builder: ${{ steps.buildx.outputs.name }}
@@ -93,7 +93,7 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
           
       - name: linux_arm_v6
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           platforms: linux/arm/v6
           builder: ${{ steps.buildx.outputs.name }}
@@ -133,7 +133,7 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}      
       
       - name: linux_arm_v7
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           platforms: linux/arm/v7
           builder: ${{ steps.buildx.outputs.name }}
@@ -173,7 +173,7 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: linux_arm64
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           platforms: linux/arm64
           builder: ${{ steps.buildx.outputs.name }}
@@ -213,7 +213,7 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }} 
  
       - name: linux_amd64
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           platforms: linux/amd64
           builder: ${{ steps.buildx.outputs.name }}
