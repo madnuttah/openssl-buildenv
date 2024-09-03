@@ -12,7 +12,7 @@ ARG OPENSSL_VERSION \
 
 ENV OPENSSL_VERSION=${OPENSSL_VERSION} \
     OPENSSL_SHA256=${OPENSSL_SHA256}\
-    OPENSSL_DOWNLOAD_URL="https://www.openssl.org/source/openssl" \
+    OPENSSL_DOWNLOAD_URL="https://github.com/openssl/openssl/releases/download/openssl" \
     OPENSSL_PGP="EFC0A467D613CB83C7ED6D30D894E2CE8B3D79F5"
     
 WORKDIR /tmp/src
@@ -30,9 +30,9 @@ RUN set -xe; \
     libevent-dev \
     linux-headers \
     apk-tools && \
-    curl -sSL "${OPENSSL_DOWNLOAD_URL}"-"${OPENSSL_VERSION}".tar.gz -o openssl.tar.gz && \
+    curl -sSL "${OPENSSL_DOWNLOAD_URL}"-"${OPENSSL_VERSION}"/openssl-"${OPENSSL_VERSION}".tar.gz -o openssl.tar.gz && \
     echo "${OPENSSL_SHA256} ./openssl.tar.gz" | sha256sum -c - && \
-    curl -L "${OPENSSL_DOWNLOAD_URL}"-"${OPENSSL_VERSION}".tar.gz.asc -o openssl.tar.gz.asc && \
+    curl -L "${OPENSSL_DOWNLOAD_URL}"-"${OPENSSL_VERSION}"/openssl-"${OPENSSL_VERSION}".tar.gz.asc -o openssl.tar.gz.asc && \
     GNUPGHOME="$(mktemp -d)" && \
     export GNUPGHOME && \
     gpg --no-tty --keyserver hkps://keys.openpgp.org \
