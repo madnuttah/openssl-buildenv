@@ -70,7 +70,7 @@ jobs:
             ${{ env.DOCKERHUB_SLUG }}:${{ env.VERSION }}-386   
           
   linux_arm_v6:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     needs: buildvars
     steps:
       - name: Checkout source
@@ -110,7 +110,7 @@ jobs:
             ${{ env.DOCKERHUB_SLUG }}:${{ env.VERSION }}-armv6
       
   linux_arm_v7:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     needs: buildvars
     steps:
       - name: Checkout source
@@ -150,7 +150,7 @@ jobs:
             ${{ env.DOCKERHUB_SLUG }}:${{ env.VERSION }}-armv7
                       
   linux_arm64:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     needs: buildvars
     steps:          
       - name: Checkout source
