@@ -1,4 +1,4 @@
-name: Manually Build Multiarch OpenSSL BuildEnv Docker Image
+name: Manually Build Multiarch OpenSSL+Quic BuildEnv Docker Image
 
 on:
   workflow_dispatch:
@@ -56,7 +56,7 @@ jobs:
           build-args: |
             BUILDENV_BUILD_DATE=${{ needs.buildvars.outputs.BUILDENV_BUILD_DATE }} 
             OPENSSL_BUILDENV_VERSION=${{ env.VERSION }}
-          file: ./openssl/linux_386_quic.Dockerfile   
+          file: ./openssl+quic/linux_386_quic.Dockerfile   
           push: ${{ github.event_name != 'pull_request' }}
           load: ${{ github.event_name == 'pull_request' }} 
           provenance: ${{ github.event_name == 'pull_request' }}
@@ -94,7 +94,7 @@ jobs:
           build-args: |
             BUILDENV_BUILD_DATE=${{ needs.buildvars.outputs.BUILDENV_BUILD_DATE }} 
             OPENSSL_BUILDENV_VERSION=${{ env.VERSION }}
-          file: ./openssl/linux_32_quic.Dockerfile          
+          file: ./openssl+quic/linux_32_quic.Dockerfile          
           push: ${{ github.event_name != 'pull_request' }}
           load: ${{ github.event_name == 'pull_request' }}
           provenance: ${{ github.event_name == 'pull_request' }}
@@ -132,7 +132,7 @@ jobs:
           build-args: |
             BUILDENV_BUILD_DATE=${{ needs.buildvars.outputs.BUILDENV_BUILD_DATE }} 
             OPENSSL_BUILDENV_VERSION=${{ env.VERSION }}
-          file: ./openssl/linux_32_quic.Dockerfile           
+          file: ./openssl+quic/linux_32_quic.Dockerfile           
           push: ${{ github.event_name != 'pull_request' }}
           load: ${{ github.event_name == 'pull_request' }}
           provenance: ${{ github.event_name == 'pull_request' }}          
@@ -170,7 +170,7 @@ jobs:
           build-args: |
             BUILDENV_BUILD_DATE=${{ needs.buildvars.outputs.BUILDENV_BUILD_DATE }} 
             OPENSSL_BUILDENV_VERSION=${{ env.VERSION }}
-          file: ./openssl/linux_64_quic.Dockerfile     
+          file: ./openssl+quic/linux_64_quic.Dockerfile     
           push: ${{ github.event_name != 'pull_request' }}
           load: ${{ github.event_name == 'pull_request' }} 
           provenance: ${{ github.event_name == 'pull_request' }}
@@ -208,7 +208,7 @@ jobs:
           build-args: |
             BUILDENV_BUILD_DATE=${{ needs.buildvars.outputs.BUILDENV_BUILD_DATE }} 
             OPENSSL_BUILDENV_VERSION=${{ env.VERSION }}
-          file: ./openssl/linux_64_quic.Dockerfile     
+          file: ./openssl+quic/linux_64_quic.Dockerfile     
           push: ${{ github.event_name != 'pull_request' }}
           load: ${{ github.event_name == 'pull_request' }}
           provenance: ${{ github.event_name == 'pull_request' }}
