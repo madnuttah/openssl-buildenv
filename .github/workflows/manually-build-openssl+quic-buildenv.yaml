@@ -5,7 +5,7 @@ on:
         
 env:
   DOCKERHUB_SLUG: "madnuttah/openssl-buildenv"
-  VERSION: "3.1.7-0-quic" 
+  VERSION: "3.1.7-1-quic" 
 
 jobs:
   buildvars:
