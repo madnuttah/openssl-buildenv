@@ -1,13 +1,7 @@
 FROM alpine:latest AS openssl
 
 LABEL maintainer="madnuttah"
-    
-WORKDIR /tmp/src
 
-RUN set -xe; \FROM alpine:latest AS openssl
-
-LABEL maintainer="madnuttah"
-    
 WORKDIR /tmp/src
 
 ENV OPENSSL_VERSION=openssl-3.1.7-quic1
