@@ -4,23 +4,34 @@ LABEL maintainer="madnuttah"
     
 WORKDIR /tmp/src
 
+RUN set -xe; \FROM alpine:latest AS openssl
+
+LABEL maintainer="madnuttah"
+    
+WORKDIR /tmp/src
+
+ENV OPENSSL_VERSION=openssl-3.1.7-quic1
+
 RUN set -xe; \
   apk --update --no-cache add \
-  ca-certificates \
-  file && \
+  ca-certificates && \
   apk --update --no-cache add --virtual .build-deps \
     build-base \
     perl \
     libidn2-dev \
     git \
+    curl \
     linux-headers && \
-    git clone https://github.com/quictls/openssl openssl+quic && \
-    cd openssl+quic && \
+    curl -sSL https://github.com/quictls/openssl/archive/refs/tags/${OPENSSL_VERSION}.tar.gz -o openssl.tar.gz && \
+    tar -xzf openssl.tar.gz && \
+    rm openssl.tar.gz && \
+    cd openssl-${OPENSSL_VERSION} && \
     ./config \
+      linux-generic32 \
       enable-tls1_3 \
       no-shared \
+      no-pinshared \
       threads \
-      linux-generic32 \
       no-weak-ssl-ciphers \
       no-ssl3 \
       no-err \
@@ -34,7 +45,9 @@ RUN set -xe; \
       --libdir=/usr/local/openssl/lib && \
     make && \
     make install_sw && \
-    apk del --no-cache .build-deps
+    apk del --no-cache .build-deps && \
+    rm -rf \
+      /usr/local/openssl/bin
     
 FROM alpine:latest AS buildenv
 
@@ -43,21 +56,24 @@ WORKDIR /tmp/src
 COPY --from=openssl /usr/local/openssl/ \
   /usr/local/openssl/
 
+ENV NGTCP2_VERSION=1.10.0
+
 RUN set -xe; \
   apk --update --no-cache add \
-  ca-certificates \
-  file && \
+  ca-certificates && \
   apk --update --no-cache add --virtual .build-deps \
     build-base \
     perl \
-    git \
+    curl \
     automake \
     autoconf \
     libtool \
     libidn2-dev \
     linux-headers && \
-    git clone --depth 1 -b v0.19.1 https://github.com/ngtcp2/ngtcp2 ngtcp2 && \
-    cd ngtcp2 && \
+    curl -sSL https://github.com/ngtcp2/ngtcp2/releases/download/v${NGTCP2_VERSION}/ngtcp2-${NGTCP2_VERSION}.tar.gz -o ngtcp2.tar.gz && \
+    tar -xzf ngtcp2.tar.gz && \
+    rm ngtcp2.tar.gz && \
+    cd ngtcp2-"${NGTCP2_VERSION}" && \
     autoreconf -i && \
     ./configure \
       PKG_CONFIG_PATH=/usr/local/openssl/lib/pkgconfig \
@@ -69,7 +85,6 @@ RUN set -xe; \
     rm -rf \
       /usr/share/man \
       /usr/share/docs \
-      /usr/local/openssl/bin \
       /tmp/* \
       /var/tmp/* \
       /var/log/* 
