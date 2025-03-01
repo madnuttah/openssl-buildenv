@@ -69,7 +69,6 @@ RUN set -xe; \
   rm -rf \
     /usr/share/man \
     /usr/share/docs \
-    /usr/local/openssl/bin \
     /tmp/* \
     /var/tmp/* \
     /var/log/* 

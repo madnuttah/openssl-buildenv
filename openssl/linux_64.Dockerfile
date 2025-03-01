@@ -29,7 +29,6 @@ RUN set -xe; \
     libidn2-dev \
     libevent-dev \
     linux-headers \
-    gcc \
     apk-tools && \
     curl -sSL "${OPENSSL_DOWNLOAD_URL}"-"${OPENSSL_VERSION}"/openssl-"${OPENSSL_VERSION}".tar.gz -o openssl.tar.gz && \
     echo "${OPENSSL_SHA256} ./openssl.tar.gz" | sha256sum -c - && \

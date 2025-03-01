@@ -6,14 +6,12 @@
 
 **This is an optimized OpenSSL build environment used by [`madnuttah/unbound-docker`](https://github.com/madnuttah/unbound-docker/).**
 
-> [!NOTE]
-> It doesn't contain any OpenSSL binaries, only necessary libraries to build and run Unbound.
- 
 ## Acknowledgements
 
 - [Alpine Linux](https://www.alpinelinux.org/)
 - [Docker](https://www.docker.com/)
 - [OpenSSL](https://www.openssl.org/)
+- quictls
 
 ## Licenses
 

@@ -40,9 +40,7 @@ RUN set -xe; \
       --libdir=/usr/local/openssl/lib && \
     make && \
     make install_sw && \
-    apk del --no-cache .build-deps && \
-    rm -rf \
-      /usr/local/openssl/bin
+    apk del --no-cache .build-deps
     
 FROM alpine:latest AS buildenv
 
