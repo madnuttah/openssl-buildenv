@@ -2,7 +2,7 @@ name: CD Check OpenSSL Release
              
 on:
   schedule:
-    - cron: '0 15 * * mon-fri'
+#    - cron: '0 15 * * mon-fri'
   workflow_dispatch:
        
 jobs:
