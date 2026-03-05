@@ -47,7 +47,7 @@ jobs:
       
       - name: Set up Docker Buildx
         id: buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
 
       - name: Login to Dockerhub
         if: github.event_name != 'pull_request'
@@ -87,7 +87,7 @@ jobs:
       
       - name: Set up Docker Buildx
         id: buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
       
       - name: Login to Dockerhub
         if: github.event_name != 'pull_request'
@@ -127,7 +127,7 @@ jobs:
       
       - name: Set up Docker Buildx
         id: buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
             
       - name: Login to Dockerhub
         if: github.event_name != 'pull_request'
@@ -167,7 +167,7 @@ jobs:
       
       - name: Set up Docker Buildx
         id: buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
               
       - name: Login to Dockerhub
         if: github.event_name != 'pull_request'
@@ -207,7 +207,7 @@ jobs:
       
       - name: Set up Docker Buildx
         id: buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
       
       - name: Login to Dockerhub
         if: github.event_name != 'pull_request'
