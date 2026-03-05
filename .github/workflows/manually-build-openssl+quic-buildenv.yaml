@@ -35,7 +35,7 @@ jobs:
           persist-credentials: false
             
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
+        uses: docker/setup-qemu-action@v4
       
       - name: Set up Docker Buildx
         id: buildx
@@ -73,7 +73,7 @@ jobs:
           persist-credentials: false
           
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3    
+        uses: docker/setup-qemu-action@v4    
       
       - name: Set up Docker Buildx
         id: buildx
@@ -111,7 +111,7 @@ jobs:
           persist-credentials: false
           
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
+        uses: docker/setup-qemu-action@v4
       
       - name: Set up Docker Buildx
         id: buildx
@@ -149,7 +149,7 @@ jobs:
           persist-credentials: false
           
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
+        uses: docker/setup-qemu-action@v4
       
       - name: Set up Docker Buildx
         id: buildx
@@ -187,7 +187,7 @@ jobs:
           persist-credentials: false
           
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
+        uses: docker/setup-qemu-action@v4
       
       - name: Set up Docker Buildx
         id: buildx
