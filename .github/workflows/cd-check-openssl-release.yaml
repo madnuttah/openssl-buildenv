@@ -27,7 +27,7 @@ jobs:
         run: |
           if $(dpkg --compare-versions "${{ steps.GET_VERSIONS.outputs.OPENSSL_BUILDENV_VERSION }}" "lt" "${{ steps.GET_VERSIONS.outputs.OPENSSL_VERSION }}"); then  
             echo "Update found"
-            echo OPENSSL_SHA256="(curl -sL https://github.com/openssl/openssl/releases/download/openssl-"${{ steps.GET_VERSIONS.outputs.OPENSSL_VERSION }}"/openssl-"${{ steps.GET_VERSIONS.outputs.OPENSSL_VERSION }}".tar.gz.sha256?raw=1 | cut -d ' ' -f1)" >> $GITHUB_OUTPUT
+            echo OPENSSL_SHA256="$(curl -sL https://github.com/openssl/openssl/releases/download/openssl-${{ steps.GET_VERSIONS.outputs.OPENSSL_VERSION }}/openssl-${{ steps.GET_VERSIONS.outputs.OPENSSL_VERSION }}.tar.gz.sha256?raw=1 | cut -d ' ' -f1)" >> $GITHUB_OUTPUT
           else
             echo "No update found"
             exit 1
