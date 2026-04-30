@@ -24,12 +24,23 @@ jobs:
 
       - name: Is update available
         id: IS_UPDATE_AVAILABLE
+        env:
+          ALLOWED_MAJOR_OVERRIDES: "4" #No automatic major bumps!
         run: |
-          if $(dpkg --compare-versions "${{ steps.GET_VERSIONS.outputs.OPENSSL_BUILDENV_VERSION }}" "lt" "${{ steps.GET_VERSIONS.outputs.OPENSSL_VERSION }}"); then  
-            echo "Update found"
+          CURRENT_MAJOR="$(echo "${{ steps.GET_VERSIONS.outputs.OPENSSL_BUILDENV_VERSION }}" | cut -d. -f1)"
+          LATEST_MAJOR="$(echo "${{ steps.GET_VERSIONS.outputs.OPENSSL_VERSION }}" | cut -d. -f1)"
+
+          if [ "$CURRENT_MAJOR" != "$LATEST_MAJOR" ]; then
+            if echo "$ALLOWED_MAJOR_OVERRIDES" | tr ',' '\n' | grep -qx "$LATEST_MAJOR"; then
+              :
+            else
+              exit 1
+            fi
+          fi
+
+          if dpkg --compare-versions "${{ steps.GET_VERSIONS.outputs.OPENSSL_BUILDENV_VERSION }}" "lt" "${{ steps.GET_VERSIONS.outputs.OPENSSL_VERSION }}"; then  
             echo OPENSSL_SHA256="$(curl -sL https://github.com/openssl/openssl/releases/download/openssl-${{ steps.GET_VERSIONS.outputs.OPENSSL_VERSION }}/openssl-${{ steps.GET_VERSIONS.outputs.OPENSSL_VERSION }}.tar.gz.sha256?raw=1 | cut -d ' ' -f1)" >> $GITHUB_OUTPUT
           else
-            echo "No update found"
             exit 1
           fi
           
