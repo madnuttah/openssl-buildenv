@@ -5,6 +5,7 @@ on:
     workflows: ["CD Build Multiarch OpenSSL BuildEnv Docker Image"]
     types:
       - completed
+  workflow_dispatch:
 
 env:
   DOCKERHUB_SLUG: "madnuttah/openssl-buildenv"
