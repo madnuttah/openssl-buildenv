@@ -4,7 +4,7 @@ LABEL maintainer="madnuttah"
 
 WORKDIR /tmp/src
 
-ENV OPENSSL_VERSION=openssl-3.1.7-quic1
+ENV OPENSSL_VERSION=openssl-3.3.0-quic1
 
 RUN set -xe; \
   apk --update --no-cache add \
