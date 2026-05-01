@@ -1,3 +1,6 @@
+ARG OPENSSL_BUILDENV_VERSION
+ARG NGTCP2_VERSION
+
 FROM alpine:latest AS openssl
 
 LABEL maintainer="madnuttah"
@@ -6,13 +9,20 @@ WORKDIR /tmp/src
 
 RUN set -xe; \
   apk add --no-cache ca-certificates jq curl && \
-  export OPENSSL_VERSION=$(curl -s https://api.github.com/repos/quictls/quictls/releases/latest | jq -r .tag_name); \
+  if [ -n "${OPENSSL_BUILDENV_VERSION}" ]; then \
+    OPENSSL_VERSION="${OPENSSL_BUILDENV_VERSION}"; \
+  else \
+    OPENSSL_VERSION=$(curl -s https://api.github.com/repos/quictls/quictls/releases/latest | jq -r .tag_name); \
+    if [ -z "$OPENSSL_VERSION" ] || [ "$OPENSSL_VERSION" = "null" ]; then \
+      OPENSSL_VERSION=$(curl -s https://api.github.com/repos/quictls/quictls/tags | jq -r '.[0].name'); \
+    fi; \
+  fi; \
   echo "Using QuicTLS version: ${OPENSSL_VERSION}" && \
   apk add --no-cache --virtual .build-deps build-base perl libidn2-dev git curl linux-headers autoconf automake libtool pkgconf pkgconfig && \
-  curl -sSL https://github.com/quictls/quictls/archive/refs/tags/${OPENSSL_VERSION}.tar.gz -o quictls.tar.gz && \
+  curl -sSL "https://github.com/quictls/quictls/archive/refs/tags/${OPENSSL_VERSION}.tar.gz" -o quictls.tar.gz && \
   tar -xzf quictls.tar.gz && \
   rm quictls.tar.gz && \
-  cd quictls-${OPENSSL_VERSION} && \
+  cd "quictls-${OPENSSL_VERSION}" && \
   export CFLAGS="-O3 -march=native -fstack-protector-strong -fstack-clash-protection -fPIC" && \
   export LDFLAGS="-Wl,-O1" && \
   ./config \
@@ -57,13 +67,21 @@ COPY --from=openssl /usr/local/openssl /usr/local/openssl
 
 RUN set -xe; \
   apk add --no-cache ca-certificates jq curl pkgconf pkgconfig && \
-  export NGTCP2_VERSION=$(curl -s https://api.github.com/repos/ngtcp2/ngtcp2/releases/latest | jq -r .tag_name | sed 's/^v//'); \
-  echo "Using ngtcp2 version: ${NGTCP2_VERSION}" && \
+  if [ -n "${NGTCP2_VERSION}" ]; then \
+    NGTCP2_DL_TAG="${NGTCP2_VERSION#v}"; \
+  else \
+    NGTCP2_TAG=$(curl -s https://api.github.com/repos/ngtcp2/ngtcp2/releases/latest | jq -r .tag_name); \
+    if [ -z "$NGTCP2_TAG" ] || [ "$NGTCP2_TAG" = "null" ]; then \
+      NGTCP2_TAG=$(curl -s https://api.github.com/repos/ngtcp2/ngtcp2/tags | jq -r '.[0].name'); \
+    fi; \
+    NGTCP2_DL_TAG="${NGTCP2_TAG#v}"; \
+  fi; \
+  echo "Using ngtcp2 version: ${NGTCP2_DL_TAG}" && \
   apk add --no-cache --virtual .build-deps build-base perl curl automake autoconf libtool libidn2-dev linux-headers pkgconf pkgconfig && \
-  curl -sSL https://github.com/ngtcp2/ngtcp2/releases/download/v${NGTCP2_VERSION}/ngtcp2-${NGTCP2_VERSION}.tar.gz -o ngtcp2.tar.gz && \
+  curl -sSL "https://github.com/ngtcp2/ngtcp2/releases/download/v${NGTCP2_DL_TAG}/ngtcp2-${NGTCP2_DL_TAG}.tar.gz" -o ngtcp2.tar.gz && \
   tar -xzf ngtcp2.tar.gz && \
   rm ngtcp2.tar.gz && \
-  cd ngtcp2-${NGTCP2_VERSION} && \
+  cd "ngtcp2-${NGTCP2_DL_TAG}" && \
   autoreconf -i && \
   export PKG_CONFIG_PATH=/usr/local/openssl/lib/pkgconfig:$PKG_CONFIG_PATH && \
   export CPPFLAGS="-I/usr/local/openssl/include" && \
