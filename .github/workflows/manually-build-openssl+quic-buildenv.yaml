@@ -12,6 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       BUILDENV_BUILD_DATE: ${{ steps.vars.outputs.BUILDENV_BUILD_DATE }}
+      QUICTLS_VERSION_UPSTREAM: ${{ steps.vars.outputs.QUICTLS_VERSION_UPSTREAM }}
       QUICTLS_VERSION: ${{ steps.vars.outputs.QUICTLS_VERSION }}
       NGTCP2_VERSION: ${{ steps.vars.outputs.NGTCP2_VERSION }}
     steps:
@@ -25,23 +26,20 @@ jobs:
         run: |
           echo BUILDENV_BUILD_DATE=$(date -u) >> $GITHUB_OUTPUT
 
-          # --- QUICTLS VERSION ---
           QUICTLS_TAG=$(curl -s https://api.github.com/repos/quictls/quictls/releases/latest | jq -r .tag_name)
           if [ -z "$QUICTLS_TAG" ] || [ "$QUICTLS_TAG" = "null" ]; then
             QUICTLS_TAG=$(curl -s https://api.github.com/repos/quictls/quictls/tags | jq -r '.[0].name')
           fi
 
-          # Keep upstream format EXACTLY (openssl-3.3.0)
-          QUICTLS_VERSION=$QUICTLS_TAG
-          echo QUICTLS_VERSION=$QUICTLS_VERSION >> $GITHUB_OUTPUT
+          echo QUICTLS_VERSION_UPSTREAM="$QUICTLS_TAG" >> $GITHUB_OUTPUT
+          CLEAN="${QUICTLS_TAG#openssl-}"
+          echo QUICTLS_VERSION="$CLEAN" >> $GITHUB_OUTPUT
 
-          # --- NGTCP2 VERSION ---
           NGTCP2_TAG=$(curl -s https://api.github.com/repos/ngtcp2/ngtcp2/releases/latest | jq -r .tag_name)
           if [ -z "$NGTCP2_TAG" ] || [ "$NGTCP2_TAG" = "null" ]; then
             NGTCP2_TAG=$(curl -s https://api.github.com/repos/ngtcp2/ngtcp2/tags | jq -r '.[0].name')
           fi
 
-          # Strip only leading v
           NGTCP2_VERSION=${NGTCP2_TAG#v}
           echo NGTCP2_VERSION=$NGTCP2_VERSION >> $GITHUB_OUTPUT
 
@@ -72,7 +70,7 @@ jobs:
           file: ./openssl+quic/linux_386_quic.Dockerfile
           build-args: |
             BUILDENV_BUILD_DATE=${{ needs.buildvars.outputs.BUILDENV_BUILD_DATE }}
-            OPENSSL_BUILDENV_VERSION=${{ needs.buildvars.outputs.QUICTLS_VERSION }}
+            OPENSSL_BUILDENV_VERSION=${{ needs.buildvars.outputs.QUICTLS_VERSION_UPSTREAM }}
             NGTCP2_VERSION=${{ needs.buildvars.outputs.NGTCP2_VERSION }}
           push: ${{ github.event_name != 'pull_request' }}
           load: ${{ github.event_name == 'pull_request' }}
@@ -107,7 +105,7 @@ jobs:
           file: ./openssl+quic/linux_32_quic.Dockerfile
           build-args: |
             BUILDENV_BUILD_DATE=${{ needs.buildvars.outputs.BUILDENV_BUILD_DATE }}
-            OPENSSL_BUILDENV_VERSION=${{ needs.buildvars.outputs.QUICTLS_VERSION }}
+            OPENSSL_BUILDENV_VERSION=${{ needs.buildvars.outputs.QUICTLS_VERSION_UPSTREAM }}
             NGTCP2_VERSION=${{ needs.buildvars.outputs.NGTCP2_VERSION }}
           push: ${{ github.event_name != 'pull_request' }}
           load: ${{ github.event_name == 'pull_request' }}
@@ -142,7 +140,7 @@ jobs:
           file: ./openssl+quic/linux_32_quic.Dockerfile
           build-args: |
             BUILDENV_BUILD_DATE=${{ needs.buildvars.outputs.BUILDENV_BUILD_DATE }}
-            OPENSSL_BUILDENV_VERSION=${{ needs.buildvars.outputs.QUICTLS_VERSION }}
+            OPENSSL_BUILDENV_VERSION=${{ needs.buildvars.outputs.QUICTLS_VERSION_UPSTREAM }}
             NGTCP2_VERSION=${{ needs.buildvars.outputs.NGTCP2_VERSION }}
           push: ${{ github.event_name != 'pull_request' }}
           load: ${{ github.event_name == 'pull_request' }}
@@ -177,7 +175,7 @@ jobs:
           file: ./openssl+quic/linux_64_quic.Dockerfile
           build-args: |
             BUILDENV_BUILD_DATE=${{ needs.buildvars.outputs.BUILDENV_BUILD_DATE }}
-            OPENSSL_BUILDENV_VERSION=${{ needs.buildvars.outputs.QUICTLS_VERSION }}
+            OPENSSL_BUILDENV_VERSION=${{ needs.buildvars.outputs.QUICTLS_VERSION_UPSTREAM }}
             NGTCP2_VERSION=${{ needs.buildvars.outputs.NGTCP2_VERSION }}
           push: ${{ github.event_name != 'pull_request' }}
           load: ${{ github.event_name == 'pull_request' }}
@@ -212,7 +210,7 @@ jobs:
           file: ./openssl+quic/linux_64_quic.Dockerfile
           build-args: |
             BUILDENV_BUILD_DATE=${{ needs.buildvars.outputs.BUILDENV_BUILD_DATE }}
-            OPENSSL_BUILDENV_VERSION=${{ needs.buildvars.outputs.QUICTLS_VERSION }}
+            OPENSSL_BUILDENV_VERSION=${{ needs.buildvars.outputs.QUICTLS_VERSION_UPSTREAM }}
             NGTCP2_VERSION=${{ needs.buildvars.outputs.NGTCP2_VERSION }}
           push: ${{ github.event_name != 'pull_request' }}
           load: ${{ github.event_name == 'pull_request' }}
