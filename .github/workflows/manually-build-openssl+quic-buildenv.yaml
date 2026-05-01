@@ -22,16 +22,27 @@ jobs:
         id: vars
         run: |
           echo "BUILDENV_BUILD_DATE=$(date -u)" >> "$GITHUB_OUTPUT"
+
+          # --- QUICTLS VERSION ---
           QUICTLS_TAG=$(curl -s https://api.github.com/repos/quictls/quictls/releases/latest | jq -r .tag_name)
           if [ -z "$QUICTLS_TAG" ] || [ "$QUICTLS_TAG" = "null" ]; then
             QUICTLS_TAG=$(curl -s https://api.github.com/repos/quictls/quictls/tags | jq -r '.[0].name')
           fi
-          QUICTLS_VERSION=${QUICTLS_TAG#v}
+
+          # Strip prefixes: openssl-, quictls-, v, openssl-v
+          QUICTLS_VERSION=${QUICTLS_TAG#openssl-}
+          QUICTLS_VERSION=${QUICTLS_VERSION#quictls-}
+          QUICTLS_VERSION=${QUICTLS_VERSION#v}
+          QUICTLS_VERSION=${QUICTLS_VERSION#openssl-v}
+
           echo "QUICTLS_VERSION=$QUICTLS_VERSION" >> "$GITHUB_OUTPUT"
+
+          # --- NGTCP2 VERSION ---
           NGTCP2_TAG=$(curl -s https://api.github.com/repos/ngtcp2/ngtcp2/releases/latest | jq -r .tag_name)
           if [ -z "$NGTCP2_TAG" ] || [ "$NGTCP2_TAG" = "null" ]; then
             NGTCP2_TAG=$(curl -s https://api.github.com/repos/ngtcp2/ngtcp2/tags | jq -r '.[0].name')
           fi
+
           NGTCP2_VERSION=${NGTCP2_TAG#v}
           echo "NGTCP2_VERSION=$NGTCP2_VERSION" >> "$GITHUB_OUTPUT"
 
