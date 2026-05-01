@@ -2,221 +2,183 @@ name: Manually Build Multiarch OpenSSL+Quic BuildEnv Docker Image
 
 on:
   workflow_dispatch:
-        
+
 env:
   DOCKERHUB_SLUG: "madnuttah/openssl-buildenv"
-  VERSION: "3.3.0-0-quic" 
 
 jobs:
+
   buildvars:
-    # if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     outputs:
-      BUILDENV_BUILD_DATE: ${{ steps.IMPORT_BUILDVARS.outputs.BUILDENV_BUILD_DATE }}
-      OPENSSL_VERSION: ${{ steps.IMPORT_BUILDVARS.outputs.OPENSSL_VERSION }}
-      OPENSSL_SHA256: ${{ steps.IMPORT_BUILDVARS.outputs.OPENSSL_SHA256 }}
-      
-    steps:             
+      BUILDENV_BUILD_DATE: ${{ steps.vars.outputs.BUILDENV_BUILD_DATE }}
+      QUICTLS_VERSION: ${{ steps.vars.outputs.QUICTLS_VERSION }}
+      NGTCP2_VERSION: ${{ steps.vars.outputs.NGTCP2_VERSION }}
+    steps:
       - name: Checkout source
-        uses: actions/checkout@v6
-        with:
-          persist-credentials: false
+        uses: actions/checkout@v4
 
-      - name: Import build variables from buildvars file
-        id: IMPORT_BUILDVARS
+      - name: Import build variables
+        id: vars
         run: |
-          echo BUILDENV_BUILD_DATE=$(date -u) >> $GITHUB_OUTPUT 
+          echo "BUILDENV_BUILD_DATE=$(date -u)" >> "$GITHUB_OUTPUT"
+          QUICTLS_VERSION=$(curl -s https://api.github.com/repos/quictls/quictls/releases/latest | jq -r .tag_name)
+          if [ -z "$QUICTLS_VERSION" ] || [ "$QUICTLS_VERSION" = "null" ]; then
+            QUICTLS_VERSION=$(curl -s https://api.github.com/repos/quictls/quictls/tags | jq -r '.[0].name')
+          fi
+          echo "QUICTLS_VERSION=$QUICTLS_VERSION" >> "$GITHUB_OUTPUT"
+          NGTCP2_TAG=$(curl -s https://api.github.com/repos/ngtcp2/ngtcp2/releases/latest | jq -r .tag_name)
+          if [ -z "$NGTCP2_TAG" ] || [ "$NGTCP2_TAG" = "null" ]; then
+            NGTCP2_TAG=$(curl -s https://api.github.com/repos/ngtcp2/ngtcp2/tags | jq -r '.[0].name')
+          fi
+          NGTCP2_VERSION=${NGTCP2_TAG#v}
+          echo "NGTCP2_VERSION=$NGTCP2_VERSION" >> "$GITHUB_OUTPUT"
 
   linux_386:
     runs-on: ubuntu-latest
     needs: buildvars
     steps:
-      - name: Checkout source
-        uses: actions/checkout@v6
-        with:
-          persist-credentials: false
-            
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v4
-      
-      - name: Set up Docker Buildx
-        id: buildx
+      - uses: actions/checkout@v4
+      - uses: docker/setup-qemu-action@v4
+      - id: buildx
         uses: docker/setup-buildx-action@v4
-
-      - name: Login to Dockerhub
-        if: github.event_name != 'pull_request'
+      - if: github.event_name != 'pull_request'
         uses: docker/login-action@v4
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-  
-      - name: linux_386
+      - name: Build linux/386
         uses: docker/build-push-action@v7
         with:
           platforms: linux/386
           builder: ${{ steps.buildx.outputs.name }}
+          file: ./openssl+quic/linux_386_quic.Dockerfile
           build-args: |
-            BUILDENV_BUILD_DATE=${{ needs.buildvars.outputs.BUILDENV_BUILD_DATE }} 
-            OPENSSL_BUILDENV_VERSION=${{ env.VERSION }}
-          file: ./openssl+quic/linux_386_quic.Dockerfile   
+            BUILDENV_BUILD_DATE=${{ needs.buildvars.outputs.BUILDENV_BUILD_DATE }}
+            OPENSSL_BUILDENV_VERSION=${{ needs.buildvars.outputs.QUICTLS_VERSION }}
+            NGTCP2_VERSION=${{ needs.buildvars.outputs.NGTCP2_VERSION }}
           push: ${{ github.event_name != 'pull_request' }}
-          load: ${{ github.event_name == 'pull_request' }} 
+          load: ${{ github.event_name == 'pull_request' }}
           provenance: ${{ github.event_name == 'pull_request' }}
           tags: |
-            ${{ env.DOCKERHUB_SLUG }}:${{ env.VERSION }}-386   
-          
+            ${{ env.DOCKERHUB_SLUG }}:${{ needs.buildvars.outputs.QUICTLS_VERSION }}-ngtcp2-${{ needs.buildvars.outputs.NGTCP2_VERSION }}-386
+
   linux_arm_v6:
     runs-on: ubuntu-22.04
     needs: buildvars
     steps:
-      - name: Checkout source
-        uses: actions/checkout@v6
-        with:
-          persist-credentials: false
-          
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v4    
-      
-      - name: Set up Docker Buildx
-        id: buildx
+      - uses: actions/checkout@v4
+      - uses: docker/setup-qemu-action@v4
+      - id: buildx
         uses: docker/setup-buildx-action@v4
-      
-      - name: Login to Dockerhub
-        if: github.event_name != 'pull_request'
+      - if: github.event_name != 'pull_request'
         uses: docker/login-action@v4
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-          
-      - name: linux_arm_v6
+      - name: Build linux/arm/v6
         uses: docker/build-push-action@v7
         with:
           platforms: linux/arm/v6
           builder: ${{ steps.buildx.outputs.name }}
+          file: ./openssl+quic/linux_armv6_quic.Dockerfile
           build-args: |
-            BUILDENV_BUILD_DATE=${{ needs.buildvars.outputs.BUILDENV_BUILD_DATE }} 
-            OPENSSL_BUILDENV_VERSION=${{ env.VERSION }}
-          file: ./openssl+quic/linux_32_quic.Dockerfile          
+            BUILDENV_BUILD_DATE=${{ needs.buildvars.outputs.BUILDENV_BUILD_DATE }}
+            OPENSSL_BUILDENV_VERSION=${{ needs.buildvars.outputs.QUICTLS_VERSION }}
+            NGTCP2_VERSION=${{ needs.buildvars.outputs.NGTCP2_VERSION }}
           push: ${{ github.event_name != 'pull_request' }}
           load: ${{ github.event_name == 'pull_request' }}
           provenance: ${{ github.event_name == 'pull_request' }}
           tags: |
-            ${{ env.DOCKERHUB_SLUG }}:${{ env.VERSION }}-armv6
-      
+            ${{ env.DOCKERHUB_SLUG }}:${{ needs.buildvars.outputs.QUICTLS_VERSION }}-ngtcp2-${{ needs.buildvars.outputs.NGTCP2_VERSION }}-armv6
+
   linux_arm_v7:
     runs-on: ubuntu-22.04
     needs: buildvars
     steps:
-      - name: Checkout source
-        uses: actions/checkout@v6
-        with:
-          persist-credentials: false
-          
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v4
-      
-      - name: Set up Docker Buildx
-        id: buildx
+      - uses: actions/checkout@v4
+      - uses: docker/setup-qemu-action@v4
+      - id: buildx
         uses: docker/setup-buildx-action@v4
-            
-      - name: Login to Dockerhub
-        if: github.event_name != 'pull_request'
-        uses: docker/login-action@v4
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}      
-      
-      - name: linux_arm_v7
-        uses: docker/build-push-action@v7
-        with:
-          platforms: linux/arm/v7
-          builder: ${{ steps.buildx.outputs.name }}
-          build-args: |
-            BUILDENV_BUILD_DATE=${{ needs.buildvars.outputs.BUILDENV_BUILD_DATE }} 
-            OPENSSL_BUILDENV_VERSION=${{ env.VERSION }}
-          file: ./openssl+quic/linux_32_quic.Dockerfile           
-          push: ${{ github.event_name != 'pull_request' }}
-          load: ${{ github.event_name == 'pull_request' }}
-          provenance: ${{ github.event_name == 'pull_request' }}          
-          tags: |
-            ${{ env.DOCKERHUB_SLUG }}:${{ env.VERSION }}-armv7
-                      
-  linux_arm64:
-    runs-on: ubuntu-22.04
-    needs: buildvars
-    steps:          
-      - name: Checkout source
-        uses: actions/checkout@v6
-        with:
-          persist-credentials: false
-          
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v4
-      
-      - name: Set up Docker Buildx
-        id: buildx
-        uses: docker/setup-buildx-action@v4
-              
-      - name: Login to Dockerhub
-        if: github.event_name != 'pull_request'
+      - if: github.event_name != 'pull_request'
         uses: docker/login-action@v4
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-      - name: linux_arm64
+      - name: Build linux/arm/v7
         uses: docker/build-push-action@v7
         with:
-          platforms: linux/arm64
+          platforms: linux/arm/v7
           builder: ${{ steps.buildx.outputs.name }}
+          file: ./openssl+quic/linux_armv7_quic.Dockerfile
           build-args: |
-            BUILDENV_BUILD_DATE=${{ needs.buildvars.outputs.BUILDENV_BUILD_DATE }} 
-            OPENSSL_BUILDENV_VERSION=${{ env.VERSION }}
-          file: ./openssl+quic/linux_64_quic.Dockerfile     
-          push: ${{ github.event_name != 'pull_request' }}
-          load: ${{ github.event_name == 'pull_request' }} 
-          provenance: ${{ github.event_name == 'pull_request' }}
-          tags: |
-            ${{ env.DOCKERHUB_SLUG }}:${{ env.VERSION }}-arm64
-
-  linux_amd64:
-    runs-on: ubuntu-latest
-    needs: buildvars
-    steps:         
-      - name: Checkout source
-        uses: actions/checkout@v6
-        with:
-          persist-credentials: false
-          
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v4
-      
-      - name: Set up Docker Buildx
-        id: buildx
-        uses: docker/setup-buildx-action@v4
-      
-      - name: Login to Dockerhub
-        if: github.event_name != 'pull_request'
-        uses: docker/login-action@v4
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }} 
- 
-      - name: linux_amd64
-        uses: docker/build-push-action@v7
-        with:
-          platforms: linux/amd64
-          builder: ${{ steps.buildx.outputs.name }}
-          build-args: |
-            BUILDENV_BUILD_DATE=${{ needs.buildvars.outputs.BUILDENV_BUILD_DATE }} 
-            OPENSSL_BUILDENV_VERSION=${{ env.VERSION }}
-          file: ./openssl+quic/linux_64_quic.Dockerfile     
+            BUILDENV_BUILD_DATE=${{ needs.buildvars.outputs.BUILDENV_BUILD_DATE }}
+            OPENSSL_BUILDENV_VERSION=${{ needs.buildvars.outputs.QUICTLS_VERSION }}
+            NGTCP2_VERSION=${{ needs.buildvars.outputs.NGTCP2_VERSION }}
           push: ${{ github.event_name != 'pull_request' }}
           load: ${{ github.event_name == 'pull_request' }}
           provenance: ${{ github.event_name == 'pull_request' }}
           tags: |
-            ${{ env.DOCKERHUB_SLUG }}:${{ env.VERSION }}-amd64
-        
+            ${{ env.DOCKERHUB_SLUG }}:${{ needs.buildvars.outputs.QUICTLS_VERSION }}-ngtcp2-${{ needs.buildvars.outputs.NGTCP2_VERSION }}-armv7
+
+  linux_arm64:
+    runs-on: ubuntu-22.04
+    needs: buildvars
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-qemu-action@v4
+      - id: buildx
+        uses: docker/setup-buildx-action@v4
+      - if: github.event_name != 'pull_request'
+        uses: docker/login-action@v4
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Build linux/arm64
+        uses: docker/build-push-action@v7
+        with:
+          platforms: linux/arm64
+          builder: ${{ steps.buildx.outputs.name }}
+          file: ./openssl+quic/linux_arm64_quic.Dockerfile
+          build-args: |
+            BUILDENV_BUILD_DATE=${{ needs.buildvars.outputs.BUILDENV_BUILD_DATE }}
+            OPENSSL_BUILDENV_VERSION=${{ needs.buildvars.outputs.QUICTLS_VERSION }}
+            NGTCP2_VERSION=${{ needs.buildvars.outputs.NGTCP2_VERSION }}
+          push: ${{ github.event_name != 'pull_request' }}
+          load: ${{ github.event_name == 'pull_request' }}
+          provenance: ${{ github.event_name == 'pull_request' }}
+          tags: |
+            ${{ env.DOCKERHUB_SLUG }}:${{ needs.buildvars.outputs.QUICTLS_VERSION }}-ngtcp2-${{ needs.buildvars.outputs.NGTCP2_VERSION }}-arm64
+
+  linux_amd64:
+    runs-on: ubuntu-latest
+    needs: buildvars
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-qemu-action@v4
+      - id: buildx
+        uses: docker/setup-buildx-action@v4
+      - if: github.event_name != 'pull_request'
+        uses: docker/login-action@v4
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Build linux/amd64
+        uses: docker/build-push-action@v7
+        with:
+          platforms: linux/amd64
+          builder: ${{ steps.buildx.outputs.name }}
+          file: ./openssl+quic/linux_amd64_quic.Dockerfile
+          build-args: |
+            BUILDENV_BUILD_DATE=${{ needs.buildvars.outputs.BUILDENV_BUILD_DATE }}
+            OPENSSL_BUILDENV_VERSION=${{ needs.buildvars.outputs.QUICTLS_VERSION }}
+            NGTCP2_VERSION=${{ needs.buildvars.outputs.NGTCP2_VERSION }}
+          push: ${{ github.event_name != 'pull_request' }}
+          load: ${{ github.event_name == 'pull_request' }}
+          provenance: ${{ github.event_name == 'pull_request' }}
+          tags: |
+            ${{ env.DOCKERHUB_SLUG }}:${{ needs.buildvars.outputs.QUICTLS_VERSION }}-ngtcp2-${{ needs.buildvars.outputs.NGTCP2_VERSION }}-amd64
+
   create-manifest-list:
     runs-on: ubuntu-latest
     needs:
@@ -226,27 +188,21 @@ jobs:
       - linux_arm_v7
       - linux_arm64
       - linux_amd64
-      
-    steps:        
-      - name: Checkout source
-        uses: actions/checkout@v6
-        with:
-          persist-credentials: false
-          
-      - name: Login to Dockerhub        
-        if: github.event_name != 'pull_request'   
+    steps:
+      - uses: actions/checkout@v4
+      - if: github.event_name != 'pull_request'
         uses: docker/login-action@v4
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-        
-      - name: Create and push multiarch manifests
+      - name: Create and push manifest list
         if: github.event_name != 'pull_request'
         run: |
-          docker manifest create ${{ env.DOCKERHUB_SLUG }}:${{ env.VERSION }} \
-            --amend ${{ env.DOCKERHUB_SLUG }}:${{ env.VERSION }}-386 \
-            --amend ${{ env.DOCKERHUB_SLUG }}:${{ env.VERSION }}-arm64 \
-            --amend ${{ env.DOCKERHUB_SLUG }}:${{ env.VERSION }}-amd64 \
-            --amend ${{ env.DOCKERHUB_SLUG }}:${{ env.VERSION }}-armv6 \
-            --amend ${{ env.DOCKERHUB_SLUG }}:${{ env.VERSION }}-armv7
-          docker manifest push ${{ env.DOCKERHUB_SLUG }}:${{ env.VERSION }}
+          TAG=${{ needs.buildvars.outputs.QUICTLS_VERSION }}-ngtcp2-${{ needs.buildvars.outputs.NGTCP2_VERSION }}
+          docker manifest create ${{ env.DOCKERHUB_SLUG }}:${TAG} \
+            --amend ${{ env.DOCKERHUB_SLUG }}:${TAG}-386 \
+            --amend ${{ env.DOCKERHUB_SLUG }}:${TAG}-armv6 \
+            --amend ${{ env.DOCKERHUB_SLUG }}:${TAG}-armv7 \
+            --amend ${{ env.DOCKERHUB_SLUG }}:${TAG}-arm64 \
+            --amend ${{ env.DOCKERHUB_SLUG }}:${TAG}-amd64
+          docker manifest push ${{ env.DOCKERHUB_SLUG }}:${TAG}
