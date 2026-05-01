@@ -82,7 +82,7 @@ jobs:
         with:
           platforms: linux/arm/v6
           builder: ${{ steps.buildx.outputs.name }}
-          file: ./openssl+quic/linux_armv6_quic.Dockerfile
+          file: ./openssl+quic/linux_32_quic.Dockerfile
           build-args: |
             BUILDENV_BUILD_DATE=${{ needs.buildvars.outputs.BUILDENV_BUILD_DATE }}
             OPENSSL_BUILDENV_VERSION=${{ needs.buildvars.outputs.QUICTLS_VERSION }}
@@ -111,7 +111,7 @@ jobs:
         with:
           platforms: linux/arm/v7
           builder: ${{ steps.buildx.outputs.name }}
-          file: ./openssl+quic/linux_armv7_quic.Dockerfile
+          file: ./openssl+quic/linux_32_quic.Dockerfile
           build-args: |
             BUILDENV_BUILD_DATE=${{ needs.buildvars.outputs.BUILDENV_BUILD_DATE }}
             OPENSSL_BUILDENV_VERSION=${{ needs.buildvars.outputs.QUICTLS_VERSION }}
@@ -140,7 +140,7 @@ jobs:
         with:
           platforms: linux/arm64
           builder: ${{ steps.buildx.outputs.name }}
-          file: ./openssl+quic/linux_arm64_quic.Dockerfile
+          file: ./openssl+quic/linux_64_quic.Dockerfile
           build-args: |
             BUILDENV_BUILD_DATE=${{ needs.buildvars.outputs.BUILDENV_BUILD_DATE }}
             OPENSSL_BUILDENV_VERSION=${{ needs.buildvars.outputs.QUICTLS_VERSION }}
@@ -169,7 +169,7 @@ jobs:
         with:
           platforms: linux/amd64
           builder: ${{ steps.buildx.outputs.name }}
-          file: ./openssl+quic/linux_amd64_quic.Dockerfile
+          file: ./openssl+quic/linux_64_quic.Dockerfile
           build-args: |
             BUILDENV_BUILD_DATE=${{ needs.buildvars.outputs.BUILDENV_BUILD_DATE }}
             OPENSSL_BUILDENV_VERSION=${{ needs.buildvars.outputs.QUICTLS_VERSION }}
