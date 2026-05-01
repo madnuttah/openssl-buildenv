@@ -3,7 +3,7 @@ ARG BUILDENV_BUILD_DATE \
     OPENSSL_SHA256 \
     OPENSSL_BUILDENV_VERSION
 
-FROM alpine:latest AS buildenv
+FROM alpine:latest AS openssl-build
 
 LABEL maintainer="madnuttah"
 
@@ -18,13 +18,14 @@ ENV OPENSSL_VERSION=${OPENSSL_VERSION} \
 WORKDIR /tmp/src
 
 RUN set -xe; \
-  apk --update --no-cache add ca-certificates gnupg curl file jq build-base perl libidn2-dev libevent-dev linux-headers apk-tools autoconf automake libtool pkgconf pkgconfig git && \
+  apk --update --no-cache add ca-certificates gnupg curl file jq && \
+  apk --update --no-cache add --virtual .build-deps build-base perl libidn2-dev libevent-dev linux-headers apk-tools autoconf automake libtool pkgconf pkgconfig git && \
   if [ -z "${OPENSSL_VERSION}" ]; then \
     OPENSSL_VERSION=$(curl -s https://api.github.com/repos/quictls/quictls/releases/latest | jq -r .tag_name); \
     if [ -z "$OPENSSL_VERSION" ] || [ "$OPENSSL_VERSION" = "null" ]; then \
       OPENSSL_VERSION=$(curl -s https://api.github.com/repos/quictls/quictls/tags | jq -r '.[0].name'); \
     fi; \
-  fi; \
+  fi && \
   curl -sSL "${OPENSSL_DOWNLOAD_URL}-${OPENSSL_VERSION}/openssl-${OPENSSL_VERSION}.tar.gz" -o openssl.tar.gz && \
   if [ -n "${OPENSSL_SHA256}" ]; then echo "${OPENSSL_SHA256}  ./openssl.tar.gz" | sha256sum -c -; fi && \
   curl -sSL "${OPENSSL_DOWNLOAD_URL}-${OPENSSL_VERSION}/openssl-${OPENSSL_VERSION}.tar.gz.asc" -o openssl.tar.gz.asc || true && \
@@ -68,27 +69,30 @@ Libs: -L${libdir} -lssl -lcrypto
 Cflags: -I${includedir}
 EOF && \
   strip --strip-unneeded /usr/local/openssl/lib/*.a || true && \
-  rm -rf /tmp/src/* /var/tmp/* /tmp/* && \
-  apk del --no-cache build-base perl libidn2-dev libevent-dev linux-headers apk-tools autoconf automake libtool pkgconf pkgconfig git && \
-  pkill -9 gpg-agent || true && pkill -9 dirmngr || true && \
-  rm -rf /usr/share/man /usr/share/docs /var/log/*
+  rm -rf /tmp/src/* && \
+  apk del --no-cache .build-deps && \
+  pkill -9 gpg-agent || true && \
+  pkill -9 dirmngr || true && \
+  rm -rf /usr/share/man /usr/share/docs /var/tmp/* /tmp/* /var/log/*
 
 ARG NGTCP2_VERSION
 
-FROM buildenv AS ngtcp2-build
+FROM alpine:latest AS ngtcp2-build
 
 WORKDIR /tmp/src
 
-COPY --from=buildenv /usr/local/openssl /usr/local/openssl
+COPY --from=openssl-build /usr/local/openssl /usr/local/openssl
+COPY --from=openssl-build /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 
 RUN set -xe; \
-  apk add --no-cache ca-certificates curl jq build-base perl automake autoconf libtool libidn2-dev linux-headers pkgconf pkgconfig && \
+  apk --update --no-cache add ca-certificates curl jq pkgconf pkgconfig && \
+  apk --update --no-cache add --virtual .build-deps build-base perl curl automake autoconf libtool libidn2-dev linux-headers pkgconf pkgconfig git && \
   if [ -z "${NGTCP2_VERSION}" ]; then \
     NGTCP2_VERSION=$(curl -s https://api.github.com/repos/ngtcp2/ngtcp2/releases/latest | jq -r .tag_name); \
     if [ -z "$NGTCP2_VERSION" ] || [ "$NGTCP2_VERSION" = "null" ]; then \
       NGTCP2_VERSION=$(curl -s https://api.github.com/repos/ngtcp2/ngtcp2/tags | jq -r '.[0].name'); \
     fi; \
-  fi; \
+  fi && \
   NGTCP2_DL_TAG="${NGTCP2_VERSION#v}" && \
   curl -sSL "https://github.com/ngtcp2/ngtcp2/releases/download/v${NGTCP2_DL_TAG}/ngtcp2-${NGTCP2_DL_TAG}.tar.gz" -o ngtcp2.tar.gz && \
   tar xzf ngtcp2.tar.gz && rm -f ngtcp2.tar.gz && \
@@ -113,20 +117,21 @@ Libs: -L${libdir} -lngtcp2
 Cflags: -I${includedir}
 EOF && \
   strip --strip-unneeded /usr/local/ngtcp2/lib/*.a || true && \
-  rm -rf /tmp/src/* /var/tmp/* /tmp/* && \
-  apk del --no-cache build-base perl automake autoconf libtool libidn2-dev linux-headers pkgconf pkgconfig && \
-  rm -rf /usr/share/man /usr/share/docs /var/log/*
+  rm -rf /tmp/src/* && \
+  apk del --no-cache .build-deps && \
+  rm -rf /usr/share/man /usr/share/docs /var/tmp/* /tmp/* /var/log/*
 
 FROM alpine:latest AS runtime
 
 RUN apk add --no-cache ca-certificates
 
-COPY --from=ngtcp2-build /usr/local/openssl /usr/local/openssl
-COPY --from=ngtcp2-build /usr/local/ngtcp2 /usr/local/ngtcp2
+COPY --from=ngtcp2-build /usr/local/openssl/lib /usr/local/openssl/lib
+COPY --from=ngtcp2-build /usr/local/ngtcp2/lib /usr/local/ngtcp2/lib
+COPY --from=ngtcp2-build /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 
-RUN rm -rf /usr/local/openssl/lib/pkgconfig /usr/local/ngtcp2/lib/pkgconfig /usr/local/openssl/include /usr/local/ngtcp2/include && \
-    find /usr/local/openssl -name '*.a' -exec strip --strip-unneeded {} \; || true && \
-    find /usr/local/ngtcp2 -name '*.a' -exec strip --strip-unneeded {} \; || true && \
+RUN rm -rf /usr/local/openssl/lib/pkgconfig /usr/local/ngtcp2/lib/pkgconfig && \
+    find /usr/local/openssl/lib -name '*.a' -exec strip --strip-unneeded {} \; || true && \
+    find /usr/local/ngtcp2/lib -name '*.a' -exec strip --strip-unneeded {} \; || true && \
     rm -rf /var/cache/apk/*
 
 ENV PKG_CONFIG_PATH=/usr/local/openssl/lib/pkgconfig:/usr/local/ngtcp2/lib/pkgconfig:$PKG_CONFIG_PATH
