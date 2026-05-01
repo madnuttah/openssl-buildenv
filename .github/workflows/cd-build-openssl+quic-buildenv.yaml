@@ -13,6 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       OPENSSL_VERSION: ${{ steps.detect.outputs.OPENSSL_VERSION }}
+      TAG_VERSION: ${{ steps.detect.outputs.TAG_VERSION }}
       BUILDENV_BUILD_DATE: ${{ steps.detect.outputs.BUILDENV_BUILD_DATE }}
 
     steps:
@@ -20,7 +21,9 @@ jobs:
         id: detect
         run: |
           OPENSSL_VERSION=$(curl -s https://api.github.com/repos/quictls/openssl/releases/latest | jq -r .tag_name)
+          TAG_VERSION=$(echo $OPENSSL_VERSION | sed 's/^v//')-0-quic
           echo "OPENSSL_VERSION=$OPENSSL_VERSION" >> $GITHUB_OUTPUT
+          echo "TAG_VERSION=$TAG_VERSION" >> $GITHUB_OUTPUT
           echo "BUILDENV_BUILD_DATE=$(date -u)" >> $GITHUB_OUTPUT
 
   linux_386:
@@ -52,7 +55,7 @@ jobs:
           load: ${{ github.event_name == 'pull_request' }}
           provenance: ${{ github.event_name == 'pull_request' }}
           tags: |
-            ${{ env.DOCKERHUB_SLUG }}:${{ needs.detect_versions.outputs.OPENSSL_VERSION }}-386
+            ${{ env.DOCKERHUB_SLUG }}:${{ needs.detect_versions.outputs.TAG_VERSION }}-386
 
   linux_arm_v6:
     runs-on: ubuntu-22.04
@@ -83,7 +86,7 @@ jobs:
           load: ${{ github.event_name == 'pull_request' }}
           provenance: ${{ github.event_name == 'pull_request' }}
           tags: |
-            ${{ env.DOCKERHUB_SLUG }}:${{ needs.detect_versions.outputs.OPENSSL_VERSION }}-armv6
+            ${{ env.DOCKERHUB_SLUG }}:${{ needs.detect_versions.outputs.TAG_VERSION }}-armv6
 
   linux_arm_v7:
     runs-on: ubuntu-22.04
@@ -114,7 +117,7 @@ jobs:
           load: ${{ github.event_name == 'pull_request' }}
           provenance: ${{ github.event_name == 'pull_request' }}
           tags: |
-            ${{ env.DOCKERHUB_SLUG }}:${{ needs.detect_versions.outputs.OPENSSL_VERSION }}-armv7
+            ${{ env.DOCKERHUB_SLUG }}:${{ needs.detect_versions.outputs.TAG_VERSION }}-armv7
 
   linux_arm64:
     runs-on: ubuntu-22.04
@@ -145,7 +148,7 @@ jobs:
           load: ${{ github.event_name == 'pull_request' }}
           provenance: ${{ github.event_name == 'pull_request' }}
           tags: |
-            ${{ env.DOCKERHUB_SLUG }}:${{ needs.detect_versions.outputs.OPENSSL_VERSION }}-arm64
+            ${{ env.DOCKERHUB_SLUG }}:${{ needs.detect_versions.outputs.TAG_VERSION }}-arm64
 
   linux_amd64:
     runs-on: ubuntu-latest
@@ -176,7 +179,7 @@ jobs:
           load: ${{ github.event_name == 'pull_request' }}
           provenance: ${{ github.event_name == 'pull_request' }}
           tags: |
-            ${{ env.DOCKERHUB_SLUG }}:${{ needs.detect_versions.outputs.OPENSSL_VERSION }}-amd64
+            ${{ env.DOCKERHUB_SLUG }}:${{ needs.detect_versions.outputs.TAG_VERSION }}-amd64
 
   create-manifest-list:
     runs-on: ubuntu-latest
@@ -202,7 +205,7 @@ jobs:
       - name: Create and push multiarch manifests
         if: github.event_name != 'pull_request'
         run: |
-          VERSION=${{ needs.detect_versions.outputs.OPENSSL_VERSION }}
+          VERSION=${{ needs.detect_versions.outputs.TAG_VERSION }}
           docker manifest create ${{ env.DOCKERHUB_SLUG }}:$VERSION \
             --amend ${{ env.DOCKERHUB_SLUG }}:$VERSION-386 \
             --amend ${{ env.DOCKERHUB_SLUG }}:$VERSION-arm64 \
