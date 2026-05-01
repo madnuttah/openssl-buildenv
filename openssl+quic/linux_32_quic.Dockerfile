@@ -3,7 +3,7 @@ ARG BUILDENV_BUILD_DATE \
     OPENSSL_SHA256 \
     NGTCP2_VERSION
 
-FROM --platform=linux/386 alpine:latest AS openssl-build
+FROM alpine:latest AS openssl-build
 
 LABEL maintainer="madnuttah"
 
