@@ -43,9 +43,10 @@ Description: QuicTLS OpenSSL fork
 Version: ${OPENSSL_VERSION}
 Libs: -L${libdir} -lssl -lcrypto
 Cflags: -I${includedir}
-EOF && \
-  rm -rf /tmp/src && \
+EOF
+  && rm -rf /tmp/src && \
   apk del --no-cache .build-deps
+
 
 FROM alpine:latest AS buildenv
 
