@@ -44,8 +44,9 @@ Version: ${OPENSSL_VERSION}
 Libs: -L${libdir} -lssl -lcrypto
 Cflags: -I${includedir}
 EOF
-rm -rf /tmp/src && \
-apk del --no-cache .build-deps
+
+RUN rm -rf /tmp/src && \
+    apk del --no-cache .build-deps
 
 
 FROM alpine:latest AS buildenv
@@ -70,6 +71,7 @@ RUN set -xe; \
   export LDFLAGS="-L/usr/local/openssl/lib -Wl,-rpath,/usr/local/openssl/lib -Wl,-O1" && \
   ./configure --prefix=/usr/local/ngtcp2 && \
   make -j"$(nproc)" && \
-  make install && \
-  rm -rf /tmp/src && \
-  apk del --no-cache .build-deps
+  make install
+
+RUN rm -rf /tmp/src && \
+    apk del --no-cache .build-deps
