@@ -113,7 +113,7 @@ EOF && \
   strip --strip-unneeded /usr/local/ngtcp2/lib/*.a || true && \
   rm -rf /tmp/src/*
 
-FROM --platform=linux/386 ngtcp2-build AS final-build
+FROM ngtcp2-build AS final-build
 
 WORKDIR /tmp/src
 
@@ -130,10 +130,3 @@ EOF && \
   strip --strip-all /usr/local/bin/test || true && \
   rm -rf /tmp/src/* && \
   rm -rf /usr/local/openssl/lib/pkgconfig /usr/local/ngtcp2/lib/pkgconfig /usr/local/openssl/include /usr/local/ngtcp2/include
-
-FROM scratch AS runtime
-
-COPY --from=final-build /usr/local/bin/test /usr/local/bin/test
-COPY --from=ngtcp2-build /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
-
-ENTRYPOINT ["/usr/local/bin/test"]
