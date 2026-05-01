@@ -22,10 +22,11 @@ jobs:
         id: vars
         run: |
           echo "BUILDENV_BUILD_DATE=$(date -u)" >> "$GITHUB_OUTPUT"
-          QUICTLS_VERSION=$(curl -s https://api.github.com/repos/quictls/quictls/releases/latest | jq -r .tag_name)
-          if [ -z "$QUICTLS_VERSION" ] || [ "$QUICTLS_VERSION" = "null" ]; then
-            QUICTLS_VERSION=$(curl -s https://api.github.com/repos/quictls/quictls/tags | jq -r '.[0].name')
+          QUICTLS_TAG=$(curl -s https://api.github.com/repos/quictls/quictls/releases/latest | jq -r .tag_name)
+          if [ -z "$QUICTLS_TAG" ] || [ "$QUICTLS_TAG" = "null" ]; then
+            QUICTLS_TAG=$(curl -s https://api.github.com/repos/quictls/quictls/tags | jq -r '.[0].name')
           fi
+          QUICTLS_VERSION=${QUICTLS_TAG#v}
           echo "QUICTLS_VERSION=$QUICTLS_VERSION" >> "$GITHUB_OUTPUT"
           NGTCP2_TAG=$(curl -s https://api.github.com/repos/ngtcp2/ngtcp2/releases/latest | jq -r .tag_name)
           if [ -z "$NGTCP2_TAG" ] || [ "$NGTCP2_TAG" = "null" ]; then
@@ -61,7 +62,7 @@ jobs:
           load: ${{ github.event_name == 'pull_request' }}
           provenance: ${{ github.event_name == 'pull_request' }}
           tags: |
-            ${{ env.DOCKERHUB_SLUG }}:${{ needs.buildvars.outputs.QUICTLS_VERSION }}-ngtcp2-${{ needs.buildvars.outputs.NGTCP2_VERSION }}-386
+            ${{ env.DOCKERHUB_SLUG }}:${{ needs.buildvars.outputs.QUICTLS_VERSION }}-0-quic-386
 
   linux_arm_v6:
     runs-on: ubuntu-22.04
@@ -90,7 +91,7 @@ jobs:
           load: ${{ github.event_name == 'pull_request' }}
           provenance: ${{ github.event_name == 'pull_request' }}
           tags: |
-            ${{ env.DOCKERHUB_SLUG }}:${{ needs.buildvars.outputs.QUICTLS_VERSION }}-ngtcp2-${{ needs.buildvars.outputs.NGTCP2_VERSION }}-armv6
+            ${{ env.DOCKERHUB_SLUG }}:${{ needs.buildvars.outputs.QUICTLS_VERSION }}-0-quic-armv6
 
   linux_arm_v7:
     runs-on: ubuntu-22.04
@@ -119,7 +120,7 @@ jobs:
           load: ${{ github.event_name == 'pull_request' }}
           provenance: ${{ github.event_name == 'pull_request' }}
           tags: |
-            ${{ env.DOCKERHUB_SLUG }}:${{ needs.buildvars.outputs.QUICTLS_VERSION }}-ngtcp2-${{ needs.buildvars.outputs.NGTCP2_VERSION }}-armv7
+            ${{ env.DOCKERHUB_SLUG }}:${{ needs.buildvars.outputs.QUICTLS_VERSION }}-0-quic-armv7
 
   linux_arm64:
     runs-on: ubuntu-22.04
@@ -148,7 +149,7 @@ jobs:
           load: ${{ github.event_name == 'pull_request' }}
           provenance: ${{ github.event_name == 'pull_request' }}
           tags: |
-            ${{ env.DOCKERHUB_SLUG }}:${{ needs.buildvars.outputs.QUICTLS_VERSION }}-ngtcp2-${{ needs.buildvars.outputs.NGTCP2_VERSION }}-arm64
+            ${{ env.DOCKERHUB_SLUG }}:${{ needs.buildvars.outputs.QUICTLS_VERSION }}-0-quic-arm64
 
   linux_amd64:
     runs-on: ubuntu-latest
@@ -177,7 +178,7 @@ jobs:
           load: ${{ github.event_name == 'pull_request' }}
           provenance: ${{ github.event_name == 'pull_request' }}
           tags: |
-            ${{ env.DOCKERHUB_SLUG }}:${{ needs.buildvars.outputs.QUICTLS_VERSION }}-ngtcp2-${{ needs.buildvars.outputs.NGTCP2_VERSION }}-amd64
+            ${{ env.DOCKERHUB_SLUG }}:${{ needs.buildvars.outputs.QUICTLS_VERSION }}-0-quic-amd64
 
   create-manifest-list:
     runs-on: ubuntu-latest
@@ -198,7 +199,7 @@ jobs:
       - name: Create and push manifest list
         if: github.event_name != 'pull_request'
         run: |
-          TAG=${{ needs.buildvars.outputs.QUICTLS_VERSION }}-ngtcp2-${{ needs.buildvars.outputs.NGTCP2_VERSION }}
+          TAG=${{ needs.buildvars.outputs.QUICTLS_VERSION }}-0-quic
           docker manifest create ${{ env.DOCKERHUB_SLUG }}:${TAG} \
             --amend ${{ env.DOCKERHUB_SLUG }}:${TAG}-386 \
             --amend ${{ env.DOCKERHUB_SLUG }}:${TAG}-armv6 \
