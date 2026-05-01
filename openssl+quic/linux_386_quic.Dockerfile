@@ -19,7 +19,6 @@ RUN set -xe; \
     linux-generic32 \
     -m32 \
     enable-tls1_3 \
-    enable-ec_nistp_64_gcc_128 \
     no-shared \
     no-pinshared \
     threads \
