@@ -26,7 +26,6 @@ RUN set -xe; \
   export CFLAGS="-O3 -march=native -fstack-protector-strong -fstack-clash-protection -fPIC" && \
   export LDFLAGS="-Wl,-O1" && \
   ./config \
-    linux-x86_64 \
     enable-tls1_3 \
     enable-ec_nistp_64_gcc_128 \
     no-shared \
