@@ -2,7 +2,7 @@ name: CD Cleanup Dockerhub Tags
 
 on:
   workflow_run:
-    workflows: workflows: ["CD Build Multiarch OpenSSL BuildEnv Docker Image", "CD Build Multiarch OpenSSL+Quic BuildEnv Docker Image"]
+    workflows: ["CD Build Multiarch OpenSSL BuildEnv Docker Image", "CD Build Multiarch OpenSSL+Quic BuildEnv Docker Image"]
     types:
       - completed
   #workflow_dispatch:
