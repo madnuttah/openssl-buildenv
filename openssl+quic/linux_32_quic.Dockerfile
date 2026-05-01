@@ -5,13 +5,13 @@ LABEL maintainer="madnuttah"
 WORKDIR /tmp/src
 
 RUN set -xe; \
-  apk --update --no-cache add \
+  apk add --no-cache \
     ca-certificates \
     jq \
     curl && \
   export OPENSSL_VERSION=$(curl -s https://api.github.com/repos/quictls/openssl/releases/latest | jq -r .tag_name); \
   echo "Using OpenSSL QUIC version: ${OPENSSL_VERSION}" && \
-  apk --update --no-cache add --virtual .build-deps \
+  apk add --no-cache --virtual .build-deps \
     build-base \
     perl \
     libidn2-dev \
@@ -41,7 +41,9 @@ RUN set -xe; \
     --libdir=/usr/local/openssl/lib && \
   make && \
   make install_sw && \
-  apk del --no-cache .build-deps
+  apk del --no-cache .build-deps && \
+  cd / && \
+  rm -rf /tmp/src
 
 
 FROM alpine:latest AS buildenv
@@ -52,13 +54,13 @@ COPY --from=openssl /usr/local/openssl/ \
   /usr/local/openssl/
 
 RUN set -xe; \
-  apk --update --no-cache add \
+  apk add --no-cache \
     ca-certificates \
     jq \
     curl && \
   export NGTCP2_VERSION=$(curl -s https://api.github.com/repos/ngtcp2/ngtcp2/releases/latest | jq -r .tag_name | sed 's/^v//'); \
   echo "Using ngtcp2 version: ${NGTCP2_VERSION}" && \
-  apk --update --no-cache add --virtual .build-deps \
+  apk add --no-cache --virtual .build-deps \
     build-base \
     perl \
     curl \
@@ -79,6 +81,7 @@ RUN set -xe; \
   make && \
   make install && \
   apk del --no-cache .build-deps && \
+  cd / && \
   rm -rf \
     /usr/share/man \
     /usr/share/docs \
