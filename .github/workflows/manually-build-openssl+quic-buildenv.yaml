@@ -9,9 +9,12 @@ env:
 
 jobs:
   buildvars:
+    # if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     outputs:
       BUILDENV_BUILD_DATE: ${{ steps.IMPORT_BUILDVARS.outputs.BUILDENV_BUILD_DATE }}
+      OPENSSL_VERSION: ${{ steps.IMPORT_BUILDVARS.outputs.OPENSSL_VERSION }}
+      OPENSSL_SHA256: ${{ steps.IMPORT_BUILDVARS.outputs.OPENSSL_SHA256 }}
       
     steps:             
       - name: Checkout source
