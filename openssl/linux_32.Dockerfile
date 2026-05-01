@@ -1,73 +1,74 @@
-FROM alpine:latest AS openssl
-
-LABEL maintainer="madnuttah"
-
-WORKDIR /tmp/src
-
-RUN set -xe; \
-  apk add --no-cache ca-certificates jq curl && \
-  export OPENSSL_VERSION=$(curl -s https://api.github.com/repos/quictls/quictls/releases/latest | jq -r .tag_name); \
-  echo "Using QuicTLS version: ${OPENSSL_VERSION}" && \
-  apk add --no-cache --virtual .build-deps build-base perl libidn2-dev git curl linux-headers autoconf automake libtool pkgconf pkgconfig && \
-  curl -sSL https://github.com/quictls/quictls/archive/refs/tags/${OPENSSL_VERSION}.tar.gz -o quictls.tar.gz && \
-  tar -xzf quictls.tar.gz && \
-  rm quictls.tar.gz && \
-  cd quictls-${OPENSSL_VERSION} && \
-  export CFLAGS="-O3 -fstack-protector-strong -fstack-clash-protection -fPIC" && \
-  export LDFLAGS="-Wl,-O1" && \
-  ./config \
-    linux-generic32 \
-    enable-tls1_3 \
-    no-shared \
-    no-pinshared \
-    threads \
-    no-weak-ssl-ciphers \
-    no-ssl3 \
-    no-err \
-    no-autoerrinit \
-    -DOPENSSL_NO_HEARTBEATS \
-    --prefix=/usr/local/openssl \
-    --openssldir=/usr/local/openssl \
-    --libdir=/usr/local/openssl/lib && \
-  make -j"$(nproc)" && \
-  make install_sw && \
-  mkdir -p /usr/local/openssl/lib/pkgconfig && \
-  cat > /usr/local/openssl/lib/pkgconfig/openssl.pc <<'EOF'
-prefix=/usr/local/openssl
-exec_prefix=${prefix}
-libdir=${exec_prefix}/lib
-includedir=${prefix}/include
-Name: OpenSSL
-Description: QuicTLS OpenSSL fork
-Version: ${OPENSSL_VERSION}
-Libs: -L${libdir} -lssl -lcrypto
-Cflags: -I${includedir}
-EOF
-  rm -rf /tmp/src && \
-  apk del --no-cache .build-deps
+ARG BUILDENV_BUILD_DATE \
+    OPENSSL_VERSION \
+    OPENSSL_SHA256 \
+    OPENSSL_BUILDENV_VERSION 
 
 FROM alpine:latest AS buildenv
 
+LABEL maintainer="madnuttah"
+
+ARG OPENSSL_VERSION \
+    OPENSSL_SHA256
+
+ENV OPENSSL_VERSION=${OPENSSL_VERSION} \
+    OPENSSL_SHA256=${OPENSSL_SHA256}\
+    OPENSSL_DOWNLOAD_URL="https://github.com/openssl/openssl/releases/download/openssl" \
+    OPENSSL_PGP="BA5473A2B0587B07FB27CF2D216094DFD0CB81EF"
+
 WORKDIR /tmp/src
 
-COPY --from=openssl /usr/local/openssl /usr/local/openssl
-
 RUN set -xe; \
-  apk add --no-cache ca-certificates jq curl pkgconf pkgconfig && \
-  export NGTCP2_VERSION=$(curl -s https://api.github.com/repos/ngtcp2/ngtcp2/releases/latest | jq -r .tag_name | sed 's/^v//'); \
-  echo "Using ngtcp2 version: ${NGTCP2_VERSION}" && \
-  apk add --no-cache --virtual .build-deps build-base perl curl automake autoconf libtool libidn2-dev linux-headers pkgconf pkgconfig && \
-  curl -sSL https://github.com/ngtcp2/ngtcp2/releases/download/v${NGTCP2_VERSION}/ngtcp2-${NGTCP2_VERSION}.tar.gz -o ngtcp2.tar.gz && \
-  tar -xzf ngtcp2.tar.gz && \
-  rm ngtcp2.tar.gz && \
-  cd ngtcp2-${NGTCP2_VERSION} && \
-  autoreconf -i && \
-  export PKG_CONFIG_PATH=/usr/local/openssl/lib/pkgconfig:$PKG_CONFIG_PATH && \
-  export CPPFLAGS="-I/usr/local/openssl/include" && \
-  export CFLAGS="-O3 -fstack-protector-strong -fstack-clash-protection -fPIC" && \
-  export LDFLAGS="-L/usr/local/openssl/lib -Wl,-rpath,/usr/local/openssl/lib -Wl,-O1" && \
-  ./configure --prefix=/usr/local/ngtcp2 && \
-  make -j"$(nproc)" && \
-  make install && \
-  rm -rf /tmp/src && \
-  apk del --no-cache .build-deps
+  apk --update --no-cache add \
+  ca-certificates \
+  gnupg \
+  curl \
+  file && \
+  apk --update --no-cache add --virtual .build-deps \
+    build-base \
+    perl \
+    libidn2-dev \
+    libevent-dev \
+    linux-headers \
+    apk-tools && \
+    curl -sSL "${OPENSSL_DOWNLOAD_URL}"-"${OPENSSL_VERSION}"/openssl-"${OPENSSL_VERSION}".tar.gz -o openssl.tar.gz && \
+    echo "${OPENSSL_SHA256} ./openssl.tar.gz" | sha256sum -c - && \
+    curl -L "${OPENSSL_DOWNLOAD_URL}"-"${OPENSSL_VERSION}"/openssl-"${OPENSSL_VERSION}".tar.gz.asc -o openssl.tar.gz.asc && \
+    GNUPGHOME="$(mktemp -d)" && \
+    export GNUPGHOME && \
+    gpg --no-tty --keyserver hkps://keys.openpgp.org \
+      --recv-keys "${OPENSSL_PGP}" && \
+    gpg --batch --verify openssl.tar.gz.asc openssl.tar.gz && \
+    tar xzf openssl.tar.gz && \
+    cd openssl-"${OPENSSL_VERSION}" && \
+    ./Configure \
+      linux-generic32 \
+      no-weak-ssl-ciphers \
+      no-apps \
+      no-docs \
+      no-legacy \
+      no-ssl3 \
+      no-err \
+      no-autoerrinit \          
+      shared \
+      enable-tfo \
+      enable-quic \
+      enable-ktls \
+      -fPIC \
+      -DOPENSSL_NO_HEARTBEATS \
+      -fstack-protector-strong \
+      -fstack-clash-protection \
+      --prefix=/usr/local/openssl \
+      --openssldir=/usr/local/openssl \
+      --libdir=/usr/local/openssl/lib && \
+  make && \
+  make install_sw && \
+  apk del --no-cache .build-deps && \
+  pkill -9 gpg-agent && \
+  pkill -9 dirmngr && \
+  rm -rf \
+    /usr/share/man \
+    /usr/share/docs \
+    /tmp/* \
+    /var/tmp/* \
+    /var/log/* 
+      
