@@ -40,7 +40,6 @@ RUN set -xe; \
   cd quictls-* && \
   ./Configure \
       linux-generic32 \
-      -m32 \
       enable-quic \
       enable-ktls \
       threads \
