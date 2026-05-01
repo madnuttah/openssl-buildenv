@@ -68,7 +68,7 @@ EOF && \
   strip --strip-unneeded /usr/local/openssl/lib/*.a || true && \
   rm -rf /tmp/src/*
 
-FROM --platform=linux/386 alpine:latest AS ngtcp2-build
+FROM alpine:latest AS ngtcp2-build
 
 WORKDIR /tmp/src
 
@@ -112,7 +112,7 @@ EOF && \
   strip --strip-unneeded /usr/local/ngtcp2/lib/*.a || true && \
   rm -rf /tmp/src/*
 
-FROM --platform=linux/386 ngtcp2-build AS final-build
+FROM ngtcp2-build AS final-build
 
 WORKDIR /tmp/src
 
@@ -129,9 +129,4 @@ EOF && \
   strip --strip-all /usr/local/bin/test || true && \
   rm -rf /tmp/src/*
 
-FROM scratch AS runtime
 
-COPY --from=final-build /usr/local/bin/test /usr/local/bin/test
-COPY --from=ngtcp2-build /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
-
-ENTRYPOINT ["/usr/local/bin/test"]
