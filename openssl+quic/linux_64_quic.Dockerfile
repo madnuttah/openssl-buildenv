@@ -12,7 +12,6 @@ RUN set -xe; \
   cd openssl-${V}; \
   ./config \
     enable-ec_nistp_64_gcc_128 \
-    enable-quic \
     enable-ktls \
     enable-tls1_3 \
     threads \
