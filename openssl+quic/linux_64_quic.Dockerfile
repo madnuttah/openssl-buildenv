@@ -1,12 +1,10 @@
 FROM alpine:latest AS openssl
 
-LABEL maintainer="madnuttah"
-
 WORKDIR /tmp/src
 
 RUN set -xe; \
   apk --no-cache add curl build-base perl linux-headers; \
-  V=$(curl -s https://api.github.com/repos/quictls/quictls/releases/latest | grep tag_name | cut -d '"' -f4); \
+  V=$(curl -s https://api.github.com/repos/quictls/quictls/tags | sed -n 's/.*"name": "\(.*\)".*/\1/p' | head -n1); \
   curl -sSL https://github.com/quictls/quictls/archive/refs/tags/${V}.tar.gz -o o.tar.gz; \
   tar -xzf o.tar.gz; \
   cd quictls-${V}; \
