@@ -1,29 +1,57 @@
+ARG BUILDENV_BUILD_DATE \
+    OPENSSL_VERSION \
+    OPENSSL_SHA256 \
+    OPENSSL_BUILDENV_VERSION
+
 FROM alpine:latest AS openssl
 
 LABEL maintainer="madnuttah"
 
+ARG OPENSSL_VERSION \
+    OPENSSL_SHA256
+
+ENV OPENSSL_VERSION=${OPENSSL_VERSION} \
+    OPENSSL_SHA256=${OPENSSL_SHA256} \
+    OPENSSL_DOWNLOAD_URL="https://github.com/openssl/openssl/releases/download" \
+    OPENSSL_PGP="BA5473A2B0587B07FB27CF2D216094DFD0CB81EF"
+
 WORKDIR /tmp/src
 
-RUN apk add --no-cache curl build-base perl linux-headers ca-certificates
-
-RUN OPENSSL_VERSION=$(curl -s https://api.github.com/repos/openssl/openssl/releases/latest | sed -n 's/.*"tag_name": "\(.*\)".*/\1/p') && \
-    curl -sSL "https://github.com/openssl/openssl/releases/download/${OPENSSL_VERSION}/openssl-${OPENSSL_VERSION}.tar.gz" -o openssl.tar.gz && \
-    curl -sSL "https://github.com/openssl/openssl/releases/download/${OPENSSL_VERSION}/openssl-${OPENSSL_VERSION}.tar.gz.sha256" -o openssl.sha256 || true && \
-    if [ -f openssl.sha256 ]; then sha256sum -c openssl.sha256; fi && \
-    tar -xzf openssl.tar.gz && \
-    cd openssl-${OPENSSL_VERSION} && \
-    ./Configure \
+RUN set -xe; \
+  apk --update --no-cache add \
+    ca-certificates \
+    gnupg \
+    curl \
+    file && \
+  apk --update --no-cache add --virtual .build-deps \
+    build-base \
+    perl \
+    libidn2-dev \
+    libevent-dev \
+    linux-headers \
+    apk-tools && \
+  curl -sSL "${OPENSSL_DOWNLOAD_URL}/openssl-${OPENSSL_VERSION}/openssl-${OPENSSL_VERSION}.tar.gz" -o openssl.tar.gz && \
+  echo "${OPENSSL_SHA256}  openssl.tar.gz" | sha256sum -c - && \
+  curl -sSL "${OPENSSL_DOWNLOAD_URL}/openssl-${OPENSSL_VERSION}/openssl-${OPENSSL_VERSION}.tar.gz.asc" -o openssl.tar.gz.asc && \
+  GNUPGHOME="$(mktemp -d)" && \
+  export GNUPGHOME && \
+  gpg --no-tty --keyserver hkps://keys.openpgp.org --recv-keys "${OPENSSL_PGP}" && \
+  gpg --batch --verify openssl.tar.gz.asc openssl.tar.gz && \
+  tar xzf openssl.tar.gz && \
+  cd openssl-"${OPENSSL_VERSION}" && \
+  ./Configure \
       linux-generic32 \
       -m32 \
-      enable-quic \
-      enable-tls1_3 \
-      no-shared \
-      no-pinshared \
-      threads \
       no-weak-ssl-ciphers \
+      no-apps \
+      no-docs \
+      no-legacy \
       no-ssl3 \
       no-err \
       no-autoerrinit \
+      enable-tfo \
+      enable-quic \
+      enable-ktls \
       -fPIC \
       -DOPENSSL_NO_HEARTBEATS \
       -fstack-protector-strong \
@@ -31,23 +59,58 @@ RUN OPENSSL_VERSION=$(curl -s https://api.github.com/repos/openssl/openssl/relea
       --prefix=/usr/local/openssl \
       --openssldir=/usr/local/openssl \
       --libdir=/usr/local/openssl/lib && \
-    make -j"$(nproc)" && \
-    make install_sw && \
-    rm -rf /usr/local/openssl/bin /tmp/*
+  make -j"$(nproc)" && \
+  make install_sw && \
+  apk del --no-cache .build-deps && \
+  pkill -9 gpg-agent || true && \
+  pkill -9 dirmngr || true && \
+  rm -rf \
+    /usr/share/man \
+    /usr/share/docs \
+    /usr/local/openssl/bin \
+    /tmp/* \
+    /var/tmp/* \
+    /var/log/*
 
-FROM alpine:latest AS buildenv
+
+FROM alpine:latest AS ngtcp2
+
+LABEL maintainer="madnuttah"
+
+ARG NGTCP2_VERSION \
+    NGTCP2_SHA256 \
+    NGHTTP3_VERSION \
+    NGHTTP3_SHA256
+
+ENV NGTCP2_VERSION=${NGTCP2_VERSION} \
+    NGTCP2_SHA256=${NGTCP2_SHA256} \
+    NGHTTP3_VERSION=${NGHTTP3_VERSION} \
+    NGHTTP3_SHA256=${NGHTTP3_SHA256} \
+    NGTCP2_URL="https://github.com/ngtcp2/ngtcp2/releases/download" \
+    NGHTTP3_URL="https://github.com/ngtcp2/nghttp3/releases/download"
 
 WORKDIR /tmp/src
 
 COPY --from=openssl /usr/local/openssl/ /usr/local/openssl/
 
-ENV PKG_CONFIG_PATH=/usr/local/openssl/lib/pkgconfig
-ENV LD_LIBRARY_PATH=/usr/local/openssl/lib
+ENV PKG_CONFIG_PATH=/usr/local/openssl/lib/pkgconfig \
+    LD_LIBRARY_PATH=/usr/local/openssl/lib
 
-RUN apk add --no-cache curl build-base perl automake autoconf libtool linux-headers ca-certificates
+RUN set -xe; \
+  apk --update --no-cache add \
+    ca-certificates \
+    curl \
+    file && \
+  apk --update --no-cache add --virtual .build-deps \
+    build-base \
+    autoconf \
+    automake \
+    libtool \
+    linux-headers \
+    perl
 
-RUN NGHTTP3_VERSION=$(curl -s https://api.github.com/repos/ngtcp2/nghttp3/releases/latest | sed -n 's/.*"tag_name": "v\(.*\)".*/\1/p') && \
-    curl -sSL "https://github.com/ngtcp2/nghttp3/releases/download/v${NGHTTP3_VERSION}/nghttp3-${NGHTTP3_VERSION}.tar.gz" -o nghttp3.tar.gz && \
+RUN curl -sSL "${NGHTTP3_URL}/v${NGHTTP3_VERSION}/nghttp3-${NGHTTP3_VERSION}.tar.gz" -o nghttp3.tar.gz && \
+    echo "${NGHTTP3_SHA256}  nghttp3.tar.gz" | sha256sum -c - && \
     tar -xzf nghttp3.tar.gz && \
     cd nghttp3-${NGHTTP3_VERSION} && \
     autoreconf -i && \
@@ -55,8 +118,8 @@ RUN NGHTTP3_VERSION=$(curl -s https://api.github.com/repos/ngtcp2/nghttp3/releas
     make -j"$(nproc)" && \
     make install
 
-RUN NGTCP2_VERSION=$(curl -s https://api.github.com/repos/ngtcp2/ngtcp2/releases/latest | sed -n 's/.*"tag_name": "v\(.*\)".*/\1/p') && \
-    curl -sSL "https://github.com/ngtcp2/ngtcp2/releases/download/v${NGTCP2_VERSION}/ngtcp2-${NGTCP2_VERSION}.tar.gz" -o ngtcp2.tar.gz && \
+RUN curl -sSL "${NGTCP2_URL}/v${NGTCP2_VERSION}/ngtcp2-${NGTCP2_VERSION}.tar.gz" -o ngtcp2.tar.gz && \
+    echo "${NGTCP2_SHA256}  ngtcp2.tar.gz" | sha256sum -c - && \
     tar -xzf ngtcp2.tar.gz && \
     cd ngtcp2-${NGTCP2_VERSION} && \
     autoreconf -i && \
@@ -67,4 +130,10 @@ RUN NGTCP2_VERSION=$(curl -s https://api.github.com/repos/ngtcp2/ngtcp2/releases
       --with-nghttp3=/usr/local && \
     make -j"$(nproc)" && \
     make install && \
-    rm -rf /tmp/* /var/tmp/* /var/log/*
+    apk del --no-cache .build-deps && \
+    rm -rf \
+      /usr/share/man \
+      /usr/share/docs \
+      /tmp/* \
+      /var/tmp/* \
+      /var/log/*
