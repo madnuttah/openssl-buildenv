@@ -10,7 +10,7 @@ RUN set -xe; \
   curl -sSL https://github.com/quictls/openssl/archive/refs/tags/${V}.tar.gz -o o.tar.gz; \
   tar -xzf o.tar.gz; \
   cd openssl-${V}; \
-  ./config \
+  ./Configure\
     linux-generic32 \
     -m32 \
     enable-ktls \
