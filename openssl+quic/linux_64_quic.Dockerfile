@@ -1,7 +1,11 @@
 ARG BUILDENV_BUILD_DATE \
     OPENSSL_VERSION \
     OPENSSL_SHA256 \
-    OPENSSL_BUILDENV_VERSION
+    OPENSSL_BUILDENV_VERSION \
+    NGHTTP3_VERSION \
+    NGHTTP3_SHA256 \
+    NGTCP2_VERSION \
+    NGTCP2_SHA256
 
 FROM alpine:latest AS openssl
 
@@ -30,6 +34,13 @@ RUN set -xe; \
     libevent-dev \
     linux-headers \
     apk-tools && \
+  ARCH=$(apk --print-arch); \
+  case "$ARCH" in \
+    armhf) export CFLAGS="-march=armv7-a -mthumb -mfpu=neon -mfloat-abi=hard" ;; \
+    armv6) export CFLAGS="-march=armv6 -mfloat-abi=hard" ;; \
+    *) export CFLAGS="" ;; \
+  esac; \
+  export CXXFLAGS="$CFLAGS"; \
   curl -sSL "${OPENSSL_DOWNLOAD_URL}/openssl-${OPENSSL_VERSION}/openssl-${OPENSSL_VERSION}.tar.gz" -o openssl.tar.gz && \
   echo "${OPENSSL_SHA256}  openssl.tar.gz" | sha256sum -c - && \
   curl -sSL "${OPENSSL_DOWNLOAD_URL}/openssl-${OPENSSL_VERSION}/openssl-${OPENSSL_VERSION}.tar.gz.asc" -o openssl.tar.gz.asc && \
@@ -40,6 +51,7 @@ RUN set -xe; \
   tar xzf openssl.tar.gz && \
   cd openssl-"${OPENSSL_VERSION}" && \
   ./Configure \
+      linux-generic32 \
       no-weak-ssl-ciphers \
       no-apps \
       no-docs \
@@ -47,10 +59,10 @@ RUN set -xe; \
       no-ssl3 \
       no-err \
       no-autoerrinit \
+      shared \
       enable-tfo \
       enable-quic \
       enable-ktls \
-      enable-ec_nistp_64_gcc_128 \
       -fPIC \
       -DOPENSSL_NO_HEARTBEATS \
       -fstack-protector-strong \
@@ -66,11 +78,9 @@ RUN set -xe; \
   rm -rf \
     /usr/share/man \
     /usr/share/docs \
-    /usr/local/openssl/bin \
     /tmp/* \
     /var/tmp/* \
     /var/log/*
-
 
 FROM alpine:latest AS ngtcp2
 
@@ -106,33 +116,39 @@ RUN set -xe; \
     automake \
     libtool \
     linux-headers \
-    perl
-
-RUN curl -sSL "${NGHTTP3_URL}/v${NGHTTP3_VERSION}/nghttp3-${NGHTTP3_VERSION}.tar.gz" -o nghttp3.tar.gz && \
-    echo "${NGHTTP3_SHA256}  nghttp3.tar.gz" | sha256sum -c - && \
-    tar -xzf nghttp3.tar.gz && \
-    cd nghttp3-${NGHTTP3_VERSION} && \
-    autoreconf -i && \
-    ./configure --prefix=/usr/local --enable-lib-only && \
-    make -j"$(nproc)" && \
-    make install
-
-RUN curl -sSL "${NGTCP2_URL}/v${NGTCP2_VERSION}/ngtcp2-${NGTCP2_VERSION}.tar.gz" -o ngtcp2.tar.gz && \
-    echo "${NGTCP2_SHA256}  ngtcp2.tar.gz" | sha256sum -c - && \
-    tar -xzf ngtcp2.tar.gz && \
-    cd ngtcp2-${NGTCP2_VERSION} && \
-    autoreconf -i && \
-    ./configure \
+    perl && \
+  ARCH=$(apk --print-arch); \
+  case "$ARCH" in \
+    armhf) export CFLAGS="-march=armv7-a -mthumb -mfpu=neon -mfloat-abi=hard" ;; \
+    armv6) export CFLAGS="-march=armv6 -mfloat-abi=hard" ;; \
+    *) export CFLAGS="" ;; \
+  esac; \
+  export CXXFLAGS="$CFLAGS"; \
+  curl -sSL "${NGHTTP3_URL}/v${NGHTTP3_VERSION}/nghttp3-${NGHTTP3_VERSION}.tar.gz" -o nghttp3.tar.gz && \
+  echo "${NGHTTP3_SHA256}  nghttp3.tar.gz" | sha256sum -c - && \
+  tar -xzf nghttp3.tar.gz && \
+  cd nghttp3-${NGHTTP3_VERSION} && \
+  autoreconf -i && \
+  ./configure --prefix=/usr/local --enable-lib-only && \
+  make -j"$(nproc)" && \
+  make install && \
+  cd /tmp/src && \
+  curl -sSL "${NGTCP2_URL}/v${NGTCP2_VERSION}/ngtcp2-${NGTCP2_VERSION}.tar.gz" -o ngtcp2.tar.gz && \
+  echo "${NGTCP2_SHA256}  ngtcp2.tar.gz" | sha256sum -c - && \
+  tar -xzf ngtcp2.tar.gz && \
+  cd ngtcp2-${NGTCP2_VERSION} && \
+  autoreconf -i && \
+  ./configure \
       --prefix=/usr/local/ngtcp2 \
       --enable-lib-only \
       --with-openssl=/usr/local/openssl \
       --with-nghttp3=/usr/local && \
-    make -j"$(nproc)" && \
-    make install && \
-    apk del --no-cache .build-deps && \
-    rm -rf \
-      /usr/share/man \
-      /usr/share/docs \
-      /tmp/* \
-      /var/tmp/* \
-      /var/log/*
+  make -j"$(nproc)" && \
+  make install && \
+  apk del --no-cache .build-deps && \
+  rm -rf \
+    /usr/share/man \
+    /usr/share/docs \
+    /tmp/* \
+    /var/tmp/* \
+    /var/log/*
