@@ -11,7 +11,7 @@ RUN set -xe; \
   tar -xzf o.tar.gz; \
   cd openssl-${V}; \
   ./config \
-    enable-ec_nistp_64_gcc_128 \
+    linux-generic32 \
     enable-quic \
     enable-ktls \
     enable-tls1_3 \
