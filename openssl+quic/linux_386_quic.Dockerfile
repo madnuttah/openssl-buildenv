@@ -12,7 +12,7 @@ ARG OPENSSL_VERSION \
 
 ENV OPENSSL_VERSION=${OPENSSL_VERSION} \
     OPENSSL_SHA256=${OPENSSL_SHA256} \
-    OPENSSL_DOWNLOAD_URL="https://github.com/openssl/openssl/releases/download" \
+    OPENSSL_DOWNLOAD_URL="https://github.com/openssl/openssl/releases/download/openssl" \
     OPENSSL_PGP="BA5473A2B0587B07FB27CF2D216094DFD0CB81EF"
 
 WORKDIR /tmp/src
@@ -30,9 +30,9 @@ RUN set -xe; \
     libevent-dev \
     linux-headers \
     apk-tools && \
-  curl -sSL "${OPENSSL_DOWNLOAD_URL}/openssl-${OPENSSL_VERSION}/openssl-${OPENSSL_VERSION}.tar.gz" -o openssl.tar.gz && \
+  curl -sSL "${OPENSSL_DOWNLOAD_URL}-${OPENSSL_VERSION}/openssl-${OPENSSL_VERSION}.tar.gz" -o openssl.tar.gz && \
   echo "${OPENSSL_SHA256}  openssl.tar.gz" | sha256sum -c - && \
-  curl -sSL "${OPENSSL_DOWNLOAD_URL}/openssl-${OPENSSL_VERSION}/openssl-${OPENSSL_VERSION}.tar.gz.asc" -o openssl.tar.gz.asc && \
+  curl -sSL "${OPENSSL_DOWNLOAD_URL}-${OPENSSL_VERSION}/openssl-${OPENSSL_VERSION}.tar.gz.asc" -o openssl.tar.gz.asc && \
   GNUPGHOME="$(mktemp -d)" && \
   export GNUPGHOME && \
   gpg --no-tty --keyserver hkps://keys.openpgp.org --recv-keys "${OPENSSL_PGP}" && \
@@ -137,4 +137,3 @@ RUN curl -sSL "${NGTCP2_URL}/v${NGTCP2_VERSION}/ngtcp2-${NGTCP2_VERSION}.tar.gz"
       /tmp/* \
       /var/tmp/* \
       /var/log/*
-
