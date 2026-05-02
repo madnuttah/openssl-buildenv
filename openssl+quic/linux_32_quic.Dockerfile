@@ -9,7 +9,7 @@ RUN set -xe; \
   tar -xzf o.tar.gz; \
   cd quictls-${V}; \
   ./Configure \
-    linux-generic32 \
+    linux-armv4 \
     enable-ktls \
     enable-tls1_3 \
     threads \
