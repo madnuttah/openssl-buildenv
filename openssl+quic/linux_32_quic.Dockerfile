@@ -50,6 +50,8 @@ RUN set -xe; \
     PKG_CONFIG_PATH=/usr/local/openssl/lib/pkgconfig \
     LDFLAGS="-Wl,-rpath,/usr/local/openssl/lib" \
     --prefix=/usr/local/ngtcp2 \
+    --enable-openssl \
+    --disable-boringssl
     --enable-lib-only; \
   make -j$(nproc); \
   make install; \
