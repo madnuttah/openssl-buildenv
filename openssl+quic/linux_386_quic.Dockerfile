@@ -47,6 +47,8 @@ RUN set -xe; \
   ./configure \
     PKG_CONFIG_PATH=/usr/local/openssl/lib/pkgconfig \
     LDFLAGS="-Wl,-rpath,/usr/local/openssl/lib" \
+    --enable-openssl \
+    --disable-boringssl
     --prefix=/usr/local/ngtcp2 \
     --enable-lib-only; \
   make -j$(nproc); \
