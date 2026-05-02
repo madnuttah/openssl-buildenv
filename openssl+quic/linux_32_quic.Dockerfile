@@ -45,13 +45,13 @@ RUN set -xe; \
   tar -xzf n.tar.gz; \
   cd ngtcp2-${V}; \
   autoreconf -i; \
+  PKG_CONFIG_PATH=/usr/local/openssl/lib/pkgconfig \
+  LDFLAGS="-Wl,-rpath,/usr/local/openssl/lib" \
   ./configure \
     --prefix=/usr/local/ngtcp2 \
     --enable-lib-only \
     --enable-openssl \
-    --disable-boringssl \
-    PKG_CONFIG_PATH=/usr/local/openssl/lib/pkgconfig \
-    LDFLAGS="-Wl,-rpath,/usr/local/openssl/lib"; \
+    --disable-boringssl; \
   make -j$(nproc); \
   make install; \
   apk del build-base autoconf automake libtool linux-headers; \
