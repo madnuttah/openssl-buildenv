@@ -41,7 +41,6 @@ RUN set -xe; \
   curl -sSL https://github.com/ngtcp2/ngtcp2/releases/download/v${V}/ngtcp2-${V}.tar.gz -o n.tar.gz; \
   tar -xzf n.tar.gz; \
   cd ngtcp2-${V}; \
-  autoreconf -i; \
   PKG_CONFIG_PATH=/usr/local/openssl/lib/pkgconfig \
   LDFLAGS="-Wl,-rpath,/usr/local/openssl/lib" \
   ./configure \
