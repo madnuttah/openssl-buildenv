@@ -4,6 +4,13 @@ WORKDIR /tmp/src
 
 RUN set -xe; \
   apk --no-cache add curl build-base perl linux-headers; \
+  ARCH=$(apk --print-arch); \
+  case "$ARCH" in \
+    armhf) export CFLAGS="-march=armv7-a -mthumb -mfpu=neon -mfloat-abi=hard" ;; \
+    armv6) export CFLAGS="-march=armv6 -mfloat-abi=hard" ;; \
+    *) export CFLAGS="" ;; \
+  esac; \
+  export CXXFLAGS="$CFLAGS"; \
   V=$(curl -s https://api.github.com/repos/quictls/quictls/tags | sed -n 's/.*"name": "\(.*\)".*/\1/p' | head -n1); \
   curl -sSL https://github.com/quictls/quictls/archive/refs/tags/${V}.tar.gz -o o.tar.gz; \
   tar -xzf o.tar.gz; \
@@ -37,6 +44,13 @@ COPY --from=openssl /usr/local/openssl/ /usr/local/openssl/
 
 RUN set -xe; \
   apk --no-cache add curl build-base autoconf automake libtool linux-headers; \
+  ARCH=$(apk --print-arch); \
+  case "$ARCH" in \
+    armhf) export CFLAGS="-march=armv7-a -mthumb -mfpu=neon -mfloat-abi=hard" ;; \
+    armv6) export CFLAGS="-march=armv6 -mfloat-abi=hard" ;; \
+    *) export CFLAGS="" ;; \
+  esac; \
+  export CXXFLAGS="$CFLAGS"; \
   V=$(curl -s https://api.github.com/repos/ngtcp2/ngtcp2/releases/latest | grep tag_name | cut -d '"' -f4 | sed 's/^v//'); \
   curl -sSL https://github.com/ngtcp2/ngtcp2/releases/download/v${V}/ngtcp2-${V}.tar.gz -o n.tar.gz; \
   tar -xzf n.tar.gz; \
