@@ -6,10 +6,10 @@ WORKDIR /tmp/src
 
 RUN set -xe; \
   apk --no-cache add curl build-base perl linux-headers; \
-  V=$(curl -s https://api.github.com/repos/quictls/openssl/releases/latest | grep tag_name | cut -d '"' -f4); \
-  curl -sSL https://github.com/quictls/openssl/archive/refs/tags/${V}.tar.gz -o o.tar.gz; \
+  V=$(curl -s https://api.github.com/repos/quictls/quictls/releases/latest | grep tag_name | cut -d '"' -f4); \
+  curl -sSL https://github.com/quictls/quictls/archive/refs/tags/${V}.tar.gz -o o.tar.gz; \
   tar -xzf o.tar.gz; \
-  cd openssl-${V}; \
+  cd quictls-${V}; \
   ./Configure \
     enable-ec_nistp_64_gcc_128 \
     enable-ktls \
