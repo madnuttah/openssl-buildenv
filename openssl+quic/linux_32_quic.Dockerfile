@@ -10,7 +10,6 @@ RUN set -xe; \
   cd quictls-${V}; \
   ./Configure \
     linux-generic32 \
-    -m32 \
     enable-ktls \
     enable-tls1_3 \
     threads \
