@@ -11,13 +11,11 @@ RUN set -xe; \
   tar -xzf o.tar.gz; \
   cd openssl-${V}; \
   ./config \
-    linux-generic32 \
-    -m32 \
+    enable-ec_nistp_64_gcc_128 \
     enable-quic \
     enable-ktls \
     enable-tls1_3 \
     threads \
-    no-shared \
     no-pinshared \
     no-weak-ssl-ciphers \
     no-err \
