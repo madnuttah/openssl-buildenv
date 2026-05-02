@@ -11,7 +11,7 @@ ARG OPENSSL_VERSION \
     OPENSSL_SHA256
 
 ENV OPENSSL_VERSION=${OPENSSL_VERSION} \
-    OPENSSL_SHA256=${OPENSSL_SHA256}\
+    OPENSSL_SHA256=${OPENSSL_SHA256} \
     OPENSSL_DOWNLOAD_URL="https://github.com/openssl/openssl/releases/download/openssl" \
     OPENSSL_PGP="BA5473A2B0587B07FB27CF2D216094DFD0CB81EF"
 
@@ -19,10 +19,10 @@ WORKDIR /tmp/src
 
 RUN set -xe; \
   apk --update --no-cache add \
-  ca-certificates \
-  gnupg \
-  curl \
-  file && \
+    ca-certificates \
+    gnupg \
+    curl \
+    file && \
   apk --update --no-cache add --virtual .build-deps \
     build-base \
     perl \
@@ -35,20 +35,32 @@ RUN set -xe; \
     curl -L "${OPENSSL_DOWNLOAD_URL}"-"${OPENSSL_VERSION}"/openssl-"${OPENSSL_VERSION}".tar.gz.asc -o openssl.tar.gz.asc && \
     GNUPGHOME="$(mktemp -d)" && \
     export GNUPGHOME && \
-    gpg --no-tty --keyserver hkps://keys.openpgp.org \
-      --recv-keys "${OPENSSL_PGP}" && \
+    gpg --no-tty --keyserver hkps://keys.openpgp.org --recv-keys "${OPENSSL_PGP}" && \
     gpg --batch --verify openssl.tar.gz.asc openssl.tar.gz && \
     tar xzf openssl.tar.gz && \
     cd openssl-"${OPENSSL_VERSION}" && \
+    ARCH=$(apk --print-arch); \
+    case "$ARCH" in \
+      armhf) export CFLAGS="-march=armv7-a -mthumb -mfpu=neon -mfloat-abi=hard" ;; \
+      armv7) export CFLAGS="-march=armv7-a -mthumb -mfpu=neon -mfloat-abi=hard" ;; \
+      armv6) export CFLAGS="-march=armv6 -mfloat-abi=hard" ;; \
+      *) export CFLAGS="" ;; \
+    esac; \
+    export CXXFLAGS="$CFLAGS"; \
     ./Configure \
-      linux-generic32 \
+      $(case "$(apk --print-arch)" in \
+        armhf|armv7) echo "linux-armv4" ;; \
+        armv6) echo "linux-armv4" ;; \
+        aarch64) echo "linux-aarch64" ;; \
+        *) echo "linux-generic32" ;; \
+      esac) \
       no-weak-ssl-ciphers \
       no-apps \
       no-docs \
       no-legacy \
       no-ssl3 \
       no-err \
-      no-autoerrinit \          
+      no-autoerrinit \
       shared \
       enable-tfo \
       enable-quic \
@@ -63,8 +75,8 @@ RUN set -xe; \
   make && \
   make install_sw && \
   apk del --no-cache .build-deps && \
-  pkill -9 gpg-agent && \
-  pkill -9 dirmngr && \
+  pkill -9 gpg-agent || true && \
+  pkill -9 dirmngr || true && \
   rm -rf \
     /usr/share/man \
     /usr/share/docs \
