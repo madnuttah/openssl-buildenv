@@ -13,7 +13,6 @@ RUN set -xe; \
   ./config \
     linux-generic32 \
     -m32 \
-    enable-quic \
     enable-ktls \
     enable-tls1_3 \
     threads \
