@@ -12,40 +12,46 @@ env:
 
 jobs:
   detect_versions:
-    #if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-latest
     outputs:
       OPENSSL_VERSION: ${{ steps.detect.outputs.OPENSSL_VERSION }}
       OPENSSL_BUILDENV_VERSION: ${{ steps.detect.outputs.OPENSSL_BUILDENV_VERSION }}
       OPENSSL_SHA256: ${{ steps.detect.outputs.OPENSSL_SHA256 }}
       BUILDENV_BUILD_DATE: ${{ steps.detect.outputs.BUILDENV_BUILD_DATE }}
+      TAG_VERSION: ${{ steps.detect.outputs.TAG_VERSION }}
 
     steps:
       - name: Fetch buildvars from openssl-buildenv
         id: detect
         run: |
           curl -s -L https://raw.githubusercontent.com/madnuttah/openssl-buildenv/main/buildvars -o buildvars
-          source buildvars
+
+          OPENSSL_VERSION=$(grep '^OPENSSL_VERSION=' buildvars | cut -d '=' -f2-)
+          OPENSSL_BUILDENV_VERSION=$(grep '^OPENSSL_BUILDENV_VERSION=' buildvars | cut -d '=' -f2-)
+          OPENSSL_SHA256=$(grep '^OPENSSL_SHA256=' buildvars | cut -d '=' -f2-)
+          BUILDENV_BUILD_DATE=$(grep '^BUILDENV_BUILD_DATE=' buildvars | cut -d '=' -f2-)
+
           echo "OPENSSL_VERSION=$OPENSSL_VERSION" >> $GITHUB_OUTPUT
           echo "OPENSSL_BUILDENV_VERSION=$OPENSSL_BUILDENV_VERSION" >> $GITHUB_OUTPUT
           echo "OPENSSL_SHA256=$OPENSSL_SHA256" >> $GITHUB_OUTPUT
           echo "BUILDENV_BUILD_DATE=$BUILDENV_BUILD_DATE" >> $GITHUB_OUTPUT
 
+          echo "TAG_VERSION=${OPENSSL_BUILDENV_VERSION}-quic" >> $GITHUB_OUTPUT
+
+
   linux_386:
     needs: detect_versions
     runs-on: ubuntu-latest
-    if: ${{ needs.detect_versions.outputs.OPENSSL_BUILDENV_VERSION != '' }}
+    if: ${{ needs.detect_versions.outputs.TAG_VERSION != '' }}
     steps:
       - uses: actions/checkout@v6
-
       - uses: docker/setup-qemu-action@v4
       - uses: docker/setup-buildx-action@v4
-
       - uses: docker/login-action@v4
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-
       - uses: docker/build-push-action@v7
         with:
           platforms: linux/386
@@ -57,23 +63,21 @@ jobs:
           file: ./openssl+quic/linux_386_quic.Dockerfile
           push: true
           tags: |
-            ${{ env.DOCKERHUB_SLUG }}:${{ needs.detect_versions.outputs.OPENSSL_BUILDENV_VERSION }}-386
+            ${{ env.DOCKERHUB_SLUG }}:${{ needs.detect_versions.outputs.TAG_VERSION }}-386
+
 
   linux_arm_v6:
     needs: detect_versions
     runs-on: ubuntu-22.04
-    if: ${{ needs.detect_versions.outputs.OPENSSL_BUILDENV_VERSION != '' }}
+    if: ${{ needs.detect_versions.outputs.TAG_VERSION != '' }}
     steps:
       - uses: actions/checkout@v6
-
       - uses: docker/setup-qemu-action@v4
       - uses: docker/setup-buildx-action@v4
-
       - uses: docker/login-action@v4
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-
       - uses: docker/build-push-action@v7
         with:
           platforms: linux/arm/v6
@@ -85,23 +89,21 @@ jobs:
           file: ./openssl+quic/linux_32_quic.Dockerfile
           push: true
           tags: |
-            ${{ env.DOCKERHUB_SLUG }}:${{ needs.detect_versions.outputs.OPENSSL_BUILDENV_VERSION }}-armv6
+            ${{ env.DOCKERHUB_SLUG }}:${{ needs.detect_versions.outputs.TAG_VERSION }}-armv6
+
 
   linux_arm_v7:
     needs: detect_versions
     runs-on: ubuntu-22.04
-    if: ${{ needs.detect_versions.outputs.OPENSSL_BUILDENV_VERSION != '' }}
+    if: ${{ needs.detect_versions.outputs.TAG_VERSION != '' }}
     steps:
       - uses: actions/checkout@v6
-
       - uses: docker/setup-qemu-action@v4
       - uses: docker/setup-buildx-action@v4
-
       - uses: docker/login-action@v4
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-
       - uses: docker/build-push-action@v7
         with:
           platforms: linux/arm/v7
@@ -113,23 +115,21 @@ jobs:
           file: ./openssl+quic/linux_32_quic.Dockerfile
           push: true
           tags: |
-            ${{ env.DOCKERHUB_SLUG }}:${{ needs.detect_versions.outputs.OPENSSL_BUILDENV_VERSION }}-armv7
+            ${{ env.DOCKERHUB_SLUG }}:${{ needs.detect_versions.outputs.TAG_VERSION }}-armv7
+
 
   linux_arm64:
     needs: detect_versions
     runs-on: ubuntu-22.04
-    if: ${{ needs.detect_versions.outputs.OPENSSL_BUILDENV_VERSION != '' }}
+    if: ${{ needs.detect_versions.outputs.TAG_VERSION != '' }}
     steps:
       - uses: actions/checkout@v6
-
       - uses: docker/setup-qemu-action@v4
       - uses: docker/setup-buildx-action@v4
-
       - uses: docker/login-action@v4
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-
       - uses: docker/build-push-action@v7
         with:
           platforms: linux/arm64
@@ -141,23 +141,21 @@ jobs:
           file: ./openssl+quic/linux_64_quic.Dockerfile
           push: true
           tags: |
-            ${{ env.DOCKERHUB_SLUG }}:${{ needs.detect_versions.outputs.OPENSSL_BUILDENV_VERSION }}-arm64
+            ${{ env.DOCKERHUB_SLUG }}:${{ needs.detect_versions.outputs.TAG_VERSION }}-arm64
+
 
   linux_amd64:
     needs: detect_versions
     runs-on: ubuntu-latest
-    if: ${{ needs.detect_versions.outputs.OPENSSL_BUILDENV_VERSION != '' }}
+    if: ${{ needs.detect_versions.outputs.TAG_VERSION != '' }}
     steps:
       - uses: actions/checkout@v6
-
       - uses: docker/setup-qemu-action@v4
       - uses: docker/setup-buildx-action@v4
-
       - uses: docker/login-action@v4
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-
       - uses: docker/build-push-action@v7
         with:
           platforms: linux/amd64
@@ -169,7 +167,8 @@ jobs:
           file: ./openssl+quic/linux_64_quic.Dockerfile
           push: true
           tags: |
-            ${{ env.DOCKERHUB_SLUG }}:${{ needs.detect_versions.outputs.OPENSSL_BUILDENV_VERSION }}-amd64
+            ${{ env.DOCKERHUB_SLUG }}:${{ needs.detect_versions.outputs.TAG_VERSION }}-amd64
+
 
   create-manifest-list:
     needs:
@@ -180,7 +179,7 @@ jobs:
       - linux_arm64
       - linux_amd64
     runs-on: ubuntu-latest
-    if: ${{ needs.detect_versions.outputs.OPENSSL_BUILDENV_VERSION != '' }}
+    if: ${{ needs.detect_versions.outputs.TAG_VERSION != '' }}
 
     steps:
       - uses: docker/login-action@v4
@@ -190,7 +189,7 @@ jobs:
 
       - name: Create and push multiarch manifests
         run: |
-          VERSION="${{ needs.detect_versions.outputs.OPENSSL_BUILDENV_VERSION }}-quic"
+          VERSION="${{ needs.detect_versions.outputs.TAG_VERSION }}"
 
           docker manifest create ${{ env.DOCKERHUB_SLUG }}:$VERSION \
             --amend ${{ env.DOCKERHUB_SLUG }}:$VERSION-386 \
@@ -200,4 +199,3 @@ jobs:
             --amend ${{ env.DOCKERHUB_SLUG }}:$VERSION-armv7
 
           docker manifest push ${{ env.DOCKERHUB_SLUG }}:$VERSION
-
