@@ -190,11 +190,14 @@ jobs:
 
       - name: Create and push multiarch manifests
         run: |
-          VERSION=${{ needs.detect_versions.outputs.OPENSSL_BUILDENV_VERSION }}
+          VERSION="${{ needs.detect_versions.outputs.OPENSSL_BUILDENV_VERSION }}-quic"
+
           docker manifest create ${{ env.DOCKERHUB_SLUG }}:$VERSION \
             --amend ${{ env.DOCKERHUB_SLUG }}:$VERSION-386 \
             --amend ${{ env.DOCKERHUB_SLUG }}:$VERSION-arm64 \
             --amend ${{ env.DOCKERHUB_SLUG }}:$VERSION-amd64 \
             --amend ${{ env.DOCKERHUB_SLUG }}:$VERSION-armv6 \
             --amend ${{ env.DOCKERHUB_SLUG }}:$VERSION-armv7
+
           docker manifest push ${{ env.DOCKERHUB_SLUG }}:$VERSION
+
