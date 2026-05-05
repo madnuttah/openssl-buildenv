@@ -5,7 +5,7 @@ on:
     workflows: ["cd-build-openssl-buildenv"]
     types:
       - completed
-   workflow_dispatch:
+  workflow_dispatch:
 
 env:
   DOCKERHUB_SLUG: "madnuttah/openssl-buildenv"
