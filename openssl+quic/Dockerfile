@@ -23,7 +23,9 @@ jobs:
         id: detect
         run: |
           curl -s -L https://raw.githubusercontent.com/madnuttah/openssl-buildenv/main/buildvars -o buildvars
+
           OPENSSL_BUILDENV_VERSION=$(grep '^OPENSSL_BUILDENV_VERSION=' buildvars | cut -d '=' -f2-)
+
           echo "OPENSSL_BUILDENV_VERSION=$OPENSSL_BUILDENV_VERSION" >> $GITHUB_OUTPUT
           echo "TAG_VERSION=${OPENSSL_BUILDENV_VERSION}-quic" >> $GITHUB_OUTPUT
 
@@ -56,16 +58,9 @@ jobs:
             ${{ env.DOCKERHUB_SLUG }}:${{ needs.detect_versions.outputs.TAG_VERSION }}
 
 
-  create_manifest:
+  finalize:
     needs: [detect_versions, build_multiarch]
     runs-on: ubuntu-latest
-
     steps:
-      - uses: docker/login-action@v4
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-      - name: Push manifest (already created by buildx)
-        run: |
-          echo "Multiarch manifest already pushed by buildx."
+      - name: Done
+        run: echo "Multiarch QUIC build completed."
