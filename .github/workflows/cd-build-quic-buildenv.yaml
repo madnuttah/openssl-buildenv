@@ -12,7 +12,7 @@ env:
 
 jobs:
   detect_versions:
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    #if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     outputs:
       OPENSSL_VERSION: ${{ steps.detect.outputs.OPENSSL_VERSION }}
