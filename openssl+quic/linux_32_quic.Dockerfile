@@ -102,14 +102,15 @@ WORKDIR /tmp/src
 
 COPY --from=openssl /usr/local/openssl/ /usr/local/openssl/
 
-ENV PKG_CONFIG_PATH=/usr/local/openssl/lib/pkgconfig \
+ENV PKG_CONFIG_PATH=/usr/local/openssl/lib/pkgconfig:/usr/local/lib/pkgconfig \
     LD_LIBRARY_PATH=/usr/local/openssl/lib
 
 RUN set -xe; \
   apk --update --no-cache add \
     ca-certificates \
     curl \
-    file && \
+    file \
+    git && \
   apk --update --no-cache add --virtual .build-deps \
     build-base \
     autoconf \
@@ -124,6 +125,15 @@ RUN set -xe; \
     *) export CFLAGS="" ;; \
   esac; \
   export CXXFLAGS="$CFLAGS"; \
+  echo "=== BUILDING SFPARSE (GIT, REQUIRED FOR NGHTTP3 >= 1.3.0) ==="; \
+  git clone https://github.com/ngtcp2/sfparse.git && \
+  cd sfparse && \
+  autoreconf -i && \
+  ./configure --prefix=/usr/local && \
+  make -j"$(nproc)" && \
+  make install && \
+  cd /tmp/src && \
+  echo "=== BUILDING NGHTTP3 ==="; \
   curl -sSL "${NGHTTP3_URL}/v${NGHTTP3_VERSION}/nghttp3-${NGHTTP3_VERSION}.tar.gz" -o nghttp3.tar.gz && \
   echo "${NGHTTP3_SHA256}  nghttp3.tar.gz" | sha256sum -c - && \
   tar -xzf nghttp3.tar.gz && \
@@ -133,12 +143,14 @@ RUN set -xe; \
   make -j"$(nproc)" && \
   make install && \
   cd /tmp/src && \
+  echo "=== BUILDING NGTCP2 ==="; \
   curl -sSL "${NGTCP2_URL}/v${NGTCP2_VERSION}/ngtcp2-${NGTCP2_VERSION}.tar.gz" -o ngtcp2.tar.gz && \
   echo "${NGTCP2_SHA256}  ngtcp2.tar.gz" | sha256sum -c - && \
   tar -xzf ngtcp2.tar.gz && \
   cd ngtcp2-${NGTCP2_VERSION} && \
   autoreconf -i && \
-  ./configure \
+  PKG_CONFIG_PATH=/usr/local/openssl/lib/pkgconfig:/usr/local/lib/pkgconfig \
+    ./configure \
       --prefix=/usr/local/ngtcp2 \
       --enable-lib-only \
       --with-openssl=/usr/local/openssl \
