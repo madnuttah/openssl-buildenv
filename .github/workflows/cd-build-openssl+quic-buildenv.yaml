@@ -62,5 +62,5 @@ jobs:
           tags: |
             madnuttah/openssl-buildenv:${{ steps.vars.outputs.OPENSSL_BUILDENV_VERSION }}
             madnuttah/openssl-buildenv:latest
-            madnuttah/openssl-buildenv-quic:${{ steps.vars.outputs.QUIC_BUILDENV_VERSION }}
+            madnuttah/openssl-buildenv${{ steps.vars.outputs.QUIC_BUILDENV_VERSION }}-quic
             madnuttah/openssl-buildenv-quic:latest
