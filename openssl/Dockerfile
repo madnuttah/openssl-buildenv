@@ -1,42 +1,46 @@
 ARG TARGETPLATFORM
 ARG TARGETARCH
-ARG BUILDENV_BUILD_DATE
-ARG OPENSSL_BUILDENV_VERSION
-ARG OPENSSL_VERSION
-ARG OPENSSL_SHA256
-ARG NGTCP2_VERSION
-ARG NGHTTP3_VERSION
-ARG SFPARSE_VERSION
-ARG QUIC_BUILDENV_VERSION
 
-FROM --platform=$TARGETPLATFORM alpine:latest AS openssl-build
+FROM --platform=$TARGETPLATFORM alpine:latest AS buildenv
 
 ARG TARGETARCH
 ARG BUILDENV_BUILD_DATE
 ARG OPENSSL_BUILDENV_VERSION
 ARG OPENSSL_VERSION
 ARG OPENSSL_SHA256
+ARG NGTCP2_VERSION
+ARG NGHTTP3_VERSION
+ARG QUIC_BUILDENV_VERSION
 
 LABEL maintainer="madnuttah" \
       build_date="${BUILDENV_BUILD_DATE}" \
       openssl_buildenv_version="${OPENSSL_BUILDENV_VERSION}" \
-      openssl_version="${OPENSSL_VERSION}"
+      openssl_version="${OPENSSL_VERSION}" \
+      quic_buildenv_version="${QUIC_BUILDENV_VERSION}"
 
-RUN apk add --no-cache build-base perl git ca-certificates curl linux-headers bash perl-utils
+ENV PREFIX="/usr/local" \
+    PATH="/usr/local/bin:${PATH}" \
+    PKG_CONFIG_PATH="/usr/local/openssl/lib/pkgconfig:/usr/local/lib/pkgconfig"
+
+RUN apk add --no-cache \
+    build-base perl git ca-certificates curl linux-headers bash perl-utils \
+    autoconf automake libtool pkgconfig libev-dev python3 gnupg cmake pkgconf jq \
+    gettext-dev
 
 WORKDIR /src
 
-RUN curl -LO https://www.openssl.org/source/openssl-${OPENSSL_VERSION}.tar.gz && \
+RUN curl -L "https://github.com/openssl/openssl/releases/download/openssl-${OPENSSL_VERSION}/openssl-${OPENSSL_VERSION}.tar.gz" \
+        -o "openssl-${OPENSSL_VERSION}.tar.gz" && \
     echo "${OPENSSL_SHA256}  openssl-${OPENSSL_VERSION}.tar.gz" | sha256sum -c - && \
-    tar -xf openssl-${OPENSSL_VERSION}.tar.gz && \
-    mv openssl-${OPENSSL_VERSION} openssl
+    tar -xf "openssl-${OPENSSL_VERSION}.tar.gz" && \
+    mv "openssl-${OPENSSL_VERSION}" openssl
 
 WORKDIR /src/openssl
 
 RUN case "$TARGETARCH" in \
-      amd64) CONF="linux-x86_64"; EXTRA="enable-ec_nistp_64_gcc_128 enable-ktls"; OUT="linux_64";; \
-      386)   CONF="linux-x86";    EXTRA=""; OUT="linux_386";; \
-      arm)   CONF="linux-armv4";  EXTRA=""; OUT="linux_32";; \
+      amd64) CONF="linux-x86_64"; EXTRA="enable-ec_nistp_64_gcc_128 enable-ktls";; \
+      386)   CONF="linux-x86";    EXTRA="";; \
+      arm)   CONF="linux-armv4";  EXTRA="";; \
       *) echo "Unsupported arch: $TARGETARCH"; exit 1;; \
     esac && \
     ./Configure \
@@ -45,7 +49,6 @@ RUN case "$TARGETARCH" in \
       no-apps \
       no-docs \
       no-legacy \
-      no-ssl3 \
       no-err \
       no-autoerrinit \
       enable-tfo \
@@ -53,41 +56,12 @@ RUN case "$TARGETARCH" in \
       ${EXTRA} \
       --prefix=/usr/local/openssl && \
     make -j"$(nproc)" && \
-    make install_sw && \
-    mkdir -p /out/${OUT} && \
-    cp -r /usr/local/openssl /out/${OUT}
+    make install_sw
 
-FROM alpine:latest AS quic-build
+WORKDIR /src
 
-ARG BUILDENV_BUILD_DATE
-ARG OPENSSL_VERSION
-ARG NGTCP2_VERSION
-ARG NGHTTP3_VERSION
-ARG SFPARSE_VERSION
-
-LABEL maintainer="madnuttah" \
-      build_date="${BUILDENV_BUILD_DATE}" \
-      openssl_version="${OPENSSL_VERSION}" \
-      ngtcp2_version="${NGTCP2_VERSION}" \
-      nghttp3_version="${NGHTTP3_VERSION}" \
-      sfparse_version="${SFPARSE_VERSION}"
-
-ENV PREFIX="/usr/local" \
-    PKG_CONFIG_PATH="/usr/local/openssl/lib/pkgconfig:/usr/local/lib/pkgconfig" \
-    PATH="/usr/local/bin:${PATH}"
-
-WORKDIR /tmp/src
-
-RUN apk add --no-cache \
-    ca-certificates curl file git autoconf automake libtool pkgconfig \
-    build-base perl libev-dev linux-headers python3 gnupg bash cmake \
-    pkgconf make jq && \
-    apk add --no-cache --virtual .build-deps gettext-dev
-
-COPY --from=openssl-build /usr/local/openssl /usr/local/openssl
-
-RUN git clone --branch "${SFPARSE_VERSION}" https://github.com/ngtcp2/sfparse.git && \
-    cd sfparse && autoreconf -i && ./configure --prefix=/usr/local && \
+RUN git clone https://github.com/ngtcp2/sfparse.git && \
+    cd sfparse && autoreconf -i && ./configure --prefix=/usr/local --disable-static && \
     make -j"$(nproc)" && make install
 
 RUN NGHTTP3_URL=$(curl -s https://api.github.com/repos/ngtcp2/nghttp3/releases \
@@ -95,7 +69,7 @@ RUN NGHTTP3_URL=$(curl -s https://api.github.com/repos/ngtcp2/nghttp3/releases \
     curl -L "$NGHTTP3_URL" -o nghttp3.tar.gz && \
     mkdir nghttp3 && tar -xf nghttp3.tar.gz -C nghttp3 --strip-components=1 && \
     cd nghttp3 && autoreconf -i && \
-    ./configure --prefix=/usr/local --enable-lib-only && \
+    ./configure --prefix=/usr/local --enable-lib-only --disable-static && \
     make -j"$(nproc)" && make install
 
 RUN NGTCP2_URL=$(curl -s https://api.github.com/repos/ngtcp2/ngtcp2/releases \
@@ -104,15 +78,17 @@ RUN NGTCP2_URL=$(curl -s https://api.github.com/repos/ngtcp2/ngtcp2/releases \
     mkdir ngtcp2 && tar -xf ngtcp2.tar.gz -C ngtcp2 --strip-components=1 && \
     cd ngtcp2 && autoreconf -i && \
     PKG_CONFIG_PATH="/usr/local/openssl/lib/pkgconfig:/usr/local/lib/pkgconfig" \
-      ./configure --prefix=/usr/local/ngtcp2 --enable-lib-only --with-openssl=/usr/local/openssl && \
+      ./configure --prefix=/usr/local/ngtcp2 --enable-lib-only --with-openssl=/usr/local/openssl --disable-static && \
     make -j"$(nproc)" && make install
 
-RUN find /usr/local -type f -executable -exec strip --strip-all {} + || true && \
-    rm -rf /tmp/* /var/tmp/* /var/log/* && \
-    apk del --no-cache .build-deps
+RUN rm -f /usr/local/lib/*.a /usr/local/lib/*.la && \
+    strip --strip-unneeded /usr/local/lib/*.so* || true && \
+    strip --strip-all /usr/local/bin/* || true && \
+    rm -rf /src /tmp/* /var/tmp/* /var/log/* && \
+    apk del gettext-dev
 
 FROM alpine:latest AS final
 
-COPY --from=quic-build /usr/local /usr/local
+COPY --from=buildenv /usr/local /usr/local
 
 ENV LD_LIBRARY_PATH="/usr/local/lib:/usr/local/openssl/lib:/usr/local/ngtcp2/lib"
