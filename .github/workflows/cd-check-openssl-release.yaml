@@ -17,15 +17,31 @@ jobs:
           if $BOOL; then
             echo "Pre-release, skipping"
             exit 1
-          else
-            echo OPENSSL_VERSION="$(curl -s https://api.github.com/repos/openssl/openssl/releases | jq '.[0] | .name' -r | grep -Eo '([0-9]+)(\.?[0-9]+)*' | head -1)" >> $GITHUB_OUTPUT 
-            echo OPENSSL_BUILDENV_VERSION="$(curl -s https://api.github.com/repos/madnuttah/openssl-buildenv/releases | jq '.[0] | .name' -r | grep -Eo '([0-9]+)(\.?[0-9]+)*' | head -1)" >> $GITHUB_OUTPUT
           fi
+
+          echo OPENSSL_VERSION="$(curl -s https://api.github.com/repos/openssl/openssl/releases \
+            | jq -r '.[0].name' \
+            | grep -Eo '([0-9]+)(\.?[0-9]+)*' \
+            | head -1)" >> $GITHUB_OUTPUT
+
+          echo OPENSSL_BUILDENV_VERSION="$(curl -s https://api.github.com/repos/madnuttah/openssl-buildenv/releases \
+            | jq -r '.[0].name' \
+            | grep -Eo '([0-9]+)(\.?[0-9]+)*' \
+            | head -1)" >> $GITHUB_OUTPUT
+
+          echo NGTCP2_VERSION="$(curl -s https://api.github.com/repos/ngtcp2/ngtcp2/releases \
+            | jq -r '.[0].tag_name')" >> $GITHUB_OUTPUT
+
+          echo NGHTTP3_VERSION="$(curl -s https://api.github.com/repos/ngtcp2/nghttp3/releases \
+            | jq -r '.[0].tag_name')" >> $GITHUB_OUTPUT
+
+          echo SFPARSE_VERSION="$(curl -s https://api.github.com/repos/ngtcp2/sfparse/releases \
+            | jq -r '.[0].tag_name')" >> $GITHUB_OUTPUT
 
       - name: Is update available
         id: IS_UPDATE_AVAILABLE
         env:
-          ALLOWED_MAJOR_OVERRIDES: "4" #No automatic major bumps!
+          ALLOWED_MAJOR_OVERRIDES: "4"
         run: |
           CURRENT_MAJOR="$(echo "${{ steps.GET_VERSIONS.outputs.OPENSSL_BUILDENV_VERSION }}" | cut -d. -f1)"
           LATEST_MAJOR="$(echo "${{ steps.GET_VERSIONS.outputs.OPENSSL_VERSION }}" | cut -d. -f1)"
@@ -68,13 +84,18 @@ jobs:
           GIT_COMMITTER_NAME: ${{ steps.IMPORT_GPG.outputs.name }}
           GIT_COMMITTER_EMAIL: ${{ steps.IMPORT_GPG.outputs.email }}
         run: |
-          git remote set-url origin https://x-access-token:${{ secrets.BOT_GITHUB_TOKEN }}@github.com/${{ github.repository }}  
-          OPENSSL_VERSION=${{ steps.GET_VERSIONS.outputs.OPENSSL_VERSION }} 
-          OPENSSL_SHA256=${{ steps.IS_UPDATE_AVAILABLE.outputs.OPENSSL_SHA256 }} 
+          git remote set-url origin https://x-access-token:${{ secrets.BOT_GITHUB_TOKEN }}@github.com/${{ github.repository }}
+
           echo BUILDENV_BUILD_DATE="$(date -u)" > buildvars
-          echo OPENSSL_VERSION="$OPENSSL_VERSION" >> buildvars
-          echo OPENSSL_SHA256="$OPENSSL_SHA256" >> buildvars
-          echo OPENSSL_BUILDENV_VERSION="${OPENSSL_VERSION}-0" >> buildvars
+          echo OPENSSL_VERSION="${{ steps.GET_VERSIONS.outputs.OPENSSL_VERSION }}" >> buildvars
+          echo OPENSSL_SHA256="${{ steps.IS_UPDATE_AVAILABLE.outputs.OPENSSL_SHA256 }}" >> buildvars
+          echo OPENSSL_BUILDENV_VERSION="${{ steps.GET_VERSIONS.outputs.OPENSSL_VERSION }}-0" >> buildvars
+
+          echo NGTCP2_VERSION="${{ steps.GET_VERSIONS.outputs.NGTCP2_VERSION }}" >> buildvars
+          echo NGHTTP3_VERSION="${{ steps.GET_VERSIONS.outputs.NGHTTP3_VERSION }}" >> buildvars
+          echo SFPARSE_VERSION="${{ steps.GET_VERSIONS.outputs.SFPARSE_VERSION }}" >> buildvars
+          echo QUIC_BUILDENV_VERSION="${{ steps.GET_VERSIONS.outputs.OPENSSL_VERSION }}-quic-0" >> buildvars
+
           git add buildvars
           git commit buildvars -m "Updated buildvars"
           git push origin main
