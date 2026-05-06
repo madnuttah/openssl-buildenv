@@ -48,11 +48,17 @@ jobs:
 
           CONTRIBUTORS=$(gh api repos/${{ github.repository }}/contributors --jq '.[].login' | sed 's/^/* @/g')
 
-          RELEASE_NOTE=$(echo -e "## $(date '+%Y-%m-%d') <madnuttah-bot>\n\
-## What's Changed?\n\
-* Updated OpenSSL to version $OPENSSL_VERSION\n\n\
-**OpenSSL changelog**: https://github.com/openssl/openssl/releases/tag/openssl-$OPENSSL_VERSION\n\n\
-## Contributors\n$CONTRIBUTORS")
+          RELEASE_NOTE=$(cat <<EOF
+          ## $(date '+%Y-%m-%d') <madnuttah-bot>
+          ## What's Changed?
+          * Updated OpenSSL to version $OPENSSL_VERSION
+
+          **OpenSSL changelog**: https://github.com/openssl/openssl/releases/tag/openssl-$OPENSSL_VERSION
+
+          ## Contributors
+          $CONTRIBUTORS
+          EOF
+          )
 
           git tag -a "$RELEASE_TAG" -m "$RELEASE_TAG"
           git push -u origin "$RELEASE_TAG"
