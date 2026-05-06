@@ -2,17 +2,17 @@ name: CD Tag And Release
 
 on:
   workflow_dispatch:
-  workflow_run:
-    workflows: ["CD Build OpenSSL+QUIC Buildenv"]
-    types: [completed]
+ # workflow_run:
+ #   workflows: ["CD Build OpenSSL+QUIC Buildenv"]
+ #   types: [completed]
 
 jobs:
   tag_and_release:
     runs-on: ubuntu-latest
-    if: >
-      github.event_name == 'workflow_dispatch' ||
-      (github.event_name == 'workflow_run' &&
-       github.event.workflow_run.conclusion == 'success')
+  #  if: >
+  #    github.event_name == 'workflow_dispatch' ||
+  #    (github.event_name == 'workflow_run' &&
+  #     github.event.workflow_run.conclusion == 'success')
 
     steps:
       - name: Checkout source
