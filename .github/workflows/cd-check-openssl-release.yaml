@@ -50,7 +50,7 @@ jobs:
       - name: Is update available
         id: IS_UPDATE_AVAILABLE
         env:
-          ALLOWED_MAJOR_OVERRIDES: "4"
+          ALLOWED_MAJOR_OVERRIDES: "3"
         run: |
           CURRENT_MAJOR="$(echo "${{ steps.GET_VERSIONS.outputs.OPENSSL_BUILDENV_VERSION }}" | cut -d. -f1)"
           LATEST_MAJOR="$(echo "${{ steps.GET_VERSIONS.outputs.OPENSSL_VERSION }}" | cut -d. -f1)"
