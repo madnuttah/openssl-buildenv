@@ -44,3 +44,7 @@ RUN set -xe; \
   find /usr/local -type f -executable -exec strip --strip-all {} + || true; \
   rm -rf /tmp/* /var/tmp/* /var/log/*; \
   apk del --no-cache .build-deps
+
+FROM alpine:latest AS final
+COPY --from=buildenv /usr/local /usr/local
+ENV LD_LIBRARY_PATH="/usr/local/lib:/usr/local/openssl/lib:/usr/local/ngtcp2/lib"
