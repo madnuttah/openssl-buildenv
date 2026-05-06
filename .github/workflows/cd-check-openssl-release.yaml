@@ -93,7 +93,7 @@ jobs:
 
           echo NGTCP2_VERSION="${{ steps.GET_VERSIONS.outputs.NGTCP2_VERSION }}" >> buildvars
           echo NGHTTP3_VERSION="${{ steps.GET_VERSIONS.outputs.NGHTTP3_VERSION }}" >> buildvars
-          echo SFPARSE_VERSION="${{ steps.GET_VERSIONS.outputs.SFPARSE_VERSION }}" >> buildvars
+    
           echo QUIC_BUILDENV_VERSION="${{ steps.GET_VERSIONS.outputs.OPENSSL_VERSION }}-quic-0" >> buildvars
 
           git add buildvars
