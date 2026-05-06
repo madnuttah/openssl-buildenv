@@ -1,22 +1,26 @@
 name: CD Tag And Release
-   
-on:       
+
+on:
+  workflow_dispatch:
   workflow_run:
-    workflows: [CD Build Multiarch OpenSSL BuildEnv Docker Image]
-    types:
-      - completed
- 
-jobs: 
+    workflows: ["CD Build OpenSSL+QUIC Buildenv"]
+    types: [completed]
+
+jobs:
   tag_and_release:
     runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
-    steps:             
+    if: >
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'workflow_run' &&
+       github.event.workflow_run.conclusion == 'success')
+
+    steps:
       - name: Checkout source
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
         with:
           persist-credentials: false
 
-      - name: Import GPG key 
+      - name: Import GPG key
         id: IMPORT_GPG
         uses: crazy-max/ghaction-import-gpg@v7
         with:
@@ -26,7 +30,7 @@ jobs:
           git_commit_gpgsign: false
           git_push_gpgsign: false
           trust_level: 5
-          
+
       - name: Push tag and upload release to GitHub
         env:
           GITHUB_TOKEN: ${{ secrets.BOT_GITHUB_TOKEN }}
@@ -35,16 +39,31 @@ jobs:
           GIT_COMMITTER_NAME: ${{ steps.IMPORT_GPG.outputs.name }}
           GIT_COMMITTER_EMAIL: ${{ steps.IMPORT_GPG.outputs.email }}
         run: |
-          git remote set-url origin https://x-access-token:${{ secrets.BOT_GITHUB_TOKEN }}@github.com/${{ github.repository }}  
-          BUILDENV_BUILD_DATE="$(cat ./buildvars | grep "^BUILDENV_BUILD_DATE=" | cut -d"=" -f2-)"
-          OPENSSL_VERSION="$(cat ./buildvars | grep "^OPENSSL_VERSION=" | cut -d"=" -f2-)"
+          git remote set-url origin https://x-access-token:${{ secrets.BOT_GITHUB_TOKEN }}@github.com/${{ github.repository }}
+
+          BUILDENV_BUILD_DATE="$(grep '^BUILDENV_BUILD_DATE=' buildvars | cut -d'=' -f2-)"
+          OPENSSL_VERSION="$(grep '^OPENSSL_VERSION=' buildvars | cut -d'=' -f2-)"
           OPENSSL_BUILDENV_VERSION="$OPENSSL_VERSION-0"
           RELEASE_TAG="v$OPENSSL_BUILDENV_VERSION"
-          RELEASE_NOTE=$(echo -e "\x23\x23 $(date '+%Y-%m-%d') <madnuttah-bot>\n\x23\x23 What's Changed?\n\x2A Updated OpenSSL to version $OPENSSL_VERSION\n\n\x2A\x2AOpenSSL changelog\x2A\x2A: https://github.com/openssl/openssl/releases/tag/openssl-$OPENSSL_VERSION")
+
+          CONTRIBUTORS=$(gh api repos/${{ github.repository }}/contributors --jq '.[].login' | sed 's/^/* @/g')
+
+          RELEASE_NOTE=$(echo -e "## $(date '+%Y-%m-%d') <madnuttah-bot>\n\
+## What's Changed?\n\
+* Updated OpenSSL to version $OPENSSL_VERSION\n\n\
+**OpenSSL changelog**: https://github.com/openssl/openssl/releases/tag/openssl-$OPENSSL_VERSION\n\n\
+## Contributors\n$CONTRIBUTORS")
+
           git tag -a "$RELEASE_TAG" -m "$RELEASE_TAG"
           git push -u origin "$RELEASE_TAG"
+
           git fetch --all --tags
           git checkout -b "$OPENSSL_BUILDENV_VERSION" "$RELEASE_TAG"
           git push --set-upstream origin "$OPENSSL_BUILDENV_VERSION"
-          gh release create "$RELEASE_TAG" -t "$OPENSSL_BUILDENV_VERSION" -n "$RELEASE_NOTE" --latest
+
+          gh release create "$RELEASE_TAG" \
+            -t "$OPENSSL_BUILDENV_VERSION" \
+            -n "$RELEASE_NOTE" \
+            --latest
+
           exit 0
