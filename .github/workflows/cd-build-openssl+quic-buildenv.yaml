@@ -1,0 +1,77 @@
+name: CD Build OpenSSL+QUIC Buildenv
+
+on:
+#  push:
+#    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Load buildvars
+        id: vars
+        run: |
+          source buildvars
+          echo "BUILDENV_BUILD_DATE=$BUILDENV_BUILD_DATE" >> $GITHUB_OUTPUT
+          echo "OPENSSL_VERSION=$OPENSSL_VERSION" >> $GITHUB_OUTPUT
+          echo "OPENSSL_SHA256=$OPENSSL_SHA256" >> $GITHUB_OUTPUT
+          echo "OPENSSL_BUILDENV_VERSION=$OPENSSL_BUILDENV_VERSION" >> $GITHUB_OUTPUT
+          echo "NGTCP2_VERSION=$NGTCP2_VERSION" >> $GITHUB_OUTPUT
+          echo "NGHTTP3_VERSION=$NGHTTP3_VERSION" >> $GITHUB_OUTPUT
+          echo "SFPARSE_VERSION=$SFPARSE_VERSION" >> $GITHUB_OUTPUT
+          echo "QUIC_BUILDENV_VERSION=$QUIC_BUILDENV_VERSION" >> $GITHUB_OUTPUT
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USER }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push OpenSSL-only image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          platforms: linux/amd64,linux/386,linux/arm/v7
+          push: true
+          target: final
+          build-args: |
+            BUILDENV_BUILD_DATE=${{ steps.vars.outputs.BUILDENV_BUILD_DATE }}
+            OPENSSL_VERSION=${{ steps.vars.outputs.OPENSSL_VERSION }}
+            OPENSSL_SHA256=${{ steps.vars.outputs.OPENSSL_SHA256 }}
+            OPENSSL_BUILDENV_VERSION=${{ steps.vars.outputs.OPENSSL_BUILDENV_VERSION }}
+          tags: |
+            madnuttah/openssl-buildenv:latest
+            madnuttah/openssl-buildenv:${{ steps.vars.outputs.OPENSSL_BUILDENV_VERSION }}
+
+      - name: Build and push QUIC-enabled image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          platforms: linux/amd64,linux/386,linux/arm/v7
+          push: true
+          target: final
+          build-args: |
+            BUILDENV_BUILD_DATE=${{ steps.vars.outputs.BUILDENV_BUILD_DATE }}
+            OPENSSL_VERSION=${{ steps.vars.outputs.OPENSSL_VERSION }}
+            OPENSSL_SHA256=${{ steps.vars.outputs.OPENSSL_SHA256 }}
+            OPENSSL_BUILDENV_VERSION=${{ steps.vars.outputs.OPENSSL_BUILDENV_VERSION }}
+            NGTCP2_VERSION=${{ steps.vars.outputs.NGTCP2_VERSION }}
+            NGHTTP3_VERSION=${{ steps.vars.outputs.NGHTTP3_VERSION }}
+            SFPARSE_VERSION=${{ steps.vars.outputs.SFPARSE_VERSION }}
+            QUIC_BUILDENV_VERSION=${{ steps.vars.outputs.QUIC_BUILDENV_VERSION }}
+          tags: |
+            madnuttah/openssl-buildenv-quic:latest
+            madnuttah/openssl-buildenv-quic:${{ steps.vars.outputs.QUIC_BUILDENV_VERSION }}
