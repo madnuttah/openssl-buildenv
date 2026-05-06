@@ -86,7 +86,7 @@ jobs:
         run: |
           git remote set-url origin https://x-access-token:${{ secrets.BOT_GITHUB_TOKEN }}@github.com/${{ github.repository }}
 
-          echo BUILDENV_BUILD_DATE="$(date -u)" > buildvars
+          echo BUILDENV_BUILD_DATE="$(date -u +"%Y-%m-%dT%H:%M:%SZ")" > buildvars
           echo OPENSSL_VERSION="${{ steps.GET_VERSIONS.outputs.OPENSSL_VERSION }}" >> buildvars
           echo OPENSSL_SHA256="${{ steps.IS_UPDATE_AVAILABLE.outputs.OPENSSL_SHA256 }}" >> buildvars
           echo OPENSSL_BUILDENV_VERSION="${{ steps.GET_VERSIONS.outputs.OPENSSL_VERSION }}-0" >> buildvars
