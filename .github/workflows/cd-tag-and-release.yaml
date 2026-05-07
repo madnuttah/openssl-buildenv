@@ -19,8 +19,8 @@ jobs:
         uses: actions/checkout@v4
         with:
           persist-credentials: false
-          fetch-depth: 0
-          clean: false     
+#          fetch-depth: 0
+#          clean: false     
 
       - name: Import GPG key
         id: IMPORT_GPG
