@@ -2,6 +2,13 @@ name: CD Tag And Release
 
 on:
   workflow_dispatch:
+    inputs:
+      subversion:
+        description: Subversion
+        required: false
+        default: '0'
+  repository_dispatch:
+    types: [trigger-tag]
   workflow_run:
     workflows: ["CD Build OpenSSL+QUIC Buildenv"]
     types: [completed]
@@ -11,6 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     if: >
       github.event_name == 'workflow_dispatch' ||
+      github.event_name == 'repository_dispatch' ||
       (github.event_name == 'workflow_run' &&
        github.event.workflow_run.conclusion == 'success')
 
@@ -20,7 +28,6 @@ jobs:
         with:
           persist-credentials: false
           fetch-depth: 0
-#          clean: true
 
       - name: Import GPG key
         id: IMPORT_GPG
@@ -42,15 +49,18 @@ jobs:
           GIT_COMMITTER_NAME: ${{ steps.IMPORT_GPG.outputs.name }}
           GIT_COMMITTER_EMAIL: ${{ steps.IMPORT_GPG.outputs.email }}
           GPG_FPR: ${{ steps.IMPORT_GPG.outputs.fingerprint }}
+          INPUT_SUBVERSION: ${{ github.event.inputs.subversion || '' }}
+          CLIENT_SUBVERSION: ${{ github.event.client_payload.subversion || '' }}
         run: |
-          BUILDENV_BUILD_DATE="$(grep '^BUILDENV_BUILD_DATE=' buildvars | cut -d'=' -f2-)"
-          OPENSSL_VERSION="$(grep '^OPENSSL_VERSION=' buildvars | cut -d'=' -f2-)"
-          OPENSSL_BUILDENV_VERSION="$(grep '^OPENSSL_BUILDENV_VERSION=' buildvars | cut -d'=' -f2-)"
-          QUIC_BUILDENV_VERSION="$(grep '^QUIC_BUILDENV_VERSION=' buildvars | cut -d'=' -f2-)"
-          NGTCP2_VERSION="$(grep '^NGTCP2_VERSION=' buildvars | cut -d'=' -f2-)"
-          NGHTTP3_VERSION="$(grep '^NGHTTP3_VERSION=' buildvars | cut -d'=' -f2-)"
+          set -euo pipefail
+          SUB="${INPUT_SUBVERSION:-${CLIENT_SUBVERSION:-0}}"
 
-          SUB="${{ github.event.inputs.subversion || '0' }}"
+          BUILDENV_BUILD_DATE="$(grep '^BUILDENV_BUILD_DATE=' buildvars | cut -d'=' -f2- || true)"
+          OPENSSL_VERSION="$(grep '^OPENSSL_VERSION=' buildvars | cut -d'=' -f2- || true)"
+          OPENSSL_BUILDENV_VERSION="$(grep '^OPENSSL_BUILDENV_VERSION=' buildvars | cut -d'=' -f2- || true)"
+          QUIC_BUILDENV_VERSION="$(grep '^QUIC_BUILDENV_VERSION=' buildvars | cut -d'=' -f2- || true)"
+          NGTCP2_VERSION="$(grep '^NGTCP2_VERSION=' buildvars | cut -d'=' -f2- || true)"
+          NGHTTP3_VERSION="$(grep '^NGHTTP3_VERSION=' buildvars | cut -d'=' -f2- || true)"
 
           if [ "${SUB}" = "0" ]; then
             OPENSSL_TAG="${OPENSSL_BUILDENV_VERSION}"
@@ -62,7 +72,7 @@ jobs:
             QUIC_TAG="${QUIC_BASE}-${SUB}-quic"
           fi
 
-          git remote set-url origin https://x-access-token:${{ secrets.BOT_GITHUB_TOKEN }}@github.com/${{ github.repository }}
+          git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}
 
           PREV_TAG=$(gh release list --limit 2 --json tagName --jq '.[1].tagName' 2>/dev/null || true)
 
@@ -101,19 +111,27 @@ jobs:
           git config user.name "${GIT_AUTHOR_NAME}"
           git config user.email "${GIT_AUTHOR_EMAIL}"
 
-          git tag -a "v${OPENSSL_TAG}" -m "v${OPENSSL_TAG}"
-          git tag -a "v${QUIC_TAG}" -m "v${QUIC_TAG}"
+          if git rev-parse "refs/tags/v${OPENSSL_TAG}" >/dev/null 2>&1; then
+            :
+          else
+            git tag -a "v${OPENSSL_TAG}" -m "v${OPENSSL_TAG}"
+          fi
 
-          git push -u origin "v${OPENSSL_TAG}" --force-with-lease
-          git push -u origin "v${QUIC_TAG}" --force-with-lease
+          if git rev-parse "refs/tags/v${QUIC_TAG}" >/dev/null 2>&1; then
+            :
+          else
+            git tag -a "v${QUIC_TAG}" -m "v${QUIC_TAG}"
+          fi
+
+          git push origin "v${OPENSSL_TAG}" --force-with-lease
+          git push origin "v${QUIC_TAG}" --force-with-lease
 
           git fetch --all --tags
           git checkout -b "${OPENSSL_TAG}" "v${OPENSSL_TAG}" || git checkout "${OPENSSL_TAG}"
           git push --set-upstream origin "${OPENSSL_TAG}" --force-with-lease
 
-          gh release create "v${OPENSSL_TAG}" \
-            -t "${OPENSSL_TAG}" \
-            -n "$RELEASE_NOTE" \
-            --latest
+          gh release create "v${OPENSSL_TAG}" -t "${OPENSSL_TAG}" -n "$RELEASE_NOTE" --latest || gh release edit "v${OPENSSL_TAG}" -t "${OPENSSL_TAG}" -n "$RELEASE_NOTE"
+
+          gh release create "v${QUIC_TAG}" -t "${QUIC_TAG}" -n "QUIC build for ${QUIC_TAG}" || gh release edit "v${QUIC_TAG}" -t "${QUIC_TAG}" -n "QUIC build for ${QUIC_TAG}"
 
           exit 0
