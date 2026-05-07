@@ -66,10 +66,7 @@ jobs:
             fi
           else
             COMMITS_JSON=$(gh api repos/${{ github.repository }}/compare/${PREV_TAG}...HEAD 2>/dev/null || true)
-            NEW_CONTRIBS=$(printf "%s" "$COMMITS_JSON" \
-              | jq -r '.commits[].author.login // empty' \
-              | sort -u)
-
+            NEW_CONTRIBS=$(printf "%s" "$COMMITS_JSON" | jq -r '.commits[].author.login // empty' | sort -u)
             if [ -z "$NEW_CONTRIBS" ]; then
               CONTRIBUTORS="* No new contributors since ${PREV_TAG}"
             else
@@ -77,21 +74,20 @@ jobs:
             fi
           fi
 
-          RELEASE_NOTE=$(cat <<EOF
-## $(date '+%Y-%m-%d') <madnuttah-bot>
-## What's Changed?
-* Updated OpenSSL and OpenSSL+QUIC to version $OPENSSL_VERSION
-
-OpenSSL changelog: https://github.com/openssl/openssl/releases/tag/openssl-$OPENSSL_VERSION
-
-## Included QUIC components
-* ngtcp2: $NGTCP2_VERSION
-* nghttp3: $NGHTTP3_VERSION
-
-## New Contributors
-$CONTRIBUTORS
-EOF
-)
+          RELEASE_NOTE=$(printf "%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n" \
+            "## $(date '+%Y-%m-%d') <madnuttah-bot>" \
+            "## What's Changed?" \
+            "* Updated OpenSSL and OpenSSL+QUIC to version $OPENSSL_VERSION" \
+            "" \
+            "OpenSSL changelog: https://github.com/openssl/openssl/releases/tag/openssl-$OPENSSL_VERSION" \
+            "" \
+            "## Included QUIC components" \
+            "* ngtcp2: $NGTCP2_VERSION" \
+            "* nghttp3: $NGHTTP3_VERSION" \
+            "" \
+            "## New Contributors" \
+            "$CONTRIBUTORS" \
+          )
 
           git config user.name "${GIT_AUTHOR_NAME}"
           git config user.email "${GIT_AUTHOR_EMAIL}"
