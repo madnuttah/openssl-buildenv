@@ -36,10 +36,10 @@ RUN curl -L "https://github.com/openssl/openssl/releases/download/openssl-${OPEN
 WORKDIR /src/openssl
 
 RUN case "$TARGETARCH" in \
-      amd64) CONF="linux-x86_64"; EXTRA="enable-ec_nistp_64_gcc_128 enable-ktls enable-asm enable-lto";; \
-      386)   CONF="linux-x86";    EXTRA="enable-asm enable-lto";; \
-      armv7) CONF="linux-armv4";  EXTRA="enable-asm enable-lto";; \
-      arm)   CONF="linux-armv4";  EXTRA="enable-asm enable-lto";; \
+      amd64) CONF="linux-x86_64"; EXTRA="enable-ec_nistp_64_gcc_128 enable-ktls enable-asm";; \
+      386)   CONF="linux-x86";    EXTRA="enable-asm";; \
+      armv7) CONF="linux-armv4";  EXTRA="enable-asm";; \
+      arm)   CONF="linux-armv4";  EXTRA="enable-asm";; \
       *) echo "Unsupported arch: $TARGETARCH"; exit 1;; \
     esac && \
     CFLAGS="-O3 -D_FORTIFY_SOURCE=2 -fstack-protector-strong" \
