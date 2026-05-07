@@ -55,6 +55,8 @@ jobs:
           GPG_FPR: ${{ steps.IMPORT_GPG.outputs.fingerprint }}
           INPUT_SUBVERSION: ${{ github.event.inputs.subversion || '' }}
           CLIENT_SUBVERSION: ${{ github.event.client_payload.subversion || '' }}
+          GITHUB_EVENT_NAME: ${{ github.event_name }}
+          GITHUB_ACTOR: ${{ github.actor }}
         run: |
           set -euo pipefail
           SUB="${INPUT_SUBVERSION:-${CLIENT_SUBVERSION:-0}}"
@@ -62,7 +64,6 @@ jobs:
           BUILDENV_BUILD_DATE="$(grep '^BUILDENV_BUILD_DATE=' buildvars | cut -d'=' -f2- || true)"
           OPENSSL_VERSION="$(grep '^OPENSSL_VERSION=' buildvars | cut -d'=' -f2- || true)"
           OPENSSL_BUILDENV_VERSION="$(grep '^OPENSSL_BUILDENV_VERSION=' buildvars | cut -d'=' -f2- || true)"
-          QUIC_BUILDENV_VERSION="$(grep '^QUIC_BUILDENV_VERSION=' buildvars | cut -d'=' -f2- || true)"
           NGTCP2_VERSION="$(grep '^NGTCP2_VERSION=' buildvars | cut -d'=' -f2- || true)"
           NGHTTP3_VERSION="$(grep '^NGHTTP3_VERSION=' buildvars | cut -d'=' -f2- || true)"
 
@@ -97,16 +98,12 @@ jobs:
             fi
           fi
 
-          RELEASE_NOTE=$(printf "%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n" \
+          RELEASE_NOTE=$(printf "%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n" \
             "## $(date '+%Y-%m-%d') <madnuttah-bot>" \
             "## What's Changed?" \
-            "* Updated OpenSSL and OpenSSL+QUIC to version $OPENSSL_VERSION" \
+            "* Updated OpenSSL to version $OPENSSL_VERSION" \
             "" \
             "OpenSSL changelog: https://github.com/openssl/openssl/releases/tag/openssl-$OPENSSL_VERSION" \
-            "" \
-            "## Included QUIC components" \
-            "* ngtcp2: $NGTCP2_VERSION" \
-            "* nghttp3: $NGHTTP3_VERSION" \
             "" \
             "## New Contributors" \
             "$CONTRIBUTORS" \
