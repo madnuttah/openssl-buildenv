@@ -118,10 +118,12 @@ jobs:
 
       - name: Load buildvars
         id: vars
-        run: |
-          source buildvars
-          echo "OPENSSL_FINAL=$(echo $OPENSSL_BUILDENV_VERSION | sed 's/-[^-]*$//')-${{ env.SUBVERSION }}" >> $GITHUB_OUTPUT
-          echo "QUIC_FINAL=$(echo $QUIC_BUILDENV_VERSION | sed 's/-[^-]*$//')-${{ env.SUBVERSION }}-quic" >> $GITHUB_OUTPUT
+        
+    run: |
+      source buildvars
+      echo "OPENSSL_FINAL=$(echo $OPENSSL_BUILDENV_VERSION | sed 's/-[^-]*$//')-${{ env.SUBVERSION }}" >> $GITHUB_OUTPUT
+      echo "QUIC_FINAL=$(echo $QUIC_BUILDENV_VERSION | sed 's/-[^-]*$//')-${{ env.SUBVERSION }}-quic" >> $GITHUB_OUTPUT
+
 
       - uses: docker/login-action@v3
         with:
