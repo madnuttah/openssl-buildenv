@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       subversion:
-        description: Subversion to append to image tags
+        description: Subversion
         required: false
         default: '0'
   workflow_run:
@@ -16,6 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       SUBVERSION: ${{ github.event.inputs.subversion || '0' }}
+
     strategy:
       fail-fast: false
       matrix:
@@ -57,13 +58,14 @@ jobs:
         id: vars
         run: |
           source buildvars
-          echo "OPENSSL_BUILDENV_VERSION=$OPENSSL_BUILDENV_VERSION" >> $GITHUB_OUTPUT
-          echo "QUIC_BUILDENV_VERSION=$QUIC_BUILDENV_VERSION" >> $GITHUB_OUTPUT
           echo "OPENSSL_VERSION=$OPENSSL_VERSION" >> $GITHUB_OUTPUT
           echo "OPENSSL_SHA256=$OPENSSL_SHA256" >> $GITHUB_OUTPUT
           echo "NGTCP2_VERSION=$NGTCP2_VERSION" >> $GITHUB_OUTPUT
           echo "NGHTTP3_VERSION=$NGHTTP3_VERSION" >> $GITHUB_OUTPUT
-          echo "BUILDENV_BUILD_DATE=$(date -u +\"%Y-%m-%dT%H:%M:%SZ\")" >> $GITHUB_OUTPUT
+          echo "BUILDENV_BUILD_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")" >> $GITHUB_OUTPUT
+
+          echo "OPENSSL_FINAL=$(echo $OPENSSL_BUILDENV_VERSION | sed 's/-[^-]*$//')-${{ env.SUBVERSION }}" >> $GITHUB_OUTPUT
+          echo "QUIC_FINAL=$(echo $QUIC_BUILDENV_VERSION | sed 's/-[^-]*$//')-${{ env.SUBVERSION }}-quic" >> $GITHUB_OUTPUT
 
       - uses: docker/setup-qemu-action@v3
       - uses: docker/setup-buildx-action@v3
@@ -73,7 +75,7 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build and push OpenSSL image
+      - name: Build OpenSSL
         if: ${{ matrix.variant == 'openssl' }}
         uses: docker/build-push-action@v6
         with:
@@ -85,11 +87,10 @@ jobs:
             BUILDENV_BUILD_DATE=${{ steps.vars.outputs.BUILDENV_BUILD_DATE }}
             OPENSSL_VERSION=${{ steps.vars.outputs.OPENSSL_VERSION }}
             OPENSSL_SHA256=${{ steps.vars.outputs.OPENSSL_SHA256 }}
-            OPENSSL_BUILDENV_VERSION=${{ steps.vars.outputs.OPENSSL_BUILDENV_VERSION }}
           tags: |
-            madnuttah/openssl-buildenv:${{ steps.vars.outputs.OPENSSL_BUILDENV_VERSION }}-${{ env.SUBVERSION }}-${{ matrix.arch }}
+            madnuttah/openssl-buildenv:${{ steps.vars.outputs.OPENSSL_FINAL }}-${{ matrix.arch }}
 
-      - name: Build and push QUIC image
+      - name: Build QUIC
         if: ${{ matrix.variant == 'openssl+quic' }}
         uses: docker/build-push-action@v6
         with:
@@ -101,18 +102,17 @@ jobs:
             BUILDENV_BUILD_DATE=${{ steps.vars.outputs.BUILDENV_BUILD_DATE }}
             OPENSSL_VERSION=${{ steps.vars.outputs.OPENSSL_VERSION }}
             OPENSSL_SHA256=${{ steps.vars.outputs.OPENSSL_SHA256 }}
-            OPENSSL_BUILDENV_VERSION=${{ steps.vars.outputs.OPENSSL_BUILDENV_VERSION }}
-            QUIC_BUILDENV_VERSION=${{ steps.vars.outputs.QUIC_BUILDENV_VERSION }}
             NGTCP2_VERSION=${{ steps.vars.outputs.NGTCP2_VERSION }}
             NGHTTP3_VERSION=${{ steps.vars.outputs.NGHTTP3_VERSION }}
           tags: |
-            madnuttah/openssl-buildenv:${{ steps.vars.outputs.QUIC_BUILDENV_VERSION }}-${{ env.SUBVERSION }}-${{ matrix.arch }}
+            madnuttah/openssl-buildenv:${{ steps.vars.outputs.QUIC_FINAL }}-${{ matrix.arch }}
 
   manifest:
     needs: build
     runs-on: ubuntu-latest
     env:
       SUBVERSION: ${{ github.event.inputs.subversion || '0' }}
+
     steps:
       - uses: actions/checkout@v4
 
@@ -120,40 +120,40 @@ jobs:
         id: vars
         run: |
           source buildvars
-          echo "OPENSSL_BUILDENV_VERSION=$OPENSSL_BUILDENV_VERSION" >> $GITHUB_OUTPUT
-          echo "QUIC_BUILDENV_VERSION=$QUIC_BUILDENV_VERSION" >> $GITHUB_OUTPUT
+          echo "OPENSSL_FINAL=$(echo $OPENSSL_BUILDENV_VERSION | sed 's/-[^-]*$//')-${{ env.SUBVERSION }}" >> $GITHUB_OUTPUT
+          echo "QUIC_FINAL=$(echo $QUIC_BUILDENV_VERSION | sed 's/-[^-]*$//')-${{ env.SUBVERSION }}-quic" >> $GITHUB_OUTPUT
 
       - uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Create OpenSSL manifest
+      - name: Manifest OpenSSL
         run: |
           docker buildx imagetools create \
-            --tag madnuttah/openssl-buildenv:${{ steps.vars.outputs.OPENSSL_BUILDENV_VERSION }}-${{ env.SUBVERSION }} \
-            madnuttah/openssl-buildenv:${{ steps.vars.outputs.OPENSSL_BUILDENV_VERSION }}-${{ env.SUBVERSION }}-amd64 \
-            madnuttah/openssl-buildenv:${{ steps.vars.outputs.OPENSSL_BUILDENV_VERSION }}-${{ env.SUBVERSION }}-386 \
-            madnuttah/openssl-buildenv:${{ steps.vars.outputs.OPENSSL_BUILDENV_VERSION }}-${{ env.SUBVERSION }}-armv7
+            --tag madnuttah/openssl-buildenv:${{ steps.vars.outputs.OPENSSL_FINAL }} \
+            madnuttah/openssl-buildenv:${{ steps.vars.outputs.OPENSSL_FINAL }}-amd64 \
+            madnuttah/openssl-buildenv:${{ steps.vars.outputs.OPENSSL_FINAL }}-386 \
+            madnuttah/openssl-buildenv:${{ steps.vars.outputs.OPENSSL_FINAL }}-armv7
 
-      - name: Create QUIC manifest
+      - name: Manifest QUIC
         run: |
           docker buildx imagetools create \
-            --tag madnuttah/openssl-buildenv:${{ steps.vars.outputs.QUIC_BUILDENV_VERSION }}-${{ env.SUBVERSION }} \
-            madnuttah/openssl-buildenv:${{ steps.vars.outputs.QUIC_BUILDENV_VERSION }}-${{ env.SUBVERSION }}-amd64 \
-            madnuttah/openssl-buildenv:${{ steps.vars.outputs.QUIC_BUILDENV_VERSION }}-${{ env.SUBVERSION }}-386 \
-            madnuttah/openssl-buildenv:${{ steps.vars.outputs.QUIC_BUILDENV_VERSION }}-${{ env.SUBVERSION }}-armv7
+            --tag madnuttah/openssl-buildenv:${{ steps.vars.outputs.QUIC_FINAL }} \
+            madnuttah/openssl-buildenv:${{ steps.vars.outputs.QUIC_FINAL }}-amd64 \
+            madnuttah/openssl-buildenv:${{ steps.vars.outputs.QUIC_FINAL }}-386 \
+            madnuttah/openssl-buildenv:${{ steps.vars.outputs.QUIC_FINAL }}-armv7
 
-      - name: Update latest tags
+      - name: Latest tags
         run: |
           docker buildx imagetools create \
             --tag madnuttah/openssl-buildenv:latest \
-            madnuttah/openssl-buildenv:${{ steps.vars.outputs.OPENSSL_BUILDENV_VERSION }}-${{ env.SUBVERSION }}-amd64 \
-            madnuttah/openssl-buildenv:${{ steps.vars.outputs.OPENSSL_BUILDENV_VERSION }}-${{ env.SUBVERSION }}-386 \
-            madnuttah/openssl-buildenv:${{ steps.vars.outputs.OPENSSL_BUILDENV_VERSION }}-${{ env.SUBVERSION }}-armv7
+            madnuttah/openssl-buildenv:${{ steps.vars.outputs.OPENSSL_FINAL }}-amd64 \
+            madnuttah/openssl-buildenv:${{ steps.vars.outputs.OPENSSL_FINAL }}-386 \
+            madnuttah/openssl-buildenv:${{ steps.vars.outputs.OPENSSL_FINAL }}-armv7
 
           docker buildx imagetools create \
             --tag madnuttah/openssl-buildenv:latest-quic \
-            madnuttah/openssl-buildenv:${{ steps.vars.outputs.QUIC_BUILDENV_VERSION }}-${{ env.SUBVERSION }}-amd64 \
-            madnuttah/openssl-buildenv:${{ steps.vars.outputs.QUIC_BUILDENV_VERSION }}-${{ env.SUBVERSION }}-386 \
-            madnuttah/openssl-buildenv:${{ steps.vars.outputs.QUIC_BUILDENV_VERSION }}-${{ env.SUBVERSION }}-armv7
+            madnuttah/openssl-buildenv:${{ steps.vars.outputs.QUIC_FINAL }}-amd64 \
+            madnuttah/openssl-buildenv:${{ steps.vars.outputs.QUIC_FINAL }}-386 \
+            madnuttah/openssl-buildenv:${{ steps.vars.outputs.QUIC_FINAL }}-armv7

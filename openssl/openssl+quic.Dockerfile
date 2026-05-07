@@ -41,8 +41,9 @@ WORKDIR /src/openssl
 
 RUN case "$TARGETARCH" in \
       amd64) CONF="linux-x86_64"; EXTRA="enable-ec_nistp_64_gcc_128 enable-ktls";; \
-      386)   CONF="linux-x86";    EXTRA="";; \
-      arm)   CONF="linux-armv4";  EXTRA="";; \
+      386)   CONF="linux-x86"; EXTRA="";; \
+      armv7) CONF="linux-armv4"; EXTRA="";; \
+      arm)   CONF="linux-armv4"; EXTRA="";; \
       *) echo "Unsupported arch: $TARGETARCH"; exit 1;; \
     esac && \
     ./Configure \
