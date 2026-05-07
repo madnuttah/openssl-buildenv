@@ -77,7 +77,7 @@ jobs:
 
       - name: Build OpenSSL
         if: ${{ matrix.variant == 'openssl' }}
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: ${{ matrix.dockerfile }}
@@ -92,7 +92,7 @@ jobs:
 
       - name: Build QUIC
         if: ${{ matrix.variant == 'openssl+quic' }}
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: ${{ matrix.dockerfile }}
