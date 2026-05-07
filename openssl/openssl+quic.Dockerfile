@@ -53,6 +53,7 @@ RUN case "$TARGETARCH" in \
       no-weak-ssl-ciphers \
       no-apps \
       no-docs \
+      shared \
       no-legacy \
       no-err \
       no-autoerrinit \
