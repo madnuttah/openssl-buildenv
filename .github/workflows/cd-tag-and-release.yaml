@@ -1,5 +1,9 @@
 name: CD Tag And Release
 
+permissions:
+  contents: write
+  actions: write
+
 on:
   workflow_dispatch:
     inputs:
@@ -64,15 +68,15 @@ jobs:
 
           if [ "${SUB}" = "0" ]; then
             OPENSSL_TAG="${OPENSSL_BUILDENV_VERSION}"
-            QUIC_TAG="${QUIC_BUILDENV_VERSION}"
           else
             OPENSSL_BASE="$(printf "%s" "${OPENSSL_BUILDENV_VERSION}" | sed -E 's/-[0-9]+$//')"
-            QUIC_BASE="$(printf "%s" "${QUIC_BUILDENV_VERSION}" | sed -E 's/-quic$//' | sed -E 's/-[0-9]+$//')"
             OPENSSL_TAG="${OPENSSL_BASE}-${SUB}"
-            QUIC_TAG="${QUIC_BASE}-${SUB}-quic"
           fi
 
           git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}
+
+          git fetch --prune origin --tags
+          git ls-remote --tags origin | grep "v${OPENSSL_TAG}" || true
 
           PREV_TAG=$(gh release list --limit 2 --json tagName --jq '.[1].tagName' 2>/dev/null || true)
 
@@ -117,21 +121,12 @@ jobs:
             git tag -a "v${OPENSSL_TAG}" -m "v${OPENSSL_TAG}"
           fi
 
-          if git rev-parse "refs/tags/v${QUIC_TAG}" >/dev/null 2>&1; then
-            :
-          else
-            git tag -a "v${QUIC_TAG}" -m "v${QUIC_TAG}"
-          fi
-
           git push origin "v${OPENSSL_TAG}" --force-with-lease
-          git push origin "v${QUIC_TAG}" --force-with-lease
 
           git fetch --all --tags
           git checkout -b "${OPENSSL_TAG}" "v${OPENSSL_TAG}" || git checkout "${OPENSSL_TAG}"
-          git push --set-upstream origin "${OPENSSL_TAG}" --force-with-lease
+          git push --set-upstream origin "refs/heads/${OPENSSL_TAG}" --force-with-lease
 
           gh release create "v${OPENSSL_TAG}" -t "${OPENSSL_TAG}" -n "$RELEASE_NOTE" --latest || gh release edit "v${OPENSSL_TAG}" -t "${OPENSSL_TAG}" -n "$RELEASE_NOTE"
-
-          gh release create "v${QUIC_TAG}" -t "${QUIC_TAG}" -n "QUIC build for ${QUIC_TAG}" || gh release edit "v${QUIC_TAG}" -t "${QUIC_TAG}" -n "QUIC build for ${QUIC_TAG}"
 
           exit 0
