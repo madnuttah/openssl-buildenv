@@ -1,3 +1,6 @@
 .dockerignore
 LICENSE
 *.md
+buildvars
+*.tmp
+*.log

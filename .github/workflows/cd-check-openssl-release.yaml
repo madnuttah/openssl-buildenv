@@ -1,10 +1,10 @@
 name: CD Check OpenSSL Release
-             
+
 on:
   schedule:
     - cron: '0 15 * * mon-fri'
   workflow_dispatch:
-       
+
 jobs:
   openssl-update:
     runs-on: ubuntu-latest
@@ -16,7 +16,6 @@ jobs:
       OPENSSL_BUILDENV_VERSION: ${{ steps.GET_VERSIONS.outputs.OPENSSL_BUILDENV_VERSION }}
       NGTCP2_VERSION: ${{ steps.GET_VERSIONS.outputs.NGTCP2_VERSION }}
       NGHTTP3_VERSION: ${{ steps.GET_VERSIONS.outputs.NGHTTP3_VERSION }}
-      SFPARSE_VERSION: ${{ steps.GET_VERSIONS.outputs.SFPARSE_VERSION }}
 
     steps:
       - name: Get versions
@@ -42,9 +41,6 @@ jobs:
             | jq -r '.[0].tag_name')" >> $GITHUB_OUTPUT
 
           echo NGHTTP3_VERSION="$(curl -s https://api.github.com/repos/ngtcp2/nghttp3/releases \
-            | jq -r '.[0].tag_name')" >> $GITHUB_OUTPUT
-
-          echo SFPARSE_VERSION="$(curl -s https://api.github.com/repos/ngtcp2/sfparse/releases \
             | jq -r '.[0].tag_name')" >> $GITHUB_OUTPUT
 
       - name: Is update available
@@ -107,7 +103,7 @@ jobs:
           echo OPENSSL_BUILDENV_VERSION="${{ steps.GET_VERSIONS.outputs.OPENSSL_VERSION }}-0" >> buildvars
           echo NGTCP2_VERSION="${{ steps.GET_VERSIONS.outputs.NGTCP2_VERSION }}" >> buildvars
           echo NGHTTP3_VERSION="${{ steps.GET_VERSIONS.outputs.NGHTTP3_VERSION }}" >> buildvars
-          echo QUIC_BUILDENV_VERSION="${{ steps.GET_VERSIONS.outputs.OPENSSL_VERSION }}-quic-0" >> buildvars
+          echo QUIC_BUILDENV_VERSION="${{ steps.GET_VERSIONS.outputs.OPENSSL_VERSION }}-0-quic" >> buildvars
 
           git add buildvars
           git commit buildvars -m "Updated buildvars"

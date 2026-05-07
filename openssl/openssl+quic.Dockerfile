@@ -1,7 +1,7 @@
 ARG TARGETPLATFORM
 ARG TARGETARCH
 
-FROM --platform=$TARGETPLATFORM alpine:latest AS buildenv
+FROM alpine:latest AS buildenv
 
 ARG TARGETARCH
 ARG BUILDENV_BUILD_DATE
@@ -11,6 +11,8 @@ ARG OPENSSL_SHA256
 ARG NGTCP2_VERSION
 ARG NGHTTP3_VERSION
 ARG QUIC_BUILDENV_VERSION
+
+ENV BUILDENV_BUILD_DATE="${BUILDENV_BUILD_DATE}"
 
 LABEL maintainer="madnuttah" \
       build_date="${BUILDENV_BUILD_DATE}" \
@@ -30,7 +32,7 @@ RUN apk add --no-cache \
 WORKDIR /src
 
 RUN curl -L "https://github.com/openssl/openssl/releases/download/openssl-${OPENSSL_VERSION}/openssl-${OPENSSL_VERSION}.tar.gz" \
-        -o "openssl-${OPENSSL_VERSION}.tar.gz" && \
+      -o "openssl-${OPENSSL_VERSION}.tar.gz" && \
     echo "${OPENSSL_SHA256}  openssl-${OPENSSL_VERSION}.tar.gz" | sha256sum -c - && \
     tar -xf "openssl-${OPENSSL_VERSION}.tar.gz" && \
     mv "openssl-${OPENSSL_VERSION}" openssl

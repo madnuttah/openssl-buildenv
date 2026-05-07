@@ -1,11 +1,16 @@
 version: 2
 updates:
-  - package-ecosystem: github-actions
+  - package-ecosystem: "github-actions"
     directory: "/.github/workflows"
     schedule:
-      interval: daily
+      interval: "daily"
 
   - package-ecosystem: "docker"
-    directory: "./openssl/"
+    directory: "/openssl"
+    schedule:
+      interval: "daily"
+
+  - package-ecosystem: "docker"
+    directory: "/quic"
     schedule:
       interval: "daily"
