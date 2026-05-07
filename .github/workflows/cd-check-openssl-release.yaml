@@ -49,7 +49,7 @@ jobs:
           CURRENT_MAJOR="$(echo "${{ steps.GET_VERSIONS.outputs.OPENSSL_BUILDENV_VERSION }}" | cut -d. -f1)"
           LATEST_MAJOR="$(echo "${{ steps.GET_VERSIONS.outputs.OPENSSL_VERSION }}" | cut -d. -f1)"
 
-          if [ "$CURRENT_MAJOR" != "$LATEST_MAJOR" ]; then
+          if [ "$LATEST_MAJOR" -gt "$CURRENT_MAJOR" ]; then
             if echo "$ALLOWED_MAJOR_OVERRIDES" | tr ',' '\n' | grep -qx "$LATEST_MAJOR"; then
               :
             else
