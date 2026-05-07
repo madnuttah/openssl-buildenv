@@ -40,12 +40,14 @@ RUN curl -L "https://github.com/openssl/openssl/releases/download/openssl-${OPEN
 WORKDIR /src/openssl
 
 RUN case "$TARGETARCH" in \
-      amd64) CONF="linux-x86_64"; EXTRA="enable-ec_nistp_64_gcc_128 enable-ktls";; \
-      386)   CONF="linux-x86"; EXTRA="";; \
-      armv7) CONF="linux-armv4"; EXTRA="";; \
-      arm)   CONF="linux-armv4"; EXTRA="";; \
+      amd64) CONF="linux-x86_64"; EXTRA="enable-ec_nistp_64_gcc_128 enable-ktls enable-asm enable-lto";; \
+      386)   CONF="linux-x86";    EXTRA="enable-asm enable-lto";; \
+      armv7) CONF="linux-armv4";  EXTRA="enable-asm enable-lto";; \
+      arm)   CONF="linux-armv4";  EXTRA="enable-asm enable-lto";; \
       *) echo "Unsupported arch: $TARGETARCH"; exit 1;; \
     esac && \
+    CFLAGS="-O3 -D_FORTIFY_SOURCE=2 -fstack-protector-strong" \
+    LDFLAGS="-Wl,-z,relro,-z,now" \
     ./Configure \
       ${CONF} \
       no-weak-ssl-ciphers \
@@ -73,7 +75,10 @@ RUN NGHTTP3_URL=$(curl -s https://api.github.com/repos/ngtcp2/nghttp3/releases \
     mkdir nghttp3 && tar -xf nghttp3.tar.gz -C nghttp3 --strip-components=1 && \
     cd nghttp3 && autoreconf -i && \
     PKG_CONFIG_PATH="/usr/local/openssl/lib/pkgconfig:/usr/local/lib/pkgconfig" \
-      ./configure --prefix=/usr/local --enable-lib-only --disable-static && \
+      ./configure --prefix=/usr/local \
+                  --enable-lib-only \
+                  --enable-optimizations \
+                  --disable-static && \
     make -j"$(nproc)" && make install
 
 RUN NGTCP2_URL=$(curl -s https://api.github.com/repos/ngtcp2/ngtcp2/releases \
@@ -82,7 +87,11 @@ RUN NGTCP2_URL=$(curl -s https://api.github.com/repos/ngtcp2/ngtcp2/releases \
     mkdir ngtcp2 && tar -xf ngtcp2.tar.gz -C ngtcp2 --strip-components=1 && \
     cd ngtcp2 && autoreconf -i && \
     PKG_CONFIG_PATH="/usr/local/openssl/lib/pkgconfig:/usr/local/lib/pkgconfig" \
-      ./configure --prefix=/usr/local/ngtcp2 --enable-lib-only --with-openssl=/usr/local/openssl --disable-static && \
+      ./configure --prefix=/usr/local/ngtcp2 \
+                  --enable-lib-only \
+                  --enable-optimizations \
+                  --with-openssl=/usr/local/openssl \
+                  --disable-static && \
     make -j"$(nproc)" && make install
 
 RUN rm -f /usr/local/lib/*.a /usr/local/lib/*.la && \
