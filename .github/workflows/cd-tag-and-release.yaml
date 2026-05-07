@@ -51,8 +51,16 @@ jobs:
           NGHTTP3_VERSION="$(grep '^NGHTTP3_VERSION=' buildvars | cut -d'=' -f2-)"
 
           SUB="${{ github.event.inputs.subversion || '0' }}"
-          OPENSSL_TAG="${OPENSSL_BUILDENV_VERSION}-${SUB}"
-          QUIC_TAG="${QUIC_BUILDENV_VERSION}-${SUB}"
+
+          if [ "${SUB}" = "0" ]; then
+            OPENSSL_TAG="${OPENSSL_BUILDENV_VERSION}"
+            QUIC_TAG="${QUIC_BUILDENV_VERSION}"
+          else
+            OPENSSL_BASE="$(printf "%s" "${OPENSSL_BUILDENV_VERSION}" | sed -E 's/-[0-9]+$//')"
+            QUIC_BASE="$(printf "%s" "${QUIC_BUILDENV_VERSION}" | sed -E 's/-quic$//' | sed -E 's/-[0-9]+$//')"
+            OPENSSL_TAG="${OPENSSL_BASE}-${SUB}"
+            QUIC_TAG="${QUIC_BASE}-${SUB}-quic"
+          fi
 
           git remote set-url origin https://x-access-token:${{ secrets.BOT_GITHUB_TOKEN }}@github.com/${{ github.repository }}
 
