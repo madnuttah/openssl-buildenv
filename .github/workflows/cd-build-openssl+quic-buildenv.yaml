@@ -19,37 +19,37 @@ jobs:
       matrix:
         include:
           - variant: openssl
-            dockerfile: openssl.Dockerfile
+            dockerfile: ./openssl/openssl.Dockerfile
             tag_suffix: ""
             arch: amd64
             platform: linux/amd64
 
           - variant: openssl
-            dockerfile: openssl.Dockerfile
+            dockerfile: ./openssl/openssl.Dockerfile
             tag_suffix: ""
             arch: 386
             platform: linux/386
 
           - variant: openssl
-            dockerfile: openssl.Dockerfile
+            dockerfile: ./openssl/openssl.Dockerfile
             tag_suffix: ""
             arch: armv7
             platform: linux/arm/v7
 
           - variant: openssl+quic
-            dockerfile: openssl+quic.Dockerfile
+            dockerfile: ./openssl/openssl+quic.Dockerfile
             tag_suffix: "-quic"
             arch: amd64
             platform: linux/amd64
 
           - variant: openssl+quic
-            dockerfile: openssl+quic.Dockerfile
+            dockerfile: ./openssl/openssl+quic.Dockerfile
             tag_suffix: "-quic"
             arch: 386
             platform: linux/386
 
           - variant: openssl+quic
-            dockerfile: openssl+quic.Dockerfile
+            dockerfile: ./openssl/openssl+quic.Dockerfile
             tag_suffix: "-quic"
             arch: armv7
             platform: linux/arm/v7
