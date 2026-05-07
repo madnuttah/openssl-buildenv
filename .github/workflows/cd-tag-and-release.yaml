@@ -11,8 +11,6 @@ on:
         description: Subversion
         required: false
         default: '0'
-  repository_dispatch:
-    types: [trigger-tag]
   workflow_run:
     workflows: ["CD Build OpenSSL+QUIC Buildenv"]
     types: [completed]
@@ -22,7 +20,6 @@ jobs:
     runs-on: ubuntu-latest
     if: >
       github.event_name == 'workflow_dispatch' ||
-      github.event_name == 'repository_dispatch' ||
       (github.event_name == 'workflow_run' &&
        github.event.workflow_run.conclusion == 'success')
 
