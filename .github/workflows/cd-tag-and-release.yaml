@@ -19,6 +19,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           persist-credentials: false
+          fetch-depth: 0
 
       - name: Import GPG key
         id: IMPORT_GPG
@@ -27,31 +28,46 @@ jobs:
           gpg_private_key: ${{ secrets.BOT_GPG_PRIVATE_KEY }}
           passphrase: ${{ secrets.BOT_GPG_PASSPHRASE }}
           git_user_signingkey: true
-          git_commit_gpgsign: false
+          git_commit_gpgsign: true
+          git_tag_gpgsign: true
           git_push_gpgsign: false
           trust_level: 5
 
-      - name: Push tag and upload release
+      - name: Tag and release
         env:
           GITHUB_TOKEN: ${{ secrets.BOT_GITHUB_TOKEN }}
           GIT_AUTHOR_NAME: ${{ steps.IMPORT_GPG.outputs.name }}
           GIT_AUTHOR_EMAIL: ${{ steps.IMPORT_GPG.outputs.email }}
           GIT_COMMITTER_NAME: ${{ steps.IMPORT_GPG.outputs.name }}
           GIT_COMMITTER_EMAIL: ${{ steps.IMPORT_GPG.outputs.email }}
-          GPG_FPR: ${{ steps.IMPORT_GPG.outputs.fingerprint }}
         run: |
           source buildvars
 
           SUB="${{ github.event.inputs.subversion || '0' }}"
 
           OPENSSL_TAG="$(echo $OPENSSL_BUILDENV_VERSION | sed 's/-[^-]*$//')-$SUB"
-          QUIC_TAG="$(echo $QUIC_BUILDENV_VERSION | sed 's/-[^-]*$//')-$SUB-quic"
+          QUIC_TAG="$(echo $QUIC_BUILDENV_VERSION | sed 's/-quic$//' | sed 's/-[^-]*$//')-$SUB-quic"
 
           git remote set-url origin https://x-access-token:${{ secrets.BOT_GITHUB_TOKEN }}@github.com/${{ github.repository }}
 
           git config user.name "${GIT_AUTHOR_NAME}"
           git config user.email "${GIT_AUTHOR_EMAIL}"
-          git config user.signingkey "$GPG_FPR"
+
+          LAST_TAG=$(git describe --tags --abbrev=0 || echo "")
+
+          CONTRIBUTORS=$(gh api repos/${{ github.repository }}/contributors --jq '.[].login' | sed 's/^/* @/g')
+
+          RELEASE_NOTE=$(cat <<EOF
+            ## $(date '+%Y-%m-%d') <madnuttah-bot>
+            ## What's Changed?
+            * Updated OpenSSL to version $OPENSSL_VERSION
+
+            OpenSSL changelog: https://github.com/openssl/openssl/releases/tag/openssl-$OPENSSL_VERSION
+
+            ## Contributors
+            $CONTRIBUTORS
+            EOF
+          )
 
           git tag -s "v${OPENSSL_TAG}" -m "v${OPENSSL_TAG}"
           git tag -s "v${QUIC_TAG}" -m "v${QUIC_TAG}"
@@ -61,4 +77,4 @@ jobs:
 
           gh release create "v${OPENSSL_TAG}" \
             -t "${OPENSSL_TAG}" \
-            -n "Updated OpenSSL and QUIC buildenv"
+            -n "$RELEASE_NOTE"
