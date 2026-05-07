@@ -28,14 +28,12 @@ jobs:
           fi
 
           echo OPENSSL_VERSION="$(curl -s https://api.github.com/repos/openssl/openssl/releases \
-            | jq -r '.[0].name' \
-            | grep -Eo '([0-9]+)(\.?[0-9]+)*' \
-            | head -1)" >> $GITHUB_OUTPUT
+            | jq -r '.[0].tag_name' \
+            | sed 's/[^0-9.]*//g')" >> $GITHUB_OUTPUT
 
           echo OPENSSL_BUILDENV_VERSION="$(curl -s https://api.github.com/repos/madnuttah/openssl-buildenv/releases \
-            | jq -r '.[0].name' \
-            | grep -Eo '([0-9]+)(\.?[0-9]+)*' \
-            | head -1)" >> $GITHUB_OUTPUT
+            | jq -r '.[0].tag_name' \
+            | sed 's/[^0-9.]*//g')" >> $GITHUB_OUTPUT
 
           echo NGTCP2_VERSION="$(curl -s https://api.github.com/repos/ngtcp2/ngtcp2/releases \
             | jq -r '.[0].tag_name')" >> $GITHUB_OUTPUT
