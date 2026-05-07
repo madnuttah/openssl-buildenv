@@ -97,8 +97,8 @@ jobs:
             git config user.signingkey "$GPG_FPR"
           fi
 
-          git tag -s "v${OPENSSL_TAG}" -m "v${OPENSSL_TAG}"
-          git tag -s "v${QUIC_TAG}" -m "v${QUIC_TAG}"
+          git tag -a "v${OPENSSL_TAG}" -m "v${OPENSSL_TAG}"
+          git tag -a "v${QUIC_TAG}" -m "v${QUIC_TAG}"
           git push -u origin "v${OPENSSL_TAG}" --force-with-lease
           git push -u origin "v${QUIC_TAG}" --force-with-lease
 
