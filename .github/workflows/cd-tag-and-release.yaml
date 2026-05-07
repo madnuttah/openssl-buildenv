@@ -74,7 +74,10 @@ jobs:
           git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}
 
           git fetch --prune origin --tags
-          git ls-remote --tags origin | grep "v${OPENSSL_TAG}" || true
+          if git ls-remote --tags origin | grep -q "refs/tags/v${OPENSSL_TAG}$"; then
+            echo "Tag v${OPENSSL_TAG} already exists, skipping."
+            exit 0
+          fi
 
           PREV_TAG=$(gh release list --limit 2 --json tagName --jq '.[1].tagName' 2>/dev/null || true)
 
