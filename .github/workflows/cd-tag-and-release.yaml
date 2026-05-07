@@ -102,10 +102,6 @@ jobs:
           git push -u origin "v${OPENSSL_TAG}" --force-with-lease
           git push -u origin "v${QUIC_TAG}" --force-with-lease
 
-          git fetch --all --tags
-          git checkout -b "${OPENSSL_TAG}" "v${OPENSSL_TAG}" || git checkout "${OPENSSL_TAG}"
-          git push --set-upstream origin "${OPENSSL_TAG}" --force-with-lease
-
           gh release create "v${OPENSSL_TAG}" \
             -t "${OPENSSL_TAG}" \
             -n "$RELEASE_NOTE" \

@@ -60,21 +60,21 @@ jobs:
             fi
           fi
 
-          if dpkg --compare-versions "${{ steps.GET_VERSIONS.outputs.OPENSSL_BUILDENV_VERSION }}" "lt" "${{ steps.GET_VERSIONS.outputs.OPENSSL_VERSION }}"; then  
+          if dpkg --compare-versions "${{ steps.GET_VERSIONS.outputs.OPENSSL_BUILDENV_VERSION }}" "lt" "${{ steps.GET_VERSIONS.outputs.OPENSSL_VERSION }}"; then
             echo OPENSSL_SHA256="$(curl -sL https://github.com/openssl/openssl/releases/download/openssl-${{ steps.GET_VERSIONS.outputs.OPENSSL_VERSION }}/openssl-${{ steps.GET_VERSIONS.outputs.OPENSSL_VERSION }}.tar.gz.sha256?raw=1 | cut -d ' ' -f1)" >> $GITHUB_OUTPUT
             echo "update_available=true" >> $GITHUB_OUTPUT
           else
             echo "update_available=false" >> $GITHUB_OUTPUT
             exit 0
           fi
-          
+
       - name: Checkout source
         if: ${{ steps.IS_UPDATE_AVAILABLE.outputs.update_available == 'true' }}
         uses: actions/checkout@v6
         with:
           persist-credentials: false
-          
-      - name: Import GPG key 
+
+      - name: Import GPG key
         if: ${{ steps.IS_UPDATE_AVAILABLE.outputs.update_available == 'true' }}
         id: IMPORT_GPG
         uses: crazy-max/ghaction-import-gpg@v7
@@ -85,7 +85,7 @@ jobs:
           git_commit_gpgsign: false
           git_push_gpgsign: false
           trust_level: 5
-          
+
       - name: Push buildvars to repository
         if: ${{ steps.IS_UPDATE_AVAILABLE.outputs.update_available == 'true' }}
         env:

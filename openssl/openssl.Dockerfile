@@ -17,7 +17,7 @@ LABEL maintainer="madnuttah" \
       openssl_version="${OPENSSL_VERSION}"
 
 ENV PREFIX="/usr/local" \
-    PATH="/usr/local/bin:${PATH}" \
+    PATH="/usr/local/openssl/bin:/usr/local/bin:${PATH}" \
     PKG_CONFIG_PATH="/usr/local/openssl/lib/pkgconfig:/usr/local/lib/pkgconfig"
 
 RUN apk add --no-cache \

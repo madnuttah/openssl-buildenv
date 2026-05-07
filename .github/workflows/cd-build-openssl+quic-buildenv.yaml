@@ -14,43 +14,39 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      SUBVERSION: ${{ github.event.inputs.subversion || '0' }}
     strategy:
       fail-fast: false
       matrix:
         include:
           - variant: openssl
             dockerfile: ./openssl/openssl.Dockerfile
-            tag_suffix: ""
             arch: amd64
             platform: linux/amd64
 
           - variant: openssl
             dockerfile: ./openssl/openssl.Dockerfile
-            tag_suffix: ""
             arch: 386
             platform: linux/386
 
           - variant: openssl
             dockerfile: ./openssl/openssl.Dockerfile
-            tag_suffix: ""
             arch: armv7
             platform: linux/arm/v7
 
           - variant: openssl+quic
             dockerfile: ./openssl/openssl+quic.Dockerfile
-            tag_suffix: "-quic"
             arch: amd64
             platform: linux/amd64
 
           - variant: openssl+quic
             dockerfile: ./openssl/openssl+quic.Dockerfile
-            tag_suffix: "-quic"
             arch: 386
             platform: linux/386
 
           - variant: openssl+quic
             dockerfile: ./openssl/openssl+quic.Dockerfile
-            tag_suffix: "-quic"
             arch: armv7
             platform: linux/arm/v7
 
@@ -77,7 +73,24 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build and push per-arch image
+      - name: Build and push OpenSSL image
+        if: ${{ matrix.variant == 'openssl' }}
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ${{ matrix.dockerfile }}
+          platforms: ${{ matrix.platform }}
+          push: true
+          build-args: |
+            BUILDENV_BUILD_DATE=${{ steps.vars.outputs.BUILDENV_BUILD_DATE }}
+            OPENSSL_VERSION=${{ steps.vars.outputs.OPENSSL_VERSION }}
+            OPENSSL_SHA256=${{ steps.vars.outputs.OPENSSL_SHA256 }}
+            OPENSSL_BUILDENV_VERSION=${{ steps.vars.outputs.OPENSSL_BUILDENV_VERSION }}
+          tags: |
+            madnuttah/openssl-buildenv:${{ steps.vars.outputs.OPENSSL_BUILDENV_VERSION }}-${{ env.SUBVERSION }}-${{ matrix.arch }}
+
+      - name: Build and push QUIC image
+        if: ${{ matrix.variant == 'openssl+quic' }}
         uses: docker/build-push-action@v6
         with:
           context: .
@@ -93,11 +106,13 @@ jobs:
             NGTCP2_VERSION=${{ steps.vars.outputs.NGTCP2_VERSION }}
             NGHTTP3_VERSION=${{ steps.vars.outputs.NGHTTP3_VERSION }}
           tags: |
-            madnuttah/openssl-buildenv:${{ steps.vars.outputs.OPENSSL_BUILDENV_VERSION }}-${{ github.event.inputs.subversion }}${{ matrix.tag_suffix }}-${{ matrix.arch }}
+            madnuttah/openssl-buildenv:${{ steps.vars.outputs.QUIC_BUILDENV_VERSION }}-${{ env.SUBVERSION }}-${{ matrix.arch }}
 
   manifest:
     needs: build
     runs-on: ubuntu-latest
+    env:
+      SUBVERSION: ${{ github.event.inputs.subversion || '0' }}
     steps:
       - uses: actions/checkout@v4
 
@@ -116,29 +131,29 @@ jobs:
       - name: Create OpenSSL manifest
         run: |
           docker buildx imagetools create \
-            --tag madnuttah/openssl-buildenv:${{ steps.vars.outputs.OPENSSL_BUILDENV_VERSION }}-${{ github.event.inputs.subversion }} \
-            madnuttah/openssl-buildenv:${{ steps.vars.outputs.OPENSSL_BUILDENV_VERSION }}-${{ github.event.inputs.subversion }}-amd64 \
-            madnuttah/openssl-buildenv:${{ steps.vars.outputs.OPENSSL_BUILDENV_VERSION }}-${{ github.event.inputs.subversion }}-386 \
-            madnuttah/openssl-buildenv:${{ steps.vars.outputs.OPENSSL_BUILDENV_VERSION }}-${{ github.event.inputs.subversion }}-armv7
+            --tag madnuttah/openssl-buildenv:${{ steps.vars.outputs.OPENSSL_BUILDENV_VERSION }}-${{ env.SUBVERSION }} \
+            madnuttah/openssl-buildenv:${{ steps.vars.outputs.OPENSSL_BUILDENV_VERSION }}-${{ env.SUBVERSION }}-amd64 \
+            madnuttah/openssl-buildenv:${{ steps.vars.outputs.OPENSSL_BUILDENV_VERSION }}-${{ env.SUBVERSION }}-386 \
+            madnuttah/openssl-buildenv:${{ steps.vars.outputs.OPENSSL_BUILDENV_VERSION }}-${{ env.SUBVERSION }}-armv7
 
       - name: Create QUIC manifest
         run: |
           docker buildx imagetools create \
-            --tag madnuttah/openssl-buildenv:${{ steps.vars.outputs.QUIC_BUILDENV_VERSION }}-${{ github.event.inputs.subversion }} \
-            madnuttah/openssl-buildenv:${{ steps.vars.outputs.QUIC_BUILDENV_VERSION }}-${{ github.event.inputs.subversion }}-amd64 \
-            madnuttah/openssl-buildenv:${{ steps.vars.outputs.QUIC_BUILDENV_VERSION }}-${{ github.event.inputs.subversion }}-386 \
-            madnuttah/openssl-buildenv:${{ steps.vars.outputs.QUIC_BUILDENV_VERSION }}-${{ github.event.inputs.subversion }}-armv7
+            --tag madnuttah/openssl-buildenv:${{ steps.vars.outputs.QUIC_BUILDENV_VERSION }}-${{ env.SUBVERSION }} \
+            madnuttah/openssl-buildenv:${{ steps.vars.outputs.QUIC_BUILDENV_VERSION }}-${{ env.SUBVERSION }}-amd64 \
+            madnuttah/openssl-buildenv:${{ steps.vars.outputs.QUIC_BUILDENV_VERSION }}-${{ env.SUBVERSION }}-386 \
+            madnuttah/openssl-buildenv:${{ steps.vars.outputs.QUIC_BUILDENV_VERSION }}-${{ env.SUBVERSION }}-armv7
 
       - name: Update latest tags
         run: |
           docker buildx imagetools create \
             --tag madnuttah/openssl-buildenv:latest \
-            madnuttah/openssl-buildenv:${{ steps.vars.outputs.OPENSSL_BUILDENV_VERSION }}-${{ github.event.inputs.subversion }}-amd64 \
-            madnuttah/openssl-buildenv:${{ steps.vars.outputs.OPENSSL_BUILDENV_VERSION }}-${{ github.event.inputs.subversion }}-386 \
-            madnuttah/openssl-buildenv:${{ steps.vars.outputs.OPENSSL_BUILDENV_VERSION }}-${{ github.event.inputs.subversion }}-armv7
+            madnuttah/openssl-buildenv:${{ steps.vars.outputs.OPENSSL_BUILDENV_VERSION }}-${{ env.SUBVERSION }}-amd64 \
+            madnuttah/openssl-buildenv:${{ steps.vars.outputs.OPENSSL_BUILDENV_VERSION }}-${{ env.SUBVERSION }}-386 \
+            madnuttah/openssl-buildenv:${{ steps.vars.outputs.OPENSSL_BUILDENV_VERSION }}-${{ env.SUBVERSION }}-armv7
 
           docker buildx imagetools create \
             --tag madnuttah/openssl-buildenv:latest-quic \
-            madnuttah/openssl-buildenv:${{ steps.vars.outputs.QUIC_BUILDENV_VERSION }}-${{ github.event.inputs.subversion }}-amd64 \
-            madnuttah/openssl-buildenv:${{ steps.vars.outputs.QUIC_BUILDENV_VERSION }}-${{ github.event.inputs.subversion }}-386 \
-            madnuttah/openssl-buildenv:${{ steps.vars.outputs.QUIC_BUILDENV_VERSION }}-${{ github.event.inputs.subversion }}-armv7
+            madnuttah/openssl-buildenv:${{ steps.vars.outputs.QUIC_BUILDENV_VERSION }}-${{ env.SUBVERSION }}-amd64 \
+            madnuttah/openssl-buildenv:${{ steps.vars.outputs.QUIC_BUILDENV_VERSION }}-${{ env.SUBVERSION }}-386 \
+            madnuttah/openssl-buildenv:${{ steps.vars.outputs.QUIC_BUILDENV_VERSION }}-${{ env.SUBVERSION }}-armv7

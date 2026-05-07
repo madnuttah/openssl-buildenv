@@ -21,7 +21,7 @@ LABEL maintainer="madnuttah" \
       quic_buildenv_version="${QUIC_BUILDENV_VERSION}"
 
 ENV PREFIX="/usr/local" \
-    PATH="/usr/local/bin:${PATH}" \
+    PATH="/usr/local/openssl/bin:/usr/local/bin:${PATH}" \
     PKG_CONFIG_PATH="/usr/local/openssl/lib/pkgconfig:/usr/local/lib/pkgconfig"
 
 RUN apk add --no-cache \
@@ -71,7 +71,8 @@ RUN NGHTTP3_URL=$(curl -s https://api.github.com/repos/ngtcp2/nghttp3/releases \
     curl -L "$NGHTTP3_URL" -o nghttp3.tar.gz && \
     mkdir nghttp3 && tar -xf nghttp3.tar.gz -C nghttp3 --strip-components=1 && \
     cd nghttp3 && autoreconf -i && \
-    ./configure --prefix=/usr/local --enable-lib-only --disable-static && \
+    PKG_CONFIG_PATH="/usr/local/openssl/lib/pkgconfig:/usr/local/lib/pkgconfig" \
+      ./configure --prefix=/usr/local --enable-lib-only --disable-static && \
     make -j"$(nproc)" && make install
 
 RUN NGTCP2_URL=$(curl -s https://api.github.com/repos/ngtcp2/ngtcp2/releases \
