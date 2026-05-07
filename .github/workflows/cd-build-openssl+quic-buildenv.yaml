@@ -52,7 +52,7 @@ jobs:
             platform: linux/arm/v7
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Load buildvars
         id: vars
@@ -114,7 +114,7 @@ jobs:
       SUBVERSION: ${{ github.event.inputs.subversion || '0' }}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Load buildvars
         id: vars
