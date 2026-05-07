@@ -64,7 +64,10 @@ jobs:
           echo "NGHTTP3_VERSION=$NGHTTP3_VERSION" >> $GITHUB_OUTPUT
           echo "BUILDENV_BUILD_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")" >> $GITHUB_OUTPUT
 
+          # OPENSSL_FINAL = 4.0.0-<SUBVERSION>
           echo "OPENSSL_FINAL=$(echo $OPENSSL_BUILDENV_VERSION | sed 's/-[^-]*$//')-${{ env.SUBVERSION }}" >> $GITHUB_OUTPUT
+
+          # QUIC_FINAL = 4.0.0-<SUBVERSION>-quic
           echo "QUIC_FINAL=$(echo $QUIC_BUILDENV_VERSION | sed 's/-quic$//' | sed 's/-[^-]*$//')-${{ env.SUBVERSION }}-quic" >> $GITHUB_OUTPUT
 
       - uses: docker/setup-qemu-action@v3
@@ -118,12 +121,10 @@ jobs:
 
       - name: Load buildvars
         id: vars
-        
-    run: |
-      source buildvars
-      echo "OPENSSL_FINAL=$(echo $OPENSSL_BUILDENV_VERSION | sed 's/-[^-]*$//')-${{ env.SUBVERSION }}" >> $GITHUB_OUTPUT
-      echo "QUIC_FINAL=$(echo $QUIC_BUILDENV_VERSION | sed 's/-[^-]*$//')-${{ env.SUBVERSION }}-quic" >> $GITHUB_OUTPUT
-
+        run: |
+          source buildvars
+          echo "OPENSSL_FINAL=$(echo $OPENSSL_BUILDENV_VERSION | sed 's/-[^-]*$//')-${{ env.SUBVERSION }}" >> $GITHUB_OUTPUT
+          echo "QUIC_FINAL=$(echo $QUIC_BUILDENV_VERSION | sed 's/-quic$//' | sed 's/-[^-]*$//')-${{ env.SUBVERSION }}-quic" >> $GITHUB_OUTPUT
 
       - uses: docker/login-action@v3
         with:
