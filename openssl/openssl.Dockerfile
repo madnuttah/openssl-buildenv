@@ -20,10 +20,29 @@ ENV PREFIX="/usr/local" \
     PATH="/usr/local/openssl/bin:/usr/local/bin:${PATH}" \
     PKG_CONFIG_PATH="/usr/local/openssl/lib/pkgconfig:/usr/local/lib/pkgconfig"
 
-RUN apk add --no-cache \
-    build-base perl git ca-certificates curl linux-headers bash perl-utils \
-    autoconf automake libtool pkgconfig libev-dev python3 gnupg cmake pkgconf jq \
-    gettext-dev
+RUN set -xe; \
+  apk --update --no-cache add \
+    ca-certificates \
+    curl \
+    bash \
+    perl \
+    perl-utils \
+    python3 \
+    jq \
+    git \
+    gnupg \
+    libev-dev \
+    pkgconf \
+    gettext-dev \
+    linux-headers && \
+  apk --update --no-cache add --virtual .build-deps \
+    build-base \
+    autoconf \
+    automake \
+    libtool \
+    pkgconfig \
+    cmake && \
+  update-ca-certificates
 
 WORKDIR /src
 
@@ -62,11 +81,9 @@ RUN case "$TARGETARCH" in \
     make -j"$(nproc)" && \
     make install_sw
 
-RUN rm -f /usr/local/lib/*.a /usr/local/lib/*.la && \
-    rm -f /usr/local/openssl/lib/*.a /usr/local/openssl/lib/*.la && \
-    RUN find /usr/local -type f -name "*.a" -delete && \
+RUN find /usr/local -type f -name "*.a" -delete && \
     find /usr/local -type f -name "*.la" -delete && \
     find /usr/local -type f -name "*.so*" -exec strip --strip-unneeded {} + || true && \
     find /usr/local -type f -perm -111 -exec strip --strip-all {} + || true && \
-    rm -rf /src /tmp/* /var/tmp/* /var/log/* && \
-    apk del gettext-dev
+    apk del .build-deps gettext-dev && \
+    rm -rf /src /tmp/* /var/tmp/* /var/log/*
