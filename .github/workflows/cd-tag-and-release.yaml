@@ -37,7 +37,7 @@ jobs:
           git_push_gpgsign: false
           trust_level: 5
 
-      - name: Push tag and upload release to GitHub
+      - name: Push tag, changelog, and release
         env:
           GITHUB_TOKEN: ${{ secrets.BOT_GITHUB_TOKEN }}
           GIT_AUTHOR_NAME: ${{ steps.IMPORT_GPG.outputs.name }}
@@ -49,7 +49,6 @@ jobs:
 
           OPENSSL_VERSION="$(grep '^OPENSSL_BUILDENV_VERSION=' buildvars | cut -d'=' -f2-)"
           SUBVERSION="$(grep '^SUBVERSION=' buildvars | cut -d'=' -f2-)"
-
           TAG="${OPENSSL_VERSION}-${SUBVERSION}"
 
           git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}
@@ -63,5 +62,50 @@ jobs:
           git tag -s "v${TAG}" -m "v${TAG}"
           git push origin "v${TAG}" --force-with-lease
 
-          gh release create "v${TAG}" -t "${TAG}" -n "Automated release for ${TAG}" --latest || \
-          gh release edit "v${TAG}" -t "${TAG}" -n "Automated release for ${TAG}"
+          PREV_TAG=$(git tag --sort=-v:refname | grep -v "v${TAG}$" | head -n 1)
+
+          echo "## v${TAG} — $(date -u +"%Y-%m-%d")" > CHANGELOG_TMP
+          echo "" >> CHANGELOG_TMP
+
+          echo "### Updated components" >> CHANGELOG_TMP
+          git diff "${PREV_TAG}" "v${TAG}" -- buildvars | grep '^+' | sed 's/^+//' | grep -v '^+++' >> CHANGELOG_TMP
+          echo "" >> CHANGELOG_TMP
+
+          echo "### Commits" >> CHANGELOG_TMP
+          git log "${PREV_TAG}..v${TAG}" --oneline >> CHANGELOG_TMP
+          echo "" >> CHANGELOG_TMP
+
+          echo "### Contributors" >> CHANGELOG_TMP
+          git log "${PREV_TAG}..v${TAG}" --format="%aN|%aE" \
+            | sort -u \
+            | while IFS='|' read -r NAME EMAIL; do
+                LOWER=$(echo "$NAME" | tr '[:upper:]' '[:lower:]')
+                if echo "$LOWER" | grep -Eq "bot|github-actions"; then
+                  continue
+                fi
+                USER=$(curl -s "https://api.github.com/search/users?q=${EMAIL}" \
+                  | jq -r '.items[0].login // empty')
+                if [ -n "$USER" ]; then
+                  echo "- @${USER}" >> CHANGELOG_TMP
+                else
+                  echo "- ${NAME}" >> CHANGELOG_TMP
+                fi
+              done
+          echo "" >> CHANGELOG_TMP
+
+          if [ -f CHANGELOG.md ]; then
+            cat CHANGELOG.md >> CHANGELOG_TMP
+          fi
+          mv CHANGELOG_TMP CHANGELOG.md
+
+          git add CHANGELOG.md
+          git commit -m "Update changelog for v${TAG}" || true
+          git push
+
+          gh release create "v${TAG}" \
+            -t "${TAG}" \
+            -F CHANGELOG.md \
+            --latest || \
+          gh release edit "v${TAG}" \
+            -t "${TAG}" \
+            -F CHANGELOG.md
