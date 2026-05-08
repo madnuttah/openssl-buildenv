@@ -38,7 +38,7 @@ jobs:
           passphrase: ${{ secrets.BOT_GPG_PASSPHRASE }}
           git_user_signingkey: true
           git_commit_gpgsign: false
-          git_tag_gpgsign: false
+          git_tag_gpgsign: true
           git_push_gpgsign: false
           trust_level: 5
 
@@ -115,7 +115,7 @@ jobs:
           if git rev-parse "refs/tags/v${OPENSSL_TAG}" >/dev/null 2>&1; then
             :
           else
-            git tag -a "v${OPENSSL_TAG}" -m "v${OPENSSL_TAG}"
+            git tag -s "v${OPENSSL_TAG}" -m "v${OPENSSL_TAG}"
           fi
 
           git push origin "v${OPENSSL_TAG}" --force-with-lease

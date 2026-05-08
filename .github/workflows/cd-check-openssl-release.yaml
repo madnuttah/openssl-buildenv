@@ -97,7 +97,9 @@ jobs:
           echo NGTCP2_VERSION="${{ steps.GET_VERSIONS.outputs.NGTCP2_VERSION }}" >> buildvars
           echo NGHTTP3_VERSION="${{ steps.GET_VERSIONS.outputs.NGHTTP3_VERSION }}" >> buildvars
           echo QUIC_BUILDENV_VERSION="${{ steps.GET_VERSIONS.outputs.OPENSSL_VERSION }}-0-quic" >> buildvars
+          echo SUBVERSION=0 >> buildvars
 
           git add buildvars
-          git commit buildvars -m "Updated buildvars"
+          git commit -m "Updated buildvars" || echo "No changes to commit"
           git push origin main
+
