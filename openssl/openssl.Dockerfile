@@ -20,7 +20,6 @@ ENV PREFIX="/usr/local" \
     PATH="/usr/local/openssl/bin:/usr/local/bin:${PATH}" \
     PKG_CONFIG_PATH="/usr/local/openssl/lib/pkgconfig:/usr/local/lib/pkgconfig"
 
-# --- Improvement: add --no-cache to curl, remove unnecessary cache layers
 RUN apk add --no-cache \
     build-base perl git ca-certificates curl linux-headers bash perl-utils \
     autoconf automake libtool pkgconfig libev-dev python3 gnupg cmake pkgconf jq \
@@ -28,7 +27,6 @@ RUN apk add --no-cache \
 
 WORKDIR /src
 
-# --- Improvement: curl with --fail and --no-progress-meter for reliability
 RUN curl -L --fail --no-progress-meter \
       "https://github.com/openssl/openssl/releases/download/openssl-${OPENSSL_VERSION}/openssl-${OPENSSL_VERSION}.tar.gz" \
       -o "openssl-${OPENSSL_VERSION}.tar.gz" && \
