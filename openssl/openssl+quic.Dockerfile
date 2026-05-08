@@ -111,9 +111,7 @@ RUN NGTCP2_URL=$(curl -s --fail https://api.github.com/repos/ngtcp2/ngtcp2/relea
     PKG_CONFIG_PATH="/usr/local/openssl/lib/pkgconfig:/usr/local/lib/pkgconfig" \
       ./configure --prefix=/usr/local/ngtcp2 \
                   --enable-lib-only \
-                  --enable-optimizations \
-                  --with-openssl=/usr/local/openssl \
-                  --disable-static && \
+                  --with-openssl=/usr/local/openssl && \
     make -j"$(nproc)" && make install
 
 RUN find /usr/local -type f -name "*.a" -delete && \
