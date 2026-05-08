@@ -11,6 +11,10 @@ on:
 env:
   DOCKERHUB_SLUG: "madnuttah/openssl-buildenv"
 
+permissions:
+  actions: read
+  contents: write
+
 jobs:
   cleanup-tags:
     if: >
