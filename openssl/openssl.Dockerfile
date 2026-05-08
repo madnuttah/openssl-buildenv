@@ -76,7 +76,7 @@ RUN rm -f /usr/local/lib/*.a /usr/local/lib/*.la && \
 
 FROM alpine:latest AS final
 
-apk add --no-cache ca-certificates
+RUN apk add --no-cache ca-certificates
 
 COPY --from=buildenv /usr/local /usr/local
 
