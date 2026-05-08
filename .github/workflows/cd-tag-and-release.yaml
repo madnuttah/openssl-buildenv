@@ -2,7 +2,7 @@ name: CD Tag And Release
 
 permissions:
   contents: write
-  actions: write
+  actions: read
 
 on:
   workflow_dispatch:
