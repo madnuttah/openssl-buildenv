@@ -1,4 +1,4 @@
-o# `OpenSSL Build Environment`
+# `OpenSSL Build Environment`
 
 [![Current OpenSSL release](https://img.shields.io/github/v/tag/openssl/openssl?label=Current%20OpenSSL%20release&style=flat-square)](https://github.com/openssl/openssl/tags)
 [![OpenSSL buildenv](https://img.shields.io/github/v/release/madnuttah/openssl-buildenv?label=madnuttah/openssl-buildenv%20release&style=flat-square)](https://github.com/madnuttah/openssl-buildenv/releases)
