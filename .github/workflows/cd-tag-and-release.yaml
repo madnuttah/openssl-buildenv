@@ -32,8 +32,8 @@ jobs:
           gpg_private_key: ${{ secrets.BOT_GPG_PRIVATE_KEY }}
           passphrase: ${{ secrets.BOT_GPG_PASSPHRASE }}
           git_user_signingkey: true
-          git_commit_gpgsign: false
-          git_tag_gpgsign: false
+          git_commit_gpgsign: true
+          git_tag_gpgsign: true
           git_push_gpgsign: false
           trust_level: 5
 
@@ -59,7 +59,7 @@ jobs:
             exit 0
           fi
 
-          git tag -s "v${TAG}" -m "v${TAG}"
+          git tag -a "v${TAG}" -m "v${TAG}"
           git push origin "v${TAG}" --force-with-lease
 
           PREV_TAG=$(git tag --sort=-v:refname | grep -v "v${TAG}$" | head -n 1)
