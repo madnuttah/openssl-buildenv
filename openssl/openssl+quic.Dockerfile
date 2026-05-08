@@ -46,10 +46,11 @@ RUN case "$TARGETARCH" in \
       arm)   CONF="linux-armv4";  EXTRA="enable-asm";; \
       *) echo "Unsupported arch: $TARGETARCH"; exit 1;; \
     esac && \
-    CFLAGS="-O3 -D_FORTIFY_SOURCE=2 -fstack-protector-strong" \
+    CFLAGS="-O3 -D_FORTIFY_SOURCE=2 -fstack-protector-strong -fstack-clash-protection -fpic -DOPENSSL_NO_HEARTBEATS" \
     LDFLAGS="-Wl,-z,relro,-z,now" \
     ./Configure \
       ${CONF} \
+      ${EXTRA} \
       no-weak-ssl-ciphers \
       no-apps \
       no-docs \
@@ -58,9 +59,9 @@ RUN case "$TARGETARCH" in \
       no-err \
       no-autoerrinit \
       enable-tfo \
-      enable-quic \
-      ${EXTRA} \
-      --prefix=/usr/local/openssl && \
+      --prefix=/usr/local/openssl \
+      --openssldir=/usr/local/openssl \
+      --libdir=/usr/local/openssl/lib && \
     make -j"$(nproc)" && \
     make install_sw
 
