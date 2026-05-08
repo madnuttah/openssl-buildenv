@@ -175,3 +175,17 @@ jobs:
             madnuttah/openssl-buildenv:${{ steps.vars.outputs.QUIC_FINAL }}-amd64 \
             madnuttah/openssl-buildenv:${{ steps.vars.outputs.QUIC_FINAL }}-386 \
             madnuttah/openssl-buildenv:${{ steps.vars.outputs.QUIC_FINAL }}-armv7
+
+      - name: Latest tags
+        run: |
+          docker buildx imagetools create \
+            --tag madnuttah/openssl-buildenv:latest \
+            madnuttah/openssl-buildenv:${{ steps.vars.outputs.OPENSSL_FINAL }}-amd64 \
+            madnuttah/openssl-buildenv:${{ steps.vars.outputs.OPENSSL_FINAL }}-386 \
+            madnuttah/openssl-buildenv:${{ steps.vars.outputs.OPENSSL_FINAL }}-armv7
+
+          docker buildx imagetools create \
+            --tag madnuttah/openssl-buildenv:latest-quic \
+            madnuttah/openssl-buildenv:${{ steps.vars.outputs.QUIC_FINAL }}-amd64 \
+            madnuttah/openssl-buildenv:${{ steps.vars.outputs.QUIC_FINAL }}-386 \
+            madnuttah/openssl-buildenv:${{ steps.vars.outputs.QUIC_FINAL }}-armv7
