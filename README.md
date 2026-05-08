@@ -1,7 +1,7 @@
 # `OpenSSL Build Environment`
 
 [![Current OpenSSL release](https://img.shields.io/github/v/tag/openssl/openssl?label=Current%20OpenSSL%20release&style=flat-square)](https://github.com/openssl/openssl/tags)
-[![OpenSSL buildenv](https://img.shields.io/github/v/release/madnuttah/openssl-buildenv?include_prereleases&label=madnuttah/openssl-buildenv%20release&style=flat-square)](https://github.com/madnuttah/openssl-buildenv/releases)
+[![OpenSSL buildenv](https://img.shields.io/github/v/release/madnuttah/openssl-buildenv?label=madnuttah/openssl-buildenv%20release&style=flat-square)](https://github.com/madnuttah/openssl-buildenv/releases)
 
 
 **This is an optimized OpenSSL build environment used by [`madnuttah/unbound-docker`](https://github.com/madnuttah/unbound-docker/).**
