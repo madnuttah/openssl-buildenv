@@ -105,11 +105,3 @@ RUN rm -f /usr/local/lib/*.a /usr/local/lib/*.la && \
     find /usr/local -type f -perm -111 -exec strip --strip-all {} + || true && \
     rm -rf /src /tmp/* /var/tmp/* /var/log/* && \
     apk del gettext-dev
-
-FROM alpine:latest AS final
-
-RUN apk add --no-cache ca-certificates
-
-COPY --from=buildenv /usr/local /usr/local
-
-ENV LD_LIBRARY_PATH="/usr/local/lib:/usr/local/openssl/lib:/usr/local/ngtcp2/lib"
