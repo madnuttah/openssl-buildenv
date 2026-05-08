@@ -6,7 +6,10 @@ on:
   pull_request:
     branches: ["**"]
 
-permissions: {}
+permissions:
+  actions: read
+  contents: read
+
 
 jobs:
   zizmor:
