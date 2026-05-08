@@ -118,7 +118,5 @@ RUN NGTCP2_URL=$(curl -s --fail https://api.github.com/repos/ngtcp2/ngtcp2/relea
 
 RUN find /usr/local -type f -name "*.a" -delete && \
     find /usr/local -type f -name "*.la" -delete && \
-    find /usr/local -type f -name "*.so*" -exec strip --strip-unneeded {} + || true && \
-    find /usr/local -type f -perm -111 -exec strip --strip-all {} + || true && \
     apk del .build-deps gettext-dev && \
     rm -rf /src /tmp/* /var/tmp/* /var/log/*
