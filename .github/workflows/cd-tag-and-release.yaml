@@ -54,10 +54,11 @@ jobs:
           git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}
 
           git fetch --prune origin --tags
-          if git ls-remote --tags origin | grep -q "refs/tags/v${TAG}$"; then
+          if git rev-parse "refs/tags/v${TAG}" >/dev/null 2>&1; then
             echo "Tag v${TAG} already exists, skipping."
             exit 0
           fi
+
 
           git tag -a "v${TAG}" -m "v${TAG}"
           git push origin "v${TAG}" --force-with-lease
