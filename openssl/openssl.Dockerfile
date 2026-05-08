@@ -64,13 +64,7 @@ RUN case "$TARGETARCH" in \
     make -j"$(nproc)" && \
     make install_sw
 
-RUN rm -f /usr/local/lib/*.a /usr/local/lib/*.la && \
-    rm -f /usr/local/openssl/lib/*.a /usr/local/openssl/lib/*.la && \
-    strip --strip-unneeded /usr/local/lib/*.so* || true && \
-    strip --strip-unneeded /usr/local/openssl/lib/*.so* || true && \
-    strip --strip-all /usr/local/bin/* || true && \
-    strip --strip-all /usr/local/openssl/bin/* || true && \
-    rm -rf /src /tmp/* /var/tmp/* /var/log/* && \
+RUN rm -rf /src /tmp/* /var/tmp/* /var/log/* && \
     apk del gettext-dev
 
 FROM alpine:latest AS final
