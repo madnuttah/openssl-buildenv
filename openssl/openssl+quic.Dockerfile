@@ -22,7 +22,7 @@ LABEL maintainer="madnuttah" \
 
 ENV PREFIX="/usr/local" \
     PATH="/usr/local/openssl/bin:/usr/local/bin:${PATH}" \
-    PKG_CONFIG_PATH="/usr/local/openssl/lib/pkgconfig:/usr/local/lib/pkgconfig"
+    PKG_CONFIG_PATH="/usr/local/ngtcp2/lib/pkgconfig:/usr/local/lib/pkgconfig:/usr/local/openssl/lib/pkgconfig"
 
 RUN set -xe; \
   apk --update --no-cache add \
