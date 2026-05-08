@@ -100,9 +100,7 @@ RUN NGHTTP3_URL=$(curl -s --fail https://api.github.com/repos/ngtcp2/nghttp3/rel
     cd nghttp3 && autoreconf -i && \
     PKG_CONFIG_PATH="/usr/local/openssl/lib/pkgconfig:/usr/local/lib/pkgconfig" \
       ./configure --prefix=/usr/local \
-                  --enable-lib-only \
-                  --enable-optimizations \
-                  --disable-static && \
+                  --enable-lib-only && \
     make -j"$(nproc)" && make install
 
 RUN NGTCP2_URL=$(curl -s --fail https://api.github.com/repos/ngtcp2/ngtcp2/releases \
