@@ -5,6 +5,10 @@ on:
     - cron: '0 15 * * mon-fri'
   workflow_dispatch:
 
+permissions:
+  actions: read
+  contents: write
+
 jobs:
   openssl-update:
     runs-on: ubuntu-latest
