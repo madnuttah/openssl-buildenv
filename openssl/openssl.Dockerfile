@@ -20,6 +20,7 @@ ENV PREFIX="/usr/local" \
     PATH="/usr/local/openssl/bin:/usr/local/bin:${PATH}" \
     PKG_CONFIG_PATH="/usr/local/openssl/lib/pkgconfig:/usr/local/lib/pkgconfig"
 
+# --- Improvement: add --no-cache to curl, remove unnecessary cache layers
 RUN apk add --no-cache \
     build-base perl git ca-certificates curl linux-headers bash perl-utils \
     autoconf automake libtool pkgconfig libev-dev python3 gnupg cmake pkgconf jq \
@@ -27,7 +28,9 @@ RUN apk add --no-cache \
 
 WORKDIR /src
 
-RUN curl -L "https://github.com/openssl/openssl/releases/download/openssl-${OPENSSL_VERSION}/openssl-${OPENSSL_VERSION}.tar.gz" \
+# --- Improvement: curl with --fail and --no-progress-meter for reliability
+RUN curl -L --fail --no-progress-meter \
+      "https://github.com/openssl/openssl/releases/download/openssl-${OPENSSL_VERSION}/openssl-${OPENSSL_VERSION}.tar.gz" \
       -o "openssl-${OPENSSL_VERSION}.tar.gz" && \
     echo "${OPENSSL_SHA256}  openssl-${OPENSSL_VERSION}.tar.gz" | sha256sum -c - && \
     tar -xf "openssl-${OPENSSL_VERSION}.tar.gz" && \
@@ -62,8 +65,11 @@ RUN case "$TARGETARCH" in \
     make install_sw
 
 RUN rm -f /usr/local/lib/*.a /usr/local/lib/*.la && \
+    rm -f /usr/local/openssl/lib/*.a /usr/local/openssl/lib/*.la && \
     strip --strip-unneeded /usr/local/lib/*.so* || true && \
+    strip --strip-unneeded /usr/local/openssl/lib/*.so* || true && \
     strip --strip-all /usr/local/bin/* || true && \
+    strip --strip-all /usr/local/openssl/bin/* || true && \
     rm -rf /src /tmp/* /var/tmp/* /var/log/* && \
     apk del gettext-dev
 

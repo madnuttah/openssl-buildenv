@@ -31,7 +31,8 @@ RUN apk add --no-cache \
 
 WORKDIR /src
 
-RUN curl -L "https://github.com/openssl/openssl/releases/download/openssl-${OPENSSL_VERSION}/openssl-${OPENSSL_VERSION}.tar.gz" \
+RUN curl -L --fail --no-progress-meter \
+      "https://github.com/openssl/openssl/releases/download/openssl-${OPENSSL_VERSION}/openssl-${OPENSSL_VERSION}.tar.gz" \
       -o "openssl-${OPENSSL_VERSION}.tar.gz" && \
     echo "${OPENSSL_SHA256}  openssl-${OPENSSL_VERSION}.tar.gz" | sha256sum -c - && \
     tar -xf "openssl-${OPENSSL_VERSION}.tar.gz" && \
@@ -71,9 +72,9 @@ RUN git clone https://github.com/ngtcp2/sfparse.git && \
     cd sfparse && autoreconf -i && ./configure --prefix=/usr/local --disable-static && \
     make -j"$(nproc)" && make install
 
-RUN NGHTTP3_URL=$(curl -s https://api.github.com/repos/ngtcp2/nghttp3/releases \
+RUN NGHTTP3_URL=$(curl -s --fail https://api.github.com/repos/ngtcp2/nghttp3/releases \
       | jq -r ".[] | select(.tag_name==\"${NGHTTP3_VERSION}\") | .assets[] | select(.name | endswith(\".tar.gz\")) | .browser_download_url") && \
-    curl -L "$NGHTTP3_URL" -o nghttp3.tar.gz && \
+    curl -L --fail --no-progress-meter "$NGHTTP3_URL" -o nghttp3.tar.gz && \
     mkdir nghttp3 && tar -xf nghttp3.tar.gz -C nghttp3 --strip-components=1 && \
     cd nghttp3 && autoreconf -i && \
     PKG_CONFIG_PATH="/usr/local/openssl/lib/pkgconfig:/usr/local/lib/pkgconfig" \
@@ -83,9 +84,9 @@ RUN NGHTTP3_URL=$(curl -s https://api.github.com/repos/ngtcp2/nghttp3/releases \
                   --disable-static && \
     make -j"$(nproc)" && make install
 
-RUN NGTCP2_URL=$(curl -s https://api.github.com/repos/ngtcp2/ngtcp2/releases \
+RUN NGTCP2_URL=$(curl -s --fail https://api.github.com/repos/ngtcp2/ngtcp2/releases \
       | jq -r ".[] | select(.tag_name==\"${NGTCP2_VERSION}\") | .assets[] | select(.name | endswith(\".tar.gz\")) | .browser_download_url") && \
-    curl -L "$NGTCP2_URL" -o ngtcp2.tar.gz && \
+    curl -L --fail --no-progress-meter "$NGTCP2_URL" -o ngtcp2.tar.gz && \
     mkdir ngtcp2 && tar -xf ngtcp2.tar.gz -C ngtcp2 --strip-components=1 && \
     cd ngtcp2 && autoreconf -i && \
     PKG_CONFIG_PATH="/usr/local/openssl/lib/pkgconfig:/usr/local/lib/pkgconfig" \
@@ -97,8 +98,14 @@ RUN NGTCP2_URL=$(curl -s https://api.github.com/repos/ngtcp2/ngtcp2/releases \
     make -j"$(nproc)" && make install
 
 RUN rm -f /usr/local/lib/*.a /usr/local/lib/*.la && \
+    rm -f /usr/local/openssl/lib/*.a /usr/local/openssl/lib/*.la && \
+    rm -f /usr/local/ngtcp2/lib/*.a /usr/local/ngtcp2/lib/*.la && \
     strip --strip-unneeded /usr/local/lib/*.so* || true && \
+    strip --strip-unneeded /usr/local/openssl/lib/*.so* || true && \
+    strip --strip-unneeded /usr/local/ngtcp2/lib/*.so* || true && \
     strip --strip-all /usr/local/bin/* || true && \
+    strip --strip-all /usr/local/openssl/bin/* || true && \
+    strip --strip-all /usr/local/ngtcp2/bin/* || true && \
     rm -rf /src /tmp/* /var/tmp/* /var/log/* && \
     apk del gettext-dev
 

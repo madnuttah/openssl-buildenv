@@ -6,11 +6,6 @@ permissions:
 
 on:
   workflow_dispatch:
-    inputs:
-      subversion:
-        description: Subversion
-        required: false
-        default: '0'
   workflow_run:
     workflows: ["CD Build OpenSSL+QUIC Buildenv"]
     types: [completed]
@@ -49,81 +44,24 @@ jobs:
           GIT_AUTHOR_EMAIL: ${{ steps.IMPORT_GPG.outputs.email }}
           GIT_COMMITTER_NAME: ${{ steps.IMPORT_GPG.outputs.name }}
           GIT_COMMITTER_EMAIL: ${{ steps.IMPORT_GPG.outputs.email }}
-          GPG_FPR: ${{ steps.IMPORT_GPG.outputs.fingerprint }}
-          INPUT_SUBVERSION: ${{ github.event.inputs.subversion || '' }}
-          CLIENT_SUBVERSION: ${{ github.event.client_payload.subversion || '' }}
-          GITHUB_EVENT_NAME: ${{ github.event_name }}
-          GITHUB_ACTOR: ${{ github.actor }}
         run: |
           set -euo pipefail
-          SUB="${INPUT_SUBVERSION:-${CLIENT_SUBVERSION:-0}}"
 
-          BUILDENV_BUILD_DATE="$(grep '^BUILDENV_BUILD_DATE=' buildvars | cut -d'=' -f2- || true)"
-          OPENSSL_VERSION="$(grep '^OPENSSL_VERSION=' buildvars | cut -d'=' -f2- || true)"
-          OPENSSL_BUILDENV_VERSION="$(grep '^OPENSSL_BUILDENV_VERSION=' buildvars | cut -d'=' -f2- || true)"
-          NGTCP2_VERSION="$(grep '^NGTCP2_VERSION=' buildvars | cut -d'=' -f2- || true)"
-          NGHTTP3_VERSION="$(grep '^NGHTTP3_VERSION=' buildvars | cut -d'=' -f2- || true)"
+          OPENSSL_VERSION="$(grep '^OPENSSL_BUILDENV_VERSION=' buildvars | cut -d'=' -f2-)"
+          SUBVERSION="$(grep '^SUBVERSION=' buildvars | cut -d'=' -f2-)"
 
-          if [ "${SUB}" = "0" ]; then
-            OPENSSL_TAG="${OPENSSL_BUILDENV_VERSION}"
-          else
-            OPENSSL_BASE="$(printf "%s" "${OPENSSL_BUILDENV_VERSION}" | sed -E 's/-[0-9]+$//')"
-            OPENSSL_TAG="${OPENSSL_BASE}-${SUB}"
-          fi
+          TAG="${OPENSSL_VERSION}-${SUBVERSION}"
 
           git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}
 
           git fetch --prune origin --tags
-          if git ls-remote --tags origin | grep -q "refs/tags/v${OPENSSL_TAG}$"; then
-            echo "Tag v${OPENSSL_TAG} already exists, skipping."
+          if git ls-remote --tags origin | grep -q "refs/tags/v${TAG}$"; then
+            echo "Tag v${TAG} already exists, skipping."
             exit 0
           fi
 
-          PREV_TAG=$(gh release list --limit 2 --json tagName --jq '.[1].tagName' 2>/dev/null || true)
+          git tag -s "v${TAG}" -m "v${TAG}"
+          git push origin "v${TAG}" --force-with-lease
 
-          if [ -z "$PREV_TAG" ]; then
-            NEW_CONTRIBS=$(gh api repos/${{ github.repository }}/contributors --jq '.[].login' 2>/dev/null || true)
-            if [ -z "$NEW_CONTRIBS" ]; then
-              CONTRIBUTORS="* No contributors found"
-            else
-              CONTRIBUTORS=$(printf "%s\n" $NEW_CONTRIBS | sed 's/^/* @/g')
-            fi
-          else
-            COMMITS_JSON=$(gh api repos/${{ github.repository }}/compare/${PREV_TAG}...HEAD 2>/dev/null || true)
-            NEW_CONTRIBS=$(printf "%s" "$COMMITS_JSON" | jq -r '.commits[].author.login // empty' | sort -u)
-            if [ -z "$NEW_CONTRIBS" ]; then
-              CONTRIBUTORS="* No new contributors since ${PREV_TAG}"
-            else
-              CONTRIBUTORS=$(printf "%s\n" $NEW_CONTRIBS | sed 's/^/* @/g')
-            fi
-          fi
-
-          RELEASE_NOTE=$(printf "%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n" \
-            "## $(date '+%Y-%m-%d') <madnuttah-bot>" \
-            "## What's Changed?" \
-            "* Updated OpenSSL to version $OPENSSL_VERSION" \
-            "" \
-            "OpenSSL changelog: https://github.com/openssl/openssl/releases/tag/openssl-$OPENSSL_VERSION" \
-            "" \
-            "## New Contributors" \
-            "$CONTRIBUTORS" \
-          )
-
-          git config user.name "${GIT_AUTHOR_NAME}"
-          git config user.email "${GIT_AUTHOR_EMAIL}"
-
-          if git rev-parse "refs/tags/v${OPENSSL_TAG}" >/dev/null 2>&1; then
-            :
-          else
-            git tag -s "v${OPENSSL_TAG}" -m "v${OPENSSL_TAG}"
-          fi
-
-          git push origin "v${OPENSSL_TAG}" --force-with-lease
-
-          git fetch --all --tags
-          git checkout -b "${OPENSSL_TAG}" "v${OPENSSL_TAG}" || git checkout "${OPENSSL_TAG}"
-          git push --set-upstream origin "refs/heads/${OPENSSL_TAG}" --force-with-lease
-
-          gh release create "v${OPENSSL_TAG}" -t "${OPENSSL_TAG}" -n "$RELEASE_NOTE" --latest || gh release edit "v${OPENSSL_TAG}" -t "${OPENSSL_TAG}" -n "$RELEASE_NOTE"
-
-          exit 0
+          gh release create "v${TAG}" -t "${TAG}" -n "Automated release for ${TAG}" --latest || \
+          gh release edit "v${TAG}" -t "${TAG}" -n "Automated release for ${TAG}"

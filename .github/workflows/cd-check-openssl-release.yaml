@@ -41,11 +41,15 @@ jobs:
           echo NGHTTP3_VERSION="$(curl -s https://api.github.com/repos/ngtcp2/nghttp3/releases \
             | jq -r '.[0].tag_name')" >> $GITHUB_OUTPUT
 
+      - name: Checkout source
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
       - name: Is update available
         id: IS_UPDATE_AVAILABLE
-        env:
-          ALLOWED_MAJOR_OVERRIDES: "3"
         run: |
+          source buildvars
           LATEST_MAJOR="$(echo "${{ steps.GET_VERSIONS.outputs.OPENSSL_VERSION }}" | cut -d. -f1)"
 
           if ! echo "$ALLOWED_MAJOR_OVERRIDES" | tr ',' '\n' | grep -qx "$LATEST_MAJOR"; then
@@ -60,12 +64,6 @@ jobs:
             echo "update_available=false" >> $GITHUB_OUTPUT
             exit 0
           fi
-
-      - name: Checkout source
-        if: ${{ steps.IS_UPDATE_AVAILABLE.outputs.update_available == 'true' }}
-        uses: actions/checkout@v6
-        with:
-          persist-credentials: false
 
       - name: Import GPG key
         if: ${{ steps.IS_UPDATE_AVAILABLE.outputs.update_available == 'true' }}
@@ -93,13 +91,13 @@ jobs:
           echo BUILDENV_BUILD_DATE="$(date -u +"%Y-%m-%dT%H:%M:%SZ")" > buildvars
           echo OPENSSL_VERSION="${{ steps.GET_VERSIONS.outputs.OPENSSL_VERSION }}" >> buildvars
           echo OPENSSL_SHA256="${{ steps.IS_UPDATE_AVAILABLE.outputs.OPENSSL_SHA256 }}" >> buildvars
-          echo OPENSSL_BUILDENV_VERSION="${{ steps.GET_VERSIONS.outputs.OPENSSL_VERSION }}-0" >> buildvars
+          echo OPENSSL_BUILDENV_VERSION="${{ steps.GET_VERSIONS.outputs.OPENSSL_VERSION }}" >> buildvars
+          echo QUIC_BUILDENV_VERSION="${{ steps.GET_VERSIONS.outputs.OPENSSL_VERSION }}" >> buildvars
           echo NGTCP2_VERSION="${{ steps.GET_VERSIONS.outputs.NGTCP2_VERSION }}" >> buildvars
           echo NGHTTP3_VERSION="${{ steps.GET_VERSIONS.outputs.NGHTTP3_VERSION }}" >> buildvars
-          echo QUIC_BUILDENV_VERSION="${{ steps.GET_VERSIONS.outputs.OPENSSL_VERSION }}-0-quic" >> buildvars
           echo SUBVERSION=0 >> buildvars
+          echo ALLOWED_MAJOR_OVERRIDES="${ALLOWED_MAJOR_OVERRIDES}" >> buildvars
 
           git add buildvars
           git commit -m "Updated buildvars" || echo "No changes to commit"
           git push origin main
-
