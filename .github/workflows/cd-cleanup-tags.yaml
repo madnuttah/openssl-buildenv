@@ -3,7 +3,7 @@ name: CD Cleanup Dockerhub Tags
 on:
   workflow_run:
     workflows:
-      - "CD Build OpenSSL+QUIC Buildenv"
+      - "CD Build OpenSSL QUIC Buildenv"
     types:
       - completed
   workflow_dispatch:
