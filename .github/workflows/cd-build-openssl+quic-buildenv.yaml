@@ -1,4 +1,4 @@
-name: CD Build OpenSSL+QUIC Buildenv
+name: CD Build OpenSSL QUIC Buildenv
 
 on:
   workflow_dispatch:
