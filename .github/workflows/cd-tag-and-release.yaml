@@ -21,9 +21,10 @@ jobs:
 
     steps:
       - name: Checkout source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           persist-credentials: false
+          ref: ${{ github.ref }}
           fetch-depth: 0
 
       - name: Import GPG key
