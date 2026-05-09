@@ -60,9 +60,6 @@ jobs:
             exit 1
           fi
 
-          git tag -a "v${TAG}" -m "v${TAG}"
-          git push origin "v${TAG}" --force-with-lease
-
           PREV_TAG=$(git tag --sort=-v:refname | grep -v "v${TAG}$" | head -n 1)
 
           OPENSSL_VER="$(grep '^OPENSSL_VERSION=' buildvars | cut -d'=' -f2-)"
@@ -78,7 +75,7 @@ jobs:
 
           RELEASE_NOTES+="## Contributors\n"
 
-          git log "${PREV_TAG}..v${TAG}" --format="%aN|%aE" \
+          git log "${PREV_TAG}..HEAD" --format="%aN|%aE" \
             | sort -u \
             | while IFS='|' read -r NAME EMAIL; do
                 LOWER=$(echo "$NAME" | tr '[:upper:]' '[:lower:]')
