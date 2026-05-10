@@ -7,7 +7,7 @@ permissions:
 on:
   workflow_dispatch:
   workflow_run:
-    workflows: ["CD Build OpenSSL+QUIC Buildenv"]
+    workflows: ["CD Build OpenSSL QUIC Buildenv"]
     types:
       - completed
 
