@@ -23,7 +23,7 @@ jobs:
        github.event.workflow_run.conclusion == 'success')
     runs-on: ubuntu-latest
     env:
-      DELETE_SUFFIXES: "-386 -amd64 -armv7"
+      DELETE_SUFFIXES: "-386 -amd64 -armv7 -arm64 -ppc64le -s390x -riscv64"
       DRY_RUN: "false"
     steps:
       - name: Checkout
@@ -55,12 +55,6 @@ jobs:
         run: |
           is_final_tag() {
             tag="$1"
-            manifest=$(curl -s -H "Authorization: JWT $JWT" \
-              "https://hub.docker.com/v2/repositories/${REPO}/tags/${tag}/" \
-              | jq -r '.images | length')
-            if [ "$manifest" -eq 0 ]; then
-              return 0
-            fi
             for s in $SUFFIXES; do
               if [[ "$tag" == *"$s" ]]; then
                 return 1
