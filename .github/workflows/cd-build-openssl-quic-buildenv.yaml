@@ -180,15 +180,15 @@ jobs:
           tags: |
             madnuttah/openssl-buildenv:${{ steps.vars.outputs.QUIC_FINAL }}-${{ matrix.arch }}
 
-    manifest:
-      needs: build
-      runs-on: ubuntu-latest
+  manifest:
+    needs: build
+    runs-on: ubuntu-latest
 
-      steps:
-        - uses: actions/checkout@v4
-          with:
-            ref: main
-            fetch-depth: 0
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
 
         - name: Load buildvars
           id: vars
