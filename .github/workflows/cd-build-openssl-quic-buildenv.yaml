@@ -5,7 +5,7 @@ on:
   workflow_run:
     workflows: ["CD Check OpenSSL Release"]
     types: [completed]
-    
+
 permissions:
   actions: read
   contents: write
