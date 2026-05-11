@@ -22,7 +22,7 @@ LABEL maintainer="madnuttah" \
 
 ENV PREFIX="/usr/local" \
     PATH="/usr/local/openssl/bin:/usr/local/bin:${PATH}" \
-    PKG_CONFIG_PATH="/usr/local/ngtcp2/lib/pkgconfig:/usr/local/lib/pkgconfig:/usr/local/openssl/lib/pkgconfig"
+    PKG_CONFIG_PATH="/usr/local/lib/pkgconfig:/usr/local/openssl/lib/pkgconfig"
 
 RUN set -xe; \
   apk --update --no-cache add \
@@ -108,27 +108,34 @@ RUN NGTCP2_URL=$(curl -s --fail https://api.github.com/repos/ngtcp2/ngtcp2/relea
     curl -L --fail --no-progress-meter "$NGTCP2_URL" -o ngtcp2.tar.gz && \
     mkdir ngtcp2 && tar -xf ngtcp2.tar.gz -C ngtcp2 --strip-components=1 && \
     cd ngtcp2 && autoreconf -i && \
-    PKG_CONFIG_PATH="/usr/local/openssl/lib/pkgconfig:/usr/local/lib/pkgconfig" \
-      ./configure --prefix=/usr/local/ngtcp2 \
-                  --with-openssl=/usr/local/openssl && \
-    make -j"$(nproc)" && make install
+    ./configure \
+      --prefix=/usr/local \
+      --with-openssl=/usr/local/openssl \
+      --enable-openssl && \
+    make -j"$(nproc)" && make install && \
+    make -C crypto && \
+    make -C crypto install && \
+    mkdir -p /usr/local/include/ngtcp2 && \
+    cp -av crypto/includes/ngtcp2/*.h /usr/local/include/ngtcp2/
 
-RUN strip --strip-unneeded /usr/local/lib/*.so* || true && \
-    strip --strip-unneeded /usr/local/openssl/lib/*.so* || true && \
-    strip --strip-all /usr/local/bin/* || true && \
-    strip --strip-all /usr/local/openssl/bin/* || true && \
-    rm -f /usr/local/lib/*.a /usr/local/lib/*.la && \
-    rm -f /usr/local/openssl/lib/*.a /usr/local/openssl/lib/*.la && \
-    rm -f /usr/local/openssl/lib/pkgconfig/*.pc && \
-    rm -rf /usr/local/openssl/ssl/man \
-           /usr/local/openssl/ssl/misc \
-           /usr/local/openssl/ssl/certs && \
-    rm -rf /src /tmp/* /var/tmp/* /var/log/*
-       
+RUN \
+  strip --strip-unneeded /usr/local/lib/libngtcp2*.so* || true && \
+  strip --strip-unneeded /usr/local/lib/libnghttp3*.so* || true && \
+  strip --strip-unneeded /usr/local/openssl/lib/*.so* || true && \
+  strip --strip-all /usr/local/bin/* || true && \
+  strip --strip-all /usr/local/openssl/bin/* || true && \
+  rm -f /usr/local/lib/*.a /usr/local/lib/*.la && \
+  rm -f /usr/local/openssl/lib/*.a /usr/local/openssl/lib/*.la && \
+  rm -f /usr/local/openssl/lib/pkgconfig/*.pc && \
+  rm -rf /usr/local/share \
+         /usr/local/openssl/ssl/man \
+         /usr/local/openssl/ssl/misc \
+         /usr/local/openssl/ssl/certs && \
+  rm -rf /src /tmp/* /var/tmp/* /var/log/*
+
 FROM alpine:latest AS final
 
 COPY --from=buildenv /usr/local /usr/local
 
 RUN apk --update --no-cache add ca-certificates && \
     update-ca-certificates
-
