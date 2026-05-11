@@ -56,12 +56,13 @@ RUN curl -L --fail --no-progress-meter \
 WORKDIR /src/openssl
 
 RUN case "$TARGETARCH" in \
-      amd64) CONF="linux-x86_64"; EXTRA="enable-ec_nistp_64_gcc_128 enable-ktls enable-asm";; \
-      arm64) CONF="linux-aarch64"; EXTRA="enable-ec_nistp_64_gcc_128 enable-ktls enable-asm";; \
-      386)   CONF="linux-x86";    EXTRA="enable-asm";; \
-      armv7) CONF="linux-armv4";  EXTRA="enable-asm";; \
-      armv6) CONF="linux-armv4";  EXTRA="enable-asm";; \
-      arm)   CONF="linux-armv4";  EXTRA="enable-asm";; \
+      amd64)   CONF="linux-x86_64";    EXTRA="enable-ec_nistp_64_gcc_128 enable-ktls enable-asm";; \
+      arm64)   CONF="linux-aarch64";   EXTRA="enable-ec_nistp_64_gcc_128 enable-ktls enable-asm";; \
+      386)     CONF="linux-x86";       EXTRA="enable-asm";; \
+      armv7)   CONF="linux-armv4";     EXTRA="enable-asm";; \
+      ppc64le) CONF="linux-ppc64le";   EXTRA="enable-asm";; \
+      s390x)   CONF="linux64-s390x";   EXTRA="enable-asm";; \
+      riscv64) CONF="linux64-riscv64"; EXTRA="enable-asm";; \
       *) echo "Unsupported arch: $TARGETARCH"; exit 1;; \
     esac && \
     CFLAGS="-O3 -D_FORTIFY_SOURCE=2 -fstack-protector-strong -fstack-clash-protection -fpic -DOPENSSL_NO_HEARTBEATS" \
@@ -83,7 +84,21 @@ RUN case "$TARGETARCH" in \
     make -j"$(nproc)" && \
     make install_sw
 
-RUN find /usr/local -type f -name "*.a" -delete && \
-    find /usr/local -type f -name "*.la" -delete && \
-    apk del .build-deps gettext-dev && \
+RUN strip --strip-unneeded /usr/local/lib/*.so* || true && \
+    strip --strip-unneeded /usr/local/openssl/lib/*.so* || true && \
+    strip --strip-all /usr/local/bin/* || true && \
+    strip --strip-all /usr/local/openssl/bin/* || true && \
+    rm -f /usr/local/lib/*.a /usr/local/lib/*.la && \
+    rm -f /usr/local/openssl/lib/*.a /usr/local/openssl/lib/*.la && \
+    rm -f /usr/local/openssl/lib/pkgconfig/*.pc && \
+    rm -rf /usr/local/openssl/ssl/man \
+           /usr/local/openssl/ssl/misc \
+           /usr/local/openssl/ssl/certs && \
     rm -rf /src /tmp/* /var/tmp/* /var/log/*
+       
+FROM alpine:latest AS final
+
+COPY --from=buildenv /usr/local /usr/local
+
+RUN apk --update --no-cache add ca-certificates && \
+    update-ca-certificates
