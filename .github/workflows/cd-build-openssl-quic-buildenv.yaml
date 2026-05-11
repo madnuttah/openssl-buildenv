@@ -13,91 +13,89 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
-
     strategy:
-    fail-fast: false
-    matrix:
-      include:
-        - variant: openssl
-          dockerfile: ./openssl/openssl.Dockerfile
-          arch: amd64
-          platform: linux/amd64
+      fail-fast: false
+      matrix:
+        include:
+          - variant: openssl
+            dockerfile: ./openssl/openssl.Dockerfile
+            arch: amd64
+            platform: linux/amd64
 
-        - variant: openssl
-          dockerfile: ./openssl/openssl.Dockerfile
-          arch: 386
-          platform: linux/386
+          - variant: openssl
+            dockerfile: ./openssl/openssl.Dockerfile
+            arch: 386
+            platform: linux/386
 
-        - variant: openssl
-          dockerfile: ./openssl/openssl.Dockerfile
-          arch: armv6
-          platform: linux/arm/v6
+          - variant: openssl
+            dockerfile: ./openssl/openssl.Dockerfile
+            arch: armv6
+            platform: linux/arm/v6
 
-        - variant: openssl
-          dockerfile: ./openssl/openssl.Dockerfile
-          arch: armv7
-          platform: linux/arm/v7
+          - variant: openssl
+            dockerfile: ./openssl/openssl.Dockerfile
+            arch: armv7
+            platform: linux/arm/v7
 
-        - variant: openssl
-          dockerfile: ./openssl/openssl.Dockerfile
-          arch: arm64
-          platform: linux/arm64
+          - variant: openssl
+            dockerfile: ./openssl/openssl.Dockerfile
+            arch: arm64
+            platform: linux/arm64
 
-        - variant: openssl
-          dockerfile: ./openssl/openssl.Dockerfile
-          arch: ppc64le
-          platform: linux/ppc64le
+          - variant: openssl
+            dockerfile: ./openssl/openssl.Dockerfile
+            arch: ppc64le
+            platform: linux/ppc64le
 
-        - variant: openssl
-          dockerfile: ./openssl/openssl.Dockerfile
-          arch: s390x
-          platform: linux/s390x
+          - variant: openssl
+            dockerfile: ./openssl/openssl.Dockerfile
+            arch: s390x
+            platform: linux/s390x
 
-        - variant: openssl
-          dockerfile: ./openssl/openssl.Dockerfile
-          arch: riscv64
-          platform: linux/riscv64
+          - variant: openssl
+            dockerfile: ./openssl/openssl.Dockerfile
+            arch: riscv64
+            platform: linux/riscv64
 
-        - variant: openssl+quic
-          dockerfile: ./openssl/openssl+quic.Dockerfile
-          arch: amd64
-          platform: linux/amd64
+          - variant: openssl+quic
+            dockerfile: ./openssl/openssl+quic.Dockerfile
+            arch: amd64
+            platform: linux/amd64
 
-        - variant: openssl+quic
-          dockerfile: ./openssl/openssl+quic.Dockerfile
-          arch: 386
-          platform: linux/386
+          - variant: openssl+quic
+            dockerfile: ./openssl/openssl+quic.Dockerfile
+            arch: 386
+            platform: linux/386
 
-        - variant: openssl+quic
-          dockerfile: ./openssl/openssl+quic.Dockerfile
-          arch: armv6
-          platform: linux/arm/v6
+          - variant: openssl+quic
+            dockerfile: ./openssl/openssl+quic.Dockerfile
+            arch: armv6
+            platform: linux/arm/v6
 
-        - variant: openssl+quic
-          dockerfile: ./openssl/openssl+quic.Dockerfile
-          arch: armv7
-          platform: linux/arm/v7
+          - variant: openssl+quic
+            dockerfile: ./openssl/openssl+quic.Dockerfile
+            arch: armv7
+            platform: linux/arm/v7
 
-        - variant: openssl+quic
-          dockerfile: ./openssl/openssl+quic.Dockerfile
-          arch: arm64
-          platform: linux/arm64
+          - variant: openssl+quic
+            dockerfile: ./openssl/openssl+quic.Dockerfile
+            arch: arm64
+            platform: linux/arm64
 
-        - variant: openssl+quic
-          dockerfile: ./openssl/openssl+quic.Dockerfile
-          arch: ppc64le
-          platform: linux/ppc64le
+          - variant: openssl+quic
+            dockerfile: ./openssl/openssl+quic.Dockerfile
+            arch: ppc64le
+            platform: linux/ppc64le
 
-        - variant: openssl+quic
-          dockerfile: ./openssl/openssl+quic.Dockerfile
-          arch: s390x
-          platform: linux/s390x
+          - variant: openssl+quic
+            dockerfile: ./openssl/openssl+quic.Dockerfile
+            arch: s390x
+            platform: linux/s390x
 
-        - variant: openssl+quic
-          dockerfile: ./openssl/openssl+quic.Dockerfile
-          arch: riscv64
-          platform: linux/riscv64
-
+          - variant: openssl+quic
+            dockerfile: ./openssl/openssl+quic.Dockerfile
+            arch: riscv64
+            platform: linux/riscv64
 
     steps:
       - uses: actions/checkout@v4
