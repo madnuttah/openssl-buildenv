@@ -63,6 +63,7 @@ RUN case "$TARGETARCH" in \
       amd64)   CONF="linux-x86_64";    EXTRA="enable-ec_nistp_64_gcc_128 enable-ktls enable-asm";; \
       arm64)   CONF="linux-aarch64";   EXTRA="enable-ec_nistp_64_gcc_128 enable-ktls enable-asm";; \
       386)     CONF="linux-x86";       EXTRA="enable-asm";; \
+      armv6)   CONF="linux-armv4";     EXTRA="enable-asm";; \
       armv7)   CONF="linux-armv4";     EXTRA="enable-asm";; \
       ppc64le) CONF="linux-ppc64le";   EXTRA="enable-asm";; \
       s390x)   CONF="linux64-s390x";   EXTRA="enable-asm";; \
