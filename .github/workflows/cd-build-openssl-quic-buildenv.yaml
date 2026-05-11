@@ -5,7 +5,7 @@ on:
   workflow_run:
     workflows: ["CD Check OpenSSL Release"]
     types: [completed]
-
+    
 permissions:
   actions: read
   contents: write
@@ -13,6 +13,7 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+
     strategy:
       fail-fast: false
       matrix:
@@ -26,11 +27,6 @@ jobs:
             dockerfile: ./openssl/openssl.Dockerfile
             arch: 386
             platform: linux/386
-
-          - variant: openssl
-            dockerfile: ./openssl/openssl.Dockerfile
-            arch: armv6
-            platform: linux/arm/v6
 
           - variant: openssl
             dockerfile: ./openssl/openssl.Dockerfile
@@ -66,11 +62,6 @@ jobs:
             dockerfile: ./openssl/openssl+quic.Dockerfile
             arch: 386
             platform: linux/386
-
-          - variant: openssl+quic
-            dockerfile: ./openssl/openssl+quic.Dockerfile
-            arch: armv6
-            platform: linux/arm/v6
 
           - variant: openssl+quic
             dockerfile: ./openssl/openssl+quic.Dockerfile
@@ -161,7 +152,6 @@ jobs:
             TARGETARCH=${{ matrix.arch }}
           tags: |
             madnuttah/openssl-buildenv:${{ steps.vars.outputs.OPENSSL_FINAL }}-${{ matrix.arch }}
-
       - name: Build QUIC
         if: ${{ matrix.variant == 'openssl+quic' }}
         uses: docker/build-push-action@v6
@@ -190,76 +180,72 @@ jobs:
           ref: main
           fetch-depth: 0
 
-        - name: Load buildvars
-          id: vars
-          run: |
-            set -euo pipefail
-            source buildvars || true
+      - name: Load buildvars
+        id: vars
+        run: |
+          set -euo pipefail
+          source buildvars || true
 
-            DERIVED_SUB="${SUBVERSION:-0}"
-            OPENSSL_BASE="${OPENSSL_BUILDENV_VERSION}"
-            QUIC_BASE="${QUIC_BUILDENV_VERSION}"
+          DERIVED_SUB="${SUBVERSION:-0}"
+          OPENSSL_BASE="${OPENSSL_BUILDENV_VERSION}"
+          QUIC_BASE="${QUIC_BUILDENV_VERSION}"
 
-            echo "SUBVERSION=${DERIVED_SUB}" >> $GITHUB_OUTPUT
-            echo "OPENSSL_FINAL=${OPENSSL_BASE}-${DERIVED_SUB}" >> $GITHUB_OUTPUT
-            echo "QUIC_FINAL=${QUIC_BASE}-${DERIVED_SUB}-quic" >> $GITHUB_OUTPUT
-            echo "OPENSSL_VERSION=${OPENSSL_VERSION:-}" >> $GITHUB_OUTPUT
-            echo "OPENSSL_SHA256=${OPENSSL_SHA256:-}" >> $GITHUB_OUTPUT
-            echo "NGTCP2_VERSION=${NGTCP2_VERSION:-}" >> $GITHUB_OUTPUT
-            echo "NGHTTP3_VERSION=${NGHTTP3_VERSION:-}" >> $GITHUB_OUTPUT
-            echo "BUILDENV_BUILD_DATE=${BUILDENV_BUILD_DATE:-$(date -u +"%Y-%m-%dT%H:%M:%SZ")}" >> $GITHUB_OUTPUT
+          echo "SUBVERSION=${DERIVED_SUB}" >> $GITHUB_OUTPUT
+          echo "OPENSSL_FINAL=${OPENSSL_BASE}-${DERIVED_SUB}" >> $GITHUB_OUTPUT
+          echo "QUIC_FINAL=${QUIC_BASE}-${DERIVED_SUB}-quic" >> $GITHUB_OUTPUT
+          echo "OPENSSL_VERSION=${OPENSSL_VERSION:-}" >> $GITHUB_OUTPUT
+          echo "OPENSSL_SHA256=${OPENSSL_SHA256:-}" >> $GITHUB_OUTPUT
+          echo "NGTCP2_VERSION=${NGTCP2_VERSION:-}" >> $GITHUB_OUTPUT
+          echo "NGHTTP3_VERSION=${NGHTTP3_VERSION:-}" >> $GITHUB_OUTPUT
+          echo "BUILDENV_BUILD_DATE=${BUILDENV_BUILD_DATE:-$(date -u +"%Y-%m-%dT%H:%M:%SZ")}" >> $GITHUB_OUTPUT
 
-        - uses: docker/login-action@v3
-          with:
-            username: ${{ secrets.DOCKERHUB_USERNAME }}
-            password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-        - name: Manifest OpenSSL
-          run: |
-            docker buildx imagetools create \
-              --tag madnuttah/openssl-buildenv:${{ steps.vars.outputs.OPENSSL_FINAL }} \
-              madnuttah/openssl-buildenv:${{ steps.vars.outputs.OPENSSL_FINAL }}-amd64 \
-              madnuttah/openssl-buildenv:${{ steps.vars.outputs.OPENSSL_FINAL }}-386 \
-              madnuttah/openssl-buildenv:${{ steps.vars.outputs.OPENSSL_FINAL }}-armv6 \
-              madnuttah/openssl-buildenv:${{ steps.vars.outputs.OPENSSL_FINAL }}-armv7 \
-              madnuttah/openssl-buildenv:${{ steps.vars.outputs.OPENSSL_FINAL }}-arm64 \
-              madnuttah/openssl-buildenv:${{ steps.vars.outputs.OPENSSL_FINAL }}-ppc64le \
-              madnuttah/openssl-buildenv:${{ steps.vars.outputs.OPENSSL_FINAL }}-s390x \
-              madnuttah/openssl-buildenv:${{ steps.vars.outputs.OPENSSL_FINAL }}-riscv64
+      - name: Manifest OpenSSL
+        run: |
+          docker buildx imagetools create \
+            --tag madnuttah/openssl-buildenv:${{ steps.vars.outputs.OPENSSL_FINAL }} \
+            madnuttah/openssl-buildenv:${{ steps.vars.outputs.OPENSSL_FINAL }}-amd64 \
+            madnuttah/openssl-buildenv:${{ steps.vars.outputs.OPENSSL_FINAL }}-386 \
+            madnuttah/openssl-buildenv:${{ steps.vars.outputs.OPENSSL_FINAL }}-armv7 \
+            madnuttah/openssl-buildenv:${{ steps.vars.outputs.OPENSSL_FINAL }}-arm64 \
+            madnuttah/openssl-buildenv:${{ steps.vars.outputs.OPENSSL_FINAL }}-ppc64le \
+            madnuttah/openssl-buildenv:${{ steps.vars.outputs.OPENSSL_FINAL }}-s390x \
+            madnuttah/openssl-buildenv:${{ steps.vars.outputs.OPENSSL_FINAL }}-riscv64
 
-        - name: Manifest QUIC
-          run: |
-            docker buildx imagetools create \
-              --tag madnuttah/openssl-buildenv:${{ steps.vars.outputs.QUIC_FINAL }} \
-              madnuttah/openssl-buildenv:${{ steps.vars.outputs.QUIC_FINAL }}-amd64 \
-              madnuttah/openssl-buildenv:${{ steps.vars.outputs.QUIC_FINAL }}-386 \
-              madnuttah/openssl-buildenv:${{ steps.vars.outputs.QUIC_FINAL }}-armv6 \
-              madnuttah/openssl-buildenv:${{ steps.vars.outputs.QUIC_FINAL }}-armv7 \
-              madnuttah/openssl-buildenv:${{ steps.vars.outputs.QUIC_FINAL }}-arm64 \
-              madnuttah/openssl-buildenv:${{ steps.vars.outputs.QUIC_FINAL }}-ppc64le \
-              madnuttah/openssl-buildenv:${{ steps.vars.outputs.QUIC_FINAL }}-s390x \
-              madnuttah/openssl-buildenv:${{ steps.vars.outputs.QUIC_FINAL }}-riscv64
+      - name: Manifest QUIC
+        run: |
+          docker buildx imagetools create \
+            --tag madnuttah/openssl-buildenv:${{ steps.vars.outputs.QUIC_FINAL }} \
+            madnuttah/openssl-buildenv:${{ steps.vars.outputs.QUIC_FINAL }}-amd64 \
+            madnuttah/openssl-buildenv:${{ steps.vars.outputs.QUIC_FINAL }}-386 \
+            madnuttah/openssl-buildenv:${{ steps.vars.outputs.QUIC_FINAL }}-armv7 \
+            madnuttah/openssl-buildenv:${{ steps.vars.outputs.QUIC_FINAL }}-arm64 \
+            madnuttah/openssl-buildenv:${{ steps.vars.outputs.QUIC_FINAL }}-ppc64le \
+            madnuttah/openssl-buildenv:${{ steps.vars.outputs.QUIC_FINAL }}-s390x \
+            madnuttah/openssl-buildenv:${{ steps.vars.outputs.QUIC_FINAL }}-riscv64
 
-        - name: Latest tags
-          run: |
-            docker buildx imagetools create \
-              --tag madnuttah/openssl-buildenv:latest \
-              madnuttah/openssl-buildenv:${{ steps.vars.outputs.OPENSSL_FINAL }}-amd64 \
-              madnuttah/openssl-buildenv:${{ steps.vars.outputs.OPENSSL_FINAL }}-386 \
-              madnuttah/openssl-buildenv:${{ steps.vars.outputs.OPENSSL_FINAL }}-armv6 \
-              madnuttah/openssl-buildenv:${{ steps.vars.outputs.OPENSSL_FINAL }}-armv7 \
-              madnuttah/openssl-buildenv:${{ steps.vars.outputs.OPENSSL_FINAL }}-arm64 \
-              madnuttah/openssl-buildenv:${{ steps.vars.outputs.OPENSSL_FINAL }}-ppc64le \
-              madnuttah/openssl-buildenv:${{ steps.vars.outputs.OPENSSL_FINAL }}-s390x \
-              madnuttah/openssl-buildenv:${{ steps.vars.outputs.OPENSSL_FINAL }}-riscv64
+      - name: Latest tags
+        run: |
+          docker buildx imagetools create \
+            --tag madnuttah/openssl-buildenv:latest \
+            madnuttah/openssl-buildenv:${{ steps.vars.outputs.OPENSSL_FINAL }}-amd64 \
+            madnuttah/openssl-buildenv:${{ steps.vars.outputs.OPENSSL_FINAL }}-386 \
+            madnuttah/openssl-buildenv:${{ steps.vars.outputs.OPENSSL_FINAL }}-armv7 \
+            madnuttah/openssl-buildenv:${{ steps.vars.outputs.OPENSSL_FINAL }}-arm64 \
+            madnuttah/openssl-buildenv:${{ steps.vars.outputs.OPENSSL_FINAL }}-ppc64le \
+            madnuttah/openssl-buildenv:${{ steps.vars.outputs.OPENSSL_FINAL }}-s390x \
+            madnuttah/openssl-buildenv:${{ steps.vars.outputs.OPENSSL_FINAL }}-riscv64
 
-            docker buildx imagetools create \
-              --tag madnuttah/openssl-buildenv:latest-quic \
-              madnuttah/openssl-buildenv:${{ steps.vars.outputs.QUIC_FINAL }}-amd64 \
-              madnuttah/openssl-buildenv:${{ steps.vars.outputs.QUIC_FINAL }}-386 \
-              madnuttah/openssl-buildenv:${{ steps.vars.outputs.QUIC_FINAL }}-armv6 \
-              madnuttah/openssl-buildenv:${{ steps.vars.outputs.QUIC_FINAL }}-armv7 \
-              madnuttah/openssl-buildenv:${{ steps.vars.outputs.QUIC_FINAL }}-arm64 \
-              madnuttah/openssl-buildenv:${{ steps.vars.outputs.QUIC_FINAL }}-ppc64le \
-              madnuttah/openssl-buildenv:${{ steps.vars.outputs.QUIC_FINAL }}-s390x \
-              madnuttah/openssl-buildenv:${{ steps.vars.outputs.QUIC_FINAL }}-riscv64
+          docker buildx imagetools create \
+            --tag madnuttah/openssl-buildenv:latest-quic \
+            madnuttah/openssl-buildenv:${{ steps.vars.outputs.QUIC_FINAL }}-amd64 \
+            madnuttah/openssl-buildenv:${{ steps.vars.outputs.QUIC_FINAL }}-386 \
+            madnuttah/openssl-buildenv:${{ steps.vars.outputs.QUIC_FINAL }}-armv7 \
+            madnuttah/openssl-buildenv:${{ steps.vars.outputs.QUIC_FINAL }}-arm64 \
+            madnuttah/openssl-buildenv:${{ steps.vars.outputs.QUIC_FINAL }}-ppc64le \
+            madnuttah/openssl-buildenv:${{ steps.vars.outputs.QUIC_FINAL }}-s390x \
+            madnuttah/openssl-buildenv:${{ steps.vars.outputs.QUIC_FINAL }}-riscv64
