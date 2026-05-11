@@ -149,9 +149,9 @@ jobs:
             BUILDENV_BUILD_DATE=${{ steps.vars.outputs.BUILDENV_BUILD_DATE }}
             OPENSSL_VERSION=${{ steps.vars.outputs.OPENSSL_VERSION }}
             OPENSSL_SHA256=${{ steps.vars.outputs.OPENSSL_SHA256 }}
+            TARGETARCH=${{ matrix.arch }}
           tags: |
             madnuttah/openssl-buildenv:${{ steps.vars.outputs.OPENSSL_FINAL }}-${{ matrix.arch }}
-
       - name: Build QUIC
         if: ${{ matrix.variant == 'openssl+quic' }}
         uses: docker/build-push-action@v6
@@ -166,6 +166,7 @@ jobs:
             OPENSSL_SHA256=${{ steps.vars.outputs.OPENSSL_SHA256 }}
             NGTCP2_VERSION=${{ steps.vars.outputs.NGTCP2_VERSION }}
             NGHTTP3_VERSION=${{ steps.vars.outputs.NGHTTP3_VERSION }}
+            TARGETARCH=${{ matrix.arch }}
           tags: |
             madnuttah/openssl-buildenv:${{ steps.vars.outputs.QUIC_FINAL }}-${{ matrix.arch }}
 
