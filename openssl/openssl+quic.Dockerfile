@@ -127,7 +127,6 @@ RUN \
   strip --strip-all /usr/local/openssl/bin/* || true && \
   rm -f /usr/local/lib/*.a /usr/local/lib/*.la && \
   rm -f /usr/local/openssl/lib/*.a /usr/local/openssl/lib/*.la && \
-  rm -f /usr/local/openssl/lib/pkgconfig/*.pc && \
   rm -rf /usr/local/share \
          /usr/local/openssl/ssl/man \
          /usr/local/openssl/ssl/misc \
