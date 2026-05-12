@@ -28,7 +28,7 @@ jobs:
           BOOL="$(curl -s https://api.github.com/repos/openssl/openssl/releases | jq '.[0] | .prerelease')"
           if $BOOL; then
             echo "update_available=false" >> $GITHUB_OUTPUT
-            exit 0
+            exit 1
           fi
 
           echo OPENSSL_VERSION="$(curl -s https://api.github.com/repos/openssl/openssl/releases \
@@ -60,7 +60,7 @@ jobs:
 
           if ! echo "$ALLOWED_MAJOR_OVERRIDES" | tr ',' '\n' | grep -qx "$LATEST_MAJOR"; then
             echo "update_available=false" >> $GITHUB_OUTPUT
-            exit 0
+            exit 1
           fi
 
           if dpkg --compare-versions "${{ steps.GET_VERSIONS.outputs.OPENSSL_BUILDENV_VERSION }}" "lt" "${{ steps.GET_VERSIONS.outputs.OPENSSL_VERSION }}"; then
@@ -68,7 +68,7 @@ jobs:
             echo "update_available=true" >> $GITHUB_OUTPUT
           else
             echo "update_available=false" >> $GITHUB_OUTPUT
-            exit 0
+            exit 1
           fi
 
       - name: Import GPG key
@@ -107,3 +107,5 @@ jobs:
           git add buildvars
           git commit -m "Updated buildvars" || echo "No changes to commit"
           git push origin main
+
+          exit 0
