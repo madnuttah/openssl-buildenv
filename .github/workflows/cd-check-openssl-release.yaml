@@ -28,7 +28,7 @@ jobs:
           BOOL="$(curl -s https://api.github.com/repos/openssl/openssl/releases | jq '.[0] | .prerelease')"
           if $BOOL; then
             echo "update_available=false" >> $GITHUB_OUTPUT
-            exit 1
+            exit 0
           fi
 
           echo OPENSSL_VERSION="$(curl -s https://api.github.com/repos/openssl/openssl/releases \
