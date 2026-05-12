@@ -1,4 +1,4 @@
-6name: CD Cleanup Dockerhub Tags
+name: CD Cleanup Dockerhub Tags
 
 on:
   workflow_run:
