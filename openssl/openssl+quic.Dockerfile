@@ -12,6 +12,9 @@ ARG NGTCP2_VERSION
 ARG NGHTTP3_VERSION
 ARG QUIC_BUILDENV_VERSION
 
+ARG TARGETPLATFORM
+ARG TARGETARCH
+
 ENV BUILDENV_BUILD_DATE="${BUILDENV_BUILD_DATE}"
 
 LABEL maintainer="madnuttah" \
@@ -101,7 +104,7 @@ RUN NGHTTP3_URL=$(curl -s --fail https://api.github.com/repos/ngtcp2/nghttp3/rel
     mkdir nghttp3 && tar -xf nghttp3.tar.gz -C nghttp3 --strip-components=1 && \
     cd nghttp3 && autoreconf -i && \
     PKG_CONFIG_PATH="/usr/local/openssl/lib/pkgconfig:/usr/local/lib/pkgconfig" \
-      ./configure --prefix=/usr/local && \
+      ./configure --prefix=/usr/local/nghttp3 && \
     make -j"$(nproc)" && make install
 
 RUN NGTCP2_URL=$(curl -s --fail https://api.github.com/repos/ngtcp2/ngtcp2/releases \
@@ -110,18 +113,18 @@ RUN NGTCP2_URL=$(curl -s --fail https://api.github.com/repos/ngtcp2/ngtcp2/relea
     mkdir ngtcp2 && tar -xf ngtcp2.tar.gz -C ngtcp2 --strip-components=1 && \
     cd ngtcp2 && autoreconf -i && \
     ./configure \
-      --prefix=/usr/local \
+      --prefix=/usr/local/ngtcp2 \
       --with-openssl=/usr/local/openssl \
       --enable-openssl && \
     make -j"$(nproc)" && make install && \
     make -C crypto && \
     make -C crypto install && \
-    mkdir -p /usr/local/include/ngtcp2 && \
-    cp -av crypto/includes/ngtcp2/*.h /usr/local/include/ngtcp2/
+    mkdir -p /usr/local/include/ngtcp2
+    
 
 RUN \
-  strip --strip-unneeded /usr/local/lib/libngtcp2*.so* || true && \
-  strip --strip-unneeded /usr/local/lib/libnghttp3*.so* || true && \
+  strip --strip-unneeded /usr/local/ngtcp2/libngtcp2*.so* || true && \
+  strip --strip-unneeded /usr/local/nghttp3/libnghttp3*.so* || true && \
   strip --strip-unneeded /usr/local/openssl/lib/*.so* || true && \
   strip --strip-all /usr/local/bin/* || true && \
   strip --strip-all /usr/local/openssl/bin/* || true && \
