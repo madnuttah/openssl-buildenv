@@ -39,7 +39,7 @@ jobs:
           git_push_gpgsign: false
           trust_level: 5
 
-      - name: Tag + Release
+      - name: Push tag and upload release to GitHub
         env:
           GITHUB_TOKEN: ${{ secrets.BOT_GITHUB_TOKEN }}
           GIT_AUTHOR_NAME: ${{ steps.IMPORT_GPG.outputs.name }}
@@ -93,6 +93,12 @@ jobs:
               done
 
           printf "%b" "$RELEASE_NOTES" > RELEASE_NOTES.md
+
+          git tag "v${TAG}"
+          git push origin "v${TAG}"
+
+          git checkout -b "${TAG}" "v${TAG}"
+          git push --set-upstream origin "${TAG}"
 
           gh release create "v${TAG}" \
             -t "${TAG}" \
