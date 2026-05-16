@@ -70,11 +70,16 @@ jobs:
           RELEASE_NOTES="## v${TAG} — $(date -u +"%Y-%m-%d")\n"
           RELEASE_NOTES+="## What's Changed?\n"
           RELEASE_NOTES+="* Updated OpenSSL & OpenSSL+QUIC buildenv\n\n"
+          
           RELEASE_NOTES+="OpenSSL: ${OPENSSL_VER}\n"
           RELEASE_NOTES+="ngtcp2: ${NGTCP2_VER}\n"
           RELEASE_NOTES+="nghttp3: ${NGHTTP3_VER}\n\n"
-
+          
+          RELEASE_NOTES+="## OpenSSL Release Notes\n"
+          RELEASE_NOTES+="https://github.com/openssl/openssl/releases/tag/openssl-${OPENSSL_VER}\n\n"
+          
           RELEASE_NOTES+="## Contributors\n"
+
 
           git log "${PREV_TAG}..HEAD" --format="%aN|%aE" \
             | sort -u \
