@@ -1,4 +1,4 @@
-# `OpenSSL Build Environment`
+# `OpenSSL & OpenSSL+QUIC Build Environment`
 
 [![Current OpenSSL release](https://img.shields.io/github/v/tag/openssl/openssl?label=Current%20OpenSSL%20release&style=flat-square)](https://github.com/openssl/openssl/tags)
 [![OpenSSL buildenv](https://img.shields.io/github/v/release/madnuttah/openssl-buildenv?label=madnuttah/openssl-buildenv%20release&style=flat-square)](https://github.com/madnuttah/openssl-buildenv/releases)
@@ -6,14 +6,13 @@
 [![GitHub Actions Security Analysis with zizmor](https://github.com/madnuttah/openssl-buildenv/actions/workflows/zizmor.yaml/badge.svg)](https://github.com/madnuttah/openssl-buildenv/actions/workflows/zizmor.yaml)
 
 
-**This is an optimized OpenSSL build environment used by [`madnuttah/unbound-docker`](https://github.com/madnuttah/unbound-docker/).**
+**This is an optimized, native OpenSSL & OpenSSL+QUIC build environment used by [`madnuttah/unbound-docker`](https://github.com/madnuttah/unbound-docker/).**
 
 ## Acknowledgements
 
 - [Alpine Linux](https://www.alpinelinux.org/)
 - [Docker](https://www.docker.com/)
 - [OpenSSL](https://www.openssl.org/)
-- quictls
 
 ## Licenses
 
