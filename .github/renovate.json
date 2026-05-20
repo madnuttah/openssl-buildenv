@@ -16,5 +16,19 @@
   "timezone": "Europe/Berlin",
   "pinDigest": {
     "automerge": true
-  }
+  },
+  "packageRules": [
+    {
+      "matchDatasources": ["docker"],
+      "matchPackagePatterns": ["^madnuttah/openssl-buildenv$"],
+      "enabled": false
+    }
+  ],
+  "regexManagers": [
+    {
+      "fileMatch": ["buildvars", "\\.sh$"],
+      "matchStrings": [],
+      "datasourceTemplate": "null"
+    }
+  ]
 }
