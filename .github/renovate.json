@@ -1,63 +1,49 @@
 {
-  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "enabledManagers": [
-    "github-actions",
-    "dockerfile",
-    "docker-compose",
-    "regex"
-  ],
   "extends": [
     "config:recommended",
-    ":pinDigests",
-    ":semanticCommits",
-    ":semanticCommitTypeAll(chore)"
+    "docker:enableMajor",
+    "default:pinDigests",
+    "default:automergeDigest"
   ],
+
   "github-actions": {
-    "enabled": true,
-    "pinDigests": true
+    "enabled": true
   },
+
   "docker": {
-    "enabled": true,
-    "pinDigests": true
+    "pinDigests": true,
+    "digest": { "enabled": true }
   },
+
   "regexManagers": [
     {
-      "description": "Docker images in GitHub Actions workflows",
-      "fileMatch": [
-        "^\\.github/workflows/.*\\.ya?ml$"
-      ],
-      "matchStrings": [
-        "image:\\s*(?<depName>[^:@\\s]+)(?::(?<currentValue>[^@\\s]+))?"
-      ],
-      "datasourceTemplate": "docker"
+      "fileMatch": ["buildvars", "\\.sh$"],
+      "matchStrings": [],
+      "datasourceTemplate": "null"
     }
   ],
+
   "packageRules": [
     {
-      "description": "Group GitHub Actions updates",
-      "matchManagers": [
-        "github-actions"
-      ],
-      "groupName": "github-actions"
+      "matchFileNames": ["buildvars"],
+      "enabled": false
     },
     {
-      "description": "Group Docker image digest updates",
-      "matchManagers": [
-        "dockerfile",
-        "docker-compose",
-        "regex"
-      ],
-      "groupName": "docker-images"
+      "matchFileNames": [".github/workflows/**"],
+      "matchManagers": ["regex"],
+      "enabled": false
     },
     {
-      "description": "Pin alpine and keep it updated",
-      "matchDatasources": [
-        "docker"
-      ],
-      "matchPackageNames": [
-        "alpine"
-      ],
-      "pinDigests": true
+      "matchDatasources": ["docker"],
+      "matchPackagePatterns": ["ubuntu", "debian", "alpine"],
+      "versioning": "semver"
+    },
+    {
+      "matchManagers": ["dockerfile"],
+      "matchUpdateTypes": ["minor", "patch"],
+      "automerge": true
     }
-  ]
+  ],
+
+  "ignorePaths": ["docker/old-files/"]
 }
