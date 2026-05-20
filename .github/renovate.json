@@ -7,43 +7,47 @@
   ],
 
   "github-actions": {
-    "enabled": true
+    "enabled": false
   },
 
   "docker": {
     "pinDigests": true,
-    "digest": { "enabled": true }
+    "digest": {
+      "enabled": true
+    }
   },
 
-  "regexManagers": [
-    {
-      "fileMatch": ["buildvars", "\\.sh$"],
-      "matchStrings": [],
-      "datasourceTemplate": "null"
-    }
-  ],
-
   "packageRules": [
+    {
+      "matchDatasources": ["docker"],
+      "matchCurrentVersion": "latest",
+      "enabled": false
+    },
+    {
+      "matchDatasources": ["docker"],
+      "matchCurrentVersion": "edge",
+      "enabled": false
+    },
+    {
+      "matchDatasources": ["docker"],
+      "matchCurrentVersion": "/[a-zA-Z]/",
+      "enabled": false
+    },
     {
       "matchFileNames": ["buildvars"],
       "enabled": false
     },
     {
       "matchFileNames": [".github/workflows/**"],
-      "matchManagers": ["regex"],
       "enabled": false
-    },
-    {
-      "matchDatasources": ["docker"],
-      "matchPackagePatterns": ["ubuntu", "debian", "alpine"],
-      "versioning": "semver"
-    },
-    {
-      "matchManagers": ["dockerfile"],
-      "matchUpdateTypes": ["minor", "patch"],
-      "automerge": true
     }
   ],
 
-  "ignorePaths": ["docker/old-files/"]
+  "regexManagers": [
+    {
+      "fileMatch": ["buildvars", "\\.sh$"],
+      "matchStrings": ["^(?<depName>[a-zA-Z0-9_-]+)=(?<currentValue>.+)$"],
+      "datasourceTemplate": "custom.datasource"
+    }
+  ]
 }
