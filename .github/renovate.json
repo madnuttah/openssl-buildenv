@@ -1,53 +1,20 @@
 {
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
     "config:recommended",
-    "docker:enableMajor",
-    "default:pinDigests",
-    "default:automergeDigest"
+    "config:best-practices",
+    ":semanticCommitsDisabled",
+    ":automergeStableNonMajor",
+    ":automergePatch",
+    ":automergeDigest",
+    "regexManagers:dockerfileVersions",
+    "regexManagers:githubActionsVersions",
+    "regexManagers:tfvarsVersions",
+    "group:allDigest",
+    "schedule:weekends"
   ],
-
-  "github-actions": {
-    "enabled": false
-  },
-
-  "docker": {
-    "pinDigests": true,
-    "digest": {
-      "enabled": true
-    }
-  },
-
-  "packageRules": [
-    {
-      "matchDatasources": ["docker"],
-      "matchCurrentVersion": "latest",
-      "enabled": false
-    },
-    {
-      "matchDatasources": ["docker"],
-      "matchCurrentVersion": "edge",
-      "enabled": false
-    },
-    {
-      "matchDatasources": ["docker"],
-      "matchCurrentVersion": "/[a-zA-Z]/",
-      "enabled": false
-    },
-    {
-      "matchFileNames": ["buildvars"],
-      "enabled": false
-    },
-    {
-      "matchFileNames": [".github/workflows/**"],
-      "enabled": false
-    }
-  ],
-
-  "regexManagers": [
-    {
-      "fileMatch": ["buildvars", "\\.sh$"],
-      "matchStrings": ["^(?<depName>[a-zA-Z0-9_-]+)=(?<currentValue>.+)$"],
-      "datasourceTemplate": "custom.datasource"
-    }
-  ]
+  "timezone": "Europe/Berlin",
+  "pinDigest": {
+    "automerge": true
+  }
 }
