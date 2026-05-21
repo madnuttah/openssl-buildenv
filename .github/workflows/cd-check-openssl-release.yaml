@@ -94,15 +94,27 @@ jobs:
         run: |
           git remote set-url origin https://x-access-token:${{ secrets.BOT_GITHUB_TOKEN }}@github.com/${{ github.repository }}
 
-          echo BUILDENV_BUILD_DATE="$(date -u +"%Y-%m-%dT%H:%M:%SZ")" > buildvars
-          echo OPENSSL_VERSION="${{ steps.GET_VERSIONS.outputs.OPENSSL_VERSION }}" >> buildvars
-          echo OPENSSL_SHA256="${{ steps.IS_UPDATE_AVAILABLE.outputs.OPENSSL_SHA256 }}" >> buildvars
-          echo OPENSSL_BUILDENV_VERSION="${{ steps.GET_VERSIONS.outputs.OPENSSL_VERSION }}" >> buildvars
-          echo QUIC_BUILDENV_VERSION="${{ steps.GET_VERSIONS.outputs.OPENSSL_VERSION }}" >> buildvars
-          echo NGTCP2_VERSION="${{ steps.GET_VERSIONS.outputs.NGTCP2_VERSION }}" >> buildvars
-          echo NGHTTP3_VERSION="${{ steps.GET_VERSIONS.outputs.NGHTTP3_VERSION }}" >> buildvars
-          echo SUBVERSION=0 >> buildvars
-          echo ALLOWED_MAJOR_OVERRIDES="${ALLOWED_MAJOR_OVERRIDES}" >> buildvars
+          BUILDENV_TIMESTAMP="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
+          OPENSSL_VERSION="${{ steps.GET_VERSIONS.outputs.OPENSSL_VERSION }}"
+          SUBVERSION="0"
+          ALLOWED_MAJOR_OVERRIDES="${ALLOWED_MAJOR_OVERRIDES}"
+          OPENSSL_SHA256="${{ steps.IS_UPDATE_AVAILABLE.outputs.OPENSSL_SHA256 }}"
+          OPENSSL_BUILDENV_VERSION="${OPENSSL_VERSION}-0"
+          OPENSSL_QUIC_BUILDENV_VERSION="${OPENSSL_VERSION}-0-quic"
+          NGTCP2_VERSION="${{ steps.GET_VERSIONS.outputs.NGTCP2_VERSION }}"
+          NGHTTP3_VERSION="${{ steps.GET_VERSIONS.outputs.NGHTTP3_VERSION }}"
+
+          {
+            echo "BUILDENV_TIMESTAMP=${BUILDENV_TIMESTAMP}"
+            echo "OPENSSL_VERSION=${OPENSSL_VERSION}"
+            echo "SUBVERSION=${SUBVERSION}"
+            echo "ALLOWED_MAJOR_OVERRIDES=${ALLOWED_MAJOR_OVERRIDES}"
+            echo "OPENSSL_SHA256=${OPENSSL_SHA256}"
+            echo "OPENSSL_BUILDENV_VERSION=${OPENSSL_BUILDENV_VERSION}"
+            echo "OPENSSL_QUIC_BUILDENV_VERSION=${OPENSSL_QUIC_BUILDENV_VERSION}"
+            echo "NGTCP2_VERSION=${NGTCP2_VERSION}"
+            echo "NGHTTP3_VERSION=${NGHTTP3_VERSION}"
+          } > buildvars
 
           git add buildvars
           git commit -m "Updated buildvars" || echo "No changes to commit"
