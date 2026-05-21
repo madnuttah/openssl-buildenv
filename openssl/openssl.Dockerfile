@@ -1,7 +1,7 @@
 ARG TARGETPLATFORM
 ARG TARGETARCH
 
-FROM alpine:latest AS buildenv
+FROM alpine:3.22.4 AS buildenv
 
 ARG TARGETARCH
 ARG BUILDENV_BUILD_DATE
@@ -96,7 +96,7 @@ RUN strip --strip-unneeded /usr/local/lib/*.so* || true && \
            /usr/local/openssl/ssl/certs && \
     rm -rf /src /tmp/* /var/tmp/* /var/log/*
        
-FROM alpine:latest AS final
+FROM alpine:3.22.4 AS final
 
 COPY --from=buildenv /usr/local /usr/local
 
