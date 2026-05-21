@@ -27,8 +27,9 @@
   "regexManagers": [
     {
       "fileMatch": ["buildvars", "\\.sh$"],
-      "matchStrings": [],
-      "datasourceTemplate": "null"
+      "matchStrings": ["DO_NOT_MATCH_ANYTHING_(\\d+)"],
+      "datasourceTemplate": null,
+      "enabled": false
     }
   ]
 }
