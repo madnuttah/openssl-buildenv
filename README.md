@@ -5,8 +5,11 @@
 
 [![GitHub Actions Security Analysis with zizmor](https://github.com/madnuttah/openssl-buildenv/actions/workflows/zizmor.yaml/badge.svg)](https://github.com/madnuttah/openssl-buildenv/actions/workflows/zizmor.yaml)
 
+This repository provides a dedicated and optimized build environment for compiling native OpenSSL and OpenSSL+QUIC toolchains.  
+It is designed for projects that require consistent cryptographic behavior, reproducible builds, and architecture‑specific performance tuning.  
+The environment is used by [`madnuttah/unbound-docker`](https://github.com/madnuttah/unbound-docker/) to ensure deterministic TLS and QUIC support across all supported platforms.
 
-**This is an optimized, native OpenSSL & OpenSSL+QUIC build environment used by [`madnuttah/unbound-docker`](https://github.com/madnuttah/unbound-docker/).**
+The build pipelines run on hardened infrastructure, use continuous dependency maintenance, and include automated security analysis to keep the toolchain trustworthy and up to date.
 
 ## Acknowledgements
 
@@ -18,7 +21,7 @@
 
 ### License
 
-Unless otherwise specified, all code is released under the MIT license.
+Unless otherwise specified, all code is released under the MIT license.  
 See the [`LICENSE`](https://github.com/madnuttah/openssl-buildenv/blob/main/LICENSE) for details.
 
 ### Licenses for other components
