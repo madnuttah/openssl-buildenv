@@ -36,19 +36,21 @@ jobs:
             exit 1
           fi
 
-          echo "OPENSSL_VERSION=$(curl -s https://api.github.com/repos/openssl/openssl/releases \
-            | jq -r '.[0].tag_name' \
-            | sed -E 's/.*?([0-9]+\.[0-9]+\.[0-9]+).*/\1/')" >> "$GITHUB_OUTPUT"
+          {
+            echo "OPENSSL_VERSION=$(curl -s https://api.github.com/repos/openssl/openssl/releases \
+              | jq -r '.[0].tag_name' \
+              | sed -E 's/.*?([0-9]+\.[0-9]+\.[0-9]+).*/\1/')"
 
-          echo "OPENSSL_BUILDENV_VERSION=$(curl -s https://api.github.com/repos/madnuttah/openssl-buildenv/releases \
-            | jq -r '.[0].tag_name' \
-            | sed -E 's/.*?([0-9]+\.[0-9]+\.[0-9]+).*/\1/')" >> "$GITHUB_OUTPUT"
+            echo "OPENSSL_BUILDENV_VERSION=$(curl -s https://api.github.com/repos/madnuttah/openssl-buildenv/releases \
+              | jq -r '.[0].tag_name' \
+              | sed -E 's/.*?([0-9]+\.[0-9]+\.[0-9]+).*/\1/')"
 
-          echo "NGTCP2_VERSION=$(curl -s https://api.github.com/repos/ngtcp2/ngtcp2/releases \
-            | jq -r '.[0].tag_name')" >> "$GITHUB_OUTPUT"
+            echo "NGTCP2_VERSION=$(curl -s https://api.github.com/repos/ngtcp2/ngtcp2/releases \
+              | jq -r '.[0].tag_name')"
 
-          echo "NGHTTP3_VERSION=$(curl -s https://api.github.com/repos/ngtcp2/nghttp3/releases \
-            | jq -r '.[0].tag_name')" >> "$GITHUB_OUTPUT"
+            echo "NGHTTP3_VERSION=$(curl -s https://api.github.com/repos/ngtcp2/nghttp3/releases \
+              | jq -r '.[0].tag_name')"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Checkout source
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
@@ -98,12 +100,12 @@ jobs:
           GIT_COMMITTER_NAME: ${{ steps.IMPORT_GPG.outputs.name }}
           GIT_COMMITTER_EMAIL: ${{ steps.IMPORT_GPG.outputs.email }}
         run: |
-          git remote set-url origin https://x-access-token:${{ secrets.BOT_GITHUB_TOKEN }}@github.com/${{ github.repository }}
+          git remote set-url origin "https://x-access-token:${{ secrets.BOT_GITHUB_TOKEN }}@github.com/${{ github.repository }}"
 
           BUILDENV_TIMESTAMP="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
           OPENSSL_VERSION="${{ steps.GET_VERSIONS.outputs.OPENSSL_VERSION }}"
           SUBVERSION="0"
-          ALLOWED_MAJOR_OVERRIDES="${ALLOWED_MAJOR_OVERRIDES}"
+          ALLOWED_MAJOR_OVERRIDES="${ALLOWED_MAJOR_OVERRIDES:-}"
           OPENSSL_SHA256="${{ steps.IS_UPDATE_AVAILABLE.outputs.OPENSSL_SHA256 }}"
           OPENSSL_BUILDENV_VERSION="${OPENSSL_VERSION}-0"
           OPENSSL_QUIC_BUILDENV_VERSION="${OPENSSL_VERSION}-0-quic"
