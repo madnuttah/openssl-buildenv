@@ -26,4 +26,4 @@ jobs:
             openssl/openssl+quic.Dockerfile
 
       - name: shellcheck
-        uses: ludeeus/action-shellcheck@04e3c8f3e3e5e5f6f6c3e8d9e2f4a3b8c7d9e1f
+        uses: ludeeus/action-shellcheck@00cae500b08a931fb5698e11e79bfbd38e612a38 # 2.0.0
