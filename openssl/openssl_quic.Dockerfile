@@ -96,24 +96,36 @@ RUN case "$TARGETARCH" in \
 
 WORKDIR /src
 
-RUN git clone https://github.com/ngtcp2/sfparse.git && \
-    cd sfparse && autoreconf -i && ./configure --prefix=/usr/local --disable-static && \
+RUN git clone https://github.com/ngtcp2/sfparse.git
+
+WORKDIR /src/sfparse
+
+RUN autoreconf -i && ./configure --prefix=/usr/local --disable-static && \
     make -j"$(nproc)" && make install
+
+WORKDIR /src
 
 RUN NGHTTP3_URL=$(curl -s --fail https://api.github.com/repos/ngtcp2/nghttp3/releases \
       | jq -r ".[] | select(.tag_name==\"${NGHTTP3_VERSION}\") | .assets[] | select(.name | endswith(\".tar.gz\")) | .browser_download_url") && \
     curl -L --fail --no-progress-meter "$NGHTTP3_URL" -o nghttp3.tar.gz && \
-    mkdir nghttp3 && tar -xf nghttp3.tar.gz -C nghttp3 --strip-components=1 && \
-    cd nghttp3 && autoreconf -i && \
+    mkdir nghttp3 && tar -xf nghttp3.tar.gz -C nghttp3 --strip-components=1
+
+WORKDIR /src/nghttp3
+
+RUN autoreconf -i && \
     PKG_CONFIG_PATH="/usr/local/openssl/lib/pkgconfig:/usr/local/lib/pkgconfig" \
       ./configure --prefix=/usr/local/nghttp3 && \
     make -j"$(nproc)" && make install
 
+WORKDIR /src
+
 RUN NGTCP2_URL=$(curl -s --fail https://api.github.com/repos/ngtcp2/ngtcp2/releases \
       | jq -r ".[] | select(.tag_name==\"${NGTCP2_VERSION}\") | .assets[] | select(.name | endswith(\".tar.gz\")) | .browser_download_url") && \
     curl -L --fail --no-progress-meter "$NGTCP2_URL" -o ngtcp2.tar.gz && \
-    mkdir ngtcp2 && tar -xf ngtcp2.tar.gz -C ngtcp2 --strip-components=1 && \
-    cd ngtcp2 && autoreconf -i && \
+    mkdir ngtcp2 && tar -xf ngtcp2.tar.gz -C ngtcp2 --strip-components=1
+
+WORKDIR /src/ngtcp2
+RUN autoreconf -i && \
     ./configure \
       --prefix=/usr/local/ngtcp2 \
       --with-openssl=/usr/local/openssl \
@@ -122,6 +134,8 @@ RUN NGTCP2_URL=$(curl -s --fail https://api.github.com/repos/ngtcp2/ngtcp2/relea
     make -C crypto && \
     make -C crypto install && \
     mkdir -p /usr/local/include/ngtcp2
+
+WORKDIR /src
 
 RUN \
   strip --strip-unneeded /usr/local/ngtcp2/libngtcp2*.so* || true && \
