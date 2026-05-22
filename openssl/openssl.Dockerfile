@@ -20,6 +20,7 @@ ENV PREFIX="/usr/local" \
     PATH="/usr/local/openssl/bin:/usr/local/bin:${PATH}" \
     PKG_CONFIG_PATH="/usr/local/openssl/lib/pkgconfig:/usr/local/lib/pkgconfig"
 
+# hadolint ignore=DL3018
 RUN set -xe; \
   apk --update --no-cache add \
     ca-certificates \
@@ -46,7 +47,8 @@ RUN set -xe; \
 
 WORKDIR /src
 
-RUN curl -L --fail --no-progress-meter \
+RUN set -o pipefail; \
+    curl -L --fail --no-progress-meter \
       "https://github.com/openssl/openssl/releases/download/openssl-${OPENSSL_VERSION}/openssl-${OPENSSL_VERSION}.tar.gz" \
       -o "openssl-${OPENSSL_VERSION}.tar.gz" && \
     echo "${OPENSSL_SHA256}  openssl-${OPENSSL_VERSION}.tar.gz" | sha256sum -c - && \
@@ -69,7 +71,7 @@ RUN case "$TARGETARCH" in \
     CFLAGS="-O3 -D_FORTIFY_SOURCE=2 -fstack-protector-strong -fstack-clash-protection -fpic -DOPENSSL_NO_HEARTBEATS" \
     LDFLAGS="-Wl,-z,relro,-z,now" \
     ./Configure \
-      ${CONF} \
+      "${CONF}" \
       ${EXTRA} \
       no-weak-ssl-ciphers \
       no-apps \
@@ -100,5 +102,6 @@ FROM alpine:3.23.4@sha256:5b10f432ef3da1b8d4c7eb6c487f2f5a8f096bc91145e68878dd4a
 
 COPY --from=buildenv /usr/local /usr/local
 
+# hadolint ignore=DL3018
 RUN apk --update --no-cache add ca-certificates && \
     update-ca-certificates
