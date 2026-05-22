@@ -225,12 +225,6 @@ jobs:
           echo "OPENSSL_FINAL=${OPENSSL_FINAL}" >> "$GITHUB_OUTPUT"
           echo "QUIC_FINAL=${QUIC_FINAL}" >> "$GITHUB_OUTPUT"
 
-<<<<<<< Updated upstream
-          echo "OPENSSL_FINAL=${OPENSSL_FINAL}" >> $GITHUB_OUTPUT
-          echo "QUIC_FINAL=${QUIC_FINAL}" >> $GITHUB_OUTPUT
-
-=======
->>>>>>> Stashed changes
       - uses: docker/login-action@650006c6eb7dba73a995cc03b0b2d7f5ca915bee # v4
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}

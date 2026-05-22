@@ -32,23 +32,23 @@ jobs:
         run: |
           BOOL="$(curl -s https://api.github.com/repos/openssl/openssl/releases | jq '.[0] | .prerelease')"
           if $BOOL; then
-            echo "update_available=false" >> $GITHUB_OUTPUT
+            echo "update_available=false" >> "$GITHUB_OUTPUT"
             exit 1
           fi
 
-          echo OPENSSL_VERSION="$(curl -s https://api.github.com/repos/openssl/openssl/releases \
+          echo "OPENSSL_VERSION=$(curl -s https://api.github.com/repos/openssl/openssl/releases \
             | jq -r '.[0].tag_name' \
-            | sed -E 's/.*?([0-9]+\.[0-9]+\.[0-9]+).*/\1/')" >> $GITHUB_OUTPUT
+            | sed -E 's/.*?([0-9]+\.[0-9]+\.[0-9]+).*/\1/')" >> "$GITHUB_OUTPUT"
 
-          echo OPENSSL_BUILDENV_VERSION="$(curl -s https://api.github.com/repos/madnuttah/openssl-buildenv/releases \
+          echo "OPENSSL_BUILDENV_VERSION=$(curl -s https://api.github.com/repos/madnuttah/openssl-buildenv/releases \
             | jq -r '.[0].tag_name' \
-            | sed -E 's/.*?([0-9]+\.[0-9]+\.[0-9]+).*/\1/')" >> $GITHUB_OUTPUT
+            | sed -E 's/.*?([0-9]+\.[0-9]+\.[0-9]+).*/\1/')" >> "$GITHUB_OUTPUT"
 
-          echo NGTCP2_VERSION="$(curl -s https://api.github.com/repos/ngtcp2/ngtcp2/releases \
-            | jq -r '.[0].tag_name')" >> $GITHUB_OUTPUT
+          echo "NGTCP2_VERSION=$(curl -s https://api.github.com/repos/ngtcp2/ngtcp2/releases \
+            | jq -r '.[0].tag_name')" >> "$GITHUB_OUTPUT"
 
-          echo NGHTTP3_VERSION="$(curl -s https://api.github.com/repos/ngtcp2/nghttp3/releases \
-            | jq -r '.[0].tag_name')" >> $GITHUB_OUTPUT
+          echo "NGHTTP3_VERSION=$(curl -s https://api.github.com/repos/ngtcp2/nghttp3/releases \
+            | jq -r '.[0].tag_name')" >> "$GITHUB_OUTPUT"
 
       - name: Checkout source
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
@@ -60,19 +60,20 @@ jobs:
       - name: Is update available
         id: IS_UPDATE_AVAILABLE
         run: |
-          source buildvars
+          [ -f buildvars ] && . ./buildvars
+
           LATEST_MAJOR="$(echo "${{ steps.GET_VERSIONS.outputs.OPENSSL_VERSION }}" | cut -d. -f1)"
 
           if ! echo "$ALLOWED_MAJOR_OVERRIDES" | tr ',' '\n' | grep -qx "$LATEST_MAJOR"; then
-            echo "update_available=false" >> $GITHUB_OUTPUT
+            echo "update_available=false" >> "$GITHUB_OUTPUT"
             exit 1
           fi
 
           if dpkg --compare-versions "${{ steps.GET_VERSIONS.outputs.OPENSSL_BUILDENV_VERSION }}" "lt" "${{ steps.GET_VERSIONS.outputs.OPENSSL_VERSION }}"; then
-            echo OPENSSL_SHA256="$(curl -sL https://github.com/openssl/openssl/releases/download/openssl-${{ steps.GET_VERSIONS.outputs.OPENSSL_VERSION }}/openssl-${{ steps.GET_VERSIONS.outputs.OPENSSL_VERSION }}.tar.gz.sha256?raw=1 | cut -d ' ' -f1)" >> $GITHUB_OUTPUT
-            echo "update_available=true" >> $GITHUB_OUTPUT
+            echo "OPENSSL_SHA256=$(curl -sL https://github.com/openssl/openssl/releases/download/openssl-${{ steps.GET_VERSIONS.outputs.OPENSSL_VERSION }}/openssl-${{ steps.GET_VERSIONS.outputs.OPENSSL_VERSION }}.tar.gz.sha256?raw=1 | cut -d ' ' -f1)" >> "$GITHUB_OUTPUT"
+            echo "update_available=true" >> "$GITHUB_OUTPUT"
           else
-            echo "update_available=false" >> $GITHUB_OUTPUT
+            echo "update_available=false" >> "$GITHUB_OUTPUT"
             exit 1
           fi
 
