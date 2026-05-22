@@ -3,7 +3,7 @@
 [![Current OpenSSL release](https://img.shields.io/github/v/tag/openssl/openssl?label=Current%20OpenSSL%20release&style=flat-square)](https://github.com/openssl/openssl/tags)
 [![OpenSSL buildenv](https://img.shields.io/github/v/release/madnuttah/openssl-buildenv?label=madnuttah/openssl-buildenv%20release&style=flat-square)](https://github.com/madnuttah/openssl-buildenv/releases)
 
-[![GitHub Actions Security Analysis with zizmor](https://github.com/madnuttah/openssl-buildenv/actions/workflows/zizmor.yaml/badge.svg)](https://github.com/madnuttah/openssl-buildenv/actions/workflows/zizmor.yaml)
+[![GitHub Actions Security Analysis with zizmor](https://github.com/madnuttah/openssl-buildenv/actions/workflows/cd-gh-action-zizmor-scan.yaml/badge.svg)](https://github.com/madnuttah/openssl-buildenv/actions/workflows/cd-gh-action-zizmor-scan.yaml)
 
 This repository provides a dedicated and optimized build environment for compiling native OpenSSL and OpenSSL+QUIC toolchains.  
 
