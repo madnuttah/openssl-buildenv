@@ -11,7 +11,7 @@
     "regexManagers:githubActionsVersions",
     "regexManagers:tfvarsVersions",
     "group:allDigest",
-    "schedule:weekends"
+    "schedule": ["every weekday", "on saturday"]
   ],
   "timezone": "Europe/Berlin",
   "pinDigest": {
