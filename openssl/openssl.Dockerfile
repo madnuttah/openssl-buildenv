@@ -20,6 +20,7 @@ ENV PREFIX="/usr/local" \
     PATH="/usr/local/openssl/bin:/usr/local/bin:${PATH}" \
     PKG_CONFIG_PATH="/usr/local/openssl/lib/pkgconfig:/usr/local/lib/pkgconfig"
 
+# hadolint ignore=DL3018
 RUN set -xe; \
   apk --update --no-cache add \
     ca-certificates \
@@ -56,6 +57,7 @@ RUN curl -L --fail --no-progress-meter \
 
 WORKDIR /src/openssl
 
+# hadolint ignore=DL3018
 RUN case "$TARGETARCH" in \
       amd64)   CONF="linux-x86_64";    EXTRA="enable-ec_nistp_64_gcc_128 enable-ktls enable-asm";; \
       arm64)   CONF="linux-aarch64";   EXTRA="enable-ec_nistp_64_gcc_128 enable-ktls enable-asm";; \
@@ -101,5 +103,6 @@ FROM alpine:3.23.4@sha256:5b10f432ef3da1b8d4c7eb6c487f2f5a8f096bc91145e68878dd4a
 
 COPY --from=buildenv /usr/local /usr/local
 
+# hadolint ignore=DL3018
 RUN apk --update --no-cache add ca-certificates && \
     update-ca-certificates
