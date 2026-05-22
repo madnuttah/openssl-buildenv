@@ -53,6 +53,7 @@ RUN set -xe; \
 
 WORKDIR /src
 
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 RUN curl -L --fail --no-progress-meter \
       "https://github.com/openssl/openssl/releases/download/openssl-${OPENSSL_VERSION}/openssl-${OPENSSL_VERSION}.tar.gz" \
       -o "openssl-${OPENSSL_VERSION}.tar.gz" && \
@@ -76,8 +77,8 @@ RUN case "$TARGETARCH" in \
     CFLAGS="-O3 -D_FORTIFY_SOURCE=2 -fstack-protector-strong -fstack-clash-protection -fpic -DOPENSSL_NO_HEARTBEATS" \
     LDFLAGS="-Wl,-z,relro,-z,now" \
     ./Configure \
-      ${CONF} \
-      ${EXTRA} \
+      "${CONF}" \
+      ${EXTRA:+$EXTRA} \
       no-weak-ssl-ciphers \
       no-apps \
       no-docs \
@@ -120,7 +121,6 @@ RUN NGTCP2_URL=$(curl -s --fail https://api.github.com/repos/ngtcp2/ngtcp2/relea
     make -C crypto && \
     make -C crypto install && \
     mkdir -p /usr/local/include/ngtcp2
-    
 
 RUN \
   strip --strip-unneeded /usr/local/ngtcp2/libngtcp2*.so* || true && \
