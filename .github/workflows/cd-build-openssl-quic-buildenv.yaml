@@ -117,7 +117,7 @@ jobs:
         id: vars
         run: |
           set -euo pipefail
-          source buildvars || true
+          [ -f buildvars ] && . ./buildvars
           if [ -n "${SUBVERSION:-}" ]; then
             DERIVED_SUB="${SUBVERSION}"
           elif printf '%s' "${OPENSSL_BUILDENV_VERSION:-}" | grep -Eq '-[0-9]+$'; then
@@ -139,19 +139,24 @@ jobs:
           else
             QUIC_BASE="${OPENSSL_BASE}"
           fi
-          echo "SUBVERSION=${DERIVED_SUB}" >> $GITHUB_OUTPUT
-          echo "OPENSSL_FINAL=${OPENSSL_BASE}-${DERIVED_SUB}" >> $GITHUB_OUTPUT
-          echo "QUIC_FINAL=${QUIC_BASE}-${DERIVED_SUB}-quic" >> $GITHUB_OUTPUT
-          echo "OPENSSL_VERSION=${OPENSSL_VERSION:-}" >> $GITHUB_OUTPUT
-          echo "OPENSSL_SHA256=${OPENSSL_SHA256:-}" >> $GITHUB_OUTPUT
-          echo "NGTCP2_VERSION=${NGTCP2_VERSION:-}" >> $GITHUB_OUTPUT
-          echo "NGHTTP3_VERSION=${NGHTTP3_VERSION:-}" >> $GITHUB_OUTPUT
-          echo "BUILDENV_BUILD_DATE=${BUILDENV_BUILD_DATE:-$(date -u +"%Y-%m-%dT%H:%M:%SZ")}" >> $GITHUB_OUTPUT
-
+          echo "SUBVERSION=${DERIVED_SUB}" >> "$GITHUB_OUTPUT"
+          echo "OPENSSL_FINAL=${OPENSSL_BASE}-${DERIVED_SUB}" >> "$GITHUB_OUTPUT"
+          echo "QUIC_FINAL=${QUIC_BASE}-${DERIVED_SUB}-quic" >> "$GITHUB_OUTPUT"
+          echo "OPENSSL_VERSION=${OPENSSL_VERSION:-}" >> "$GITHUB_OUTPUT"
+          echo "OPENSSL_SHA256=${OPENSSL_SHA256:-}" >> "$GITHUB_OUTPUT"
+          echo "NGTCP2_VERSION=${NGTCP2_VERSION:-}" >> "$GITHUB_OUTPUT"
+          echo "NGHTTP3_VERSION=${NGHTTP3_VERSION:-}" >> "$GITHUB_OUTPUT"
+          echo "BUILDENV_BUILD_DATE=${BUILDENV_BUILD_DATE:-$(date -u +"%Y-%m-%dT%H:%M:%SZ")}" >> "$GITHUB_OUTPUT"
 
       - uses: docker/setup-qemu-action@ce360397dd3f832beb865e1373c09c0e9f86d70a # v4
       - uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # v4
 
+<<<<<<< Updated upstream
+      - uses: docker/setup-qemu-action@ce360397dd3f832beb865e1373c09c0e9f86d70a # v4
+      - uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # v4
+
+=======
+>>>>>>> Stashed changes
       - uses: docker/login-action@650006c6eb7dba73a995cc03b0b2d7f5ca915bee # v4
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
@@ -214,14 +219,18 @@ jobs:
         id: vars
         run: |
           set -euo pipefail
-          source buildvars
-
+          [ -f buildvars ] && . ./buildvars
           OPENSSL_FINAL="${OPENSSL_BUILDENV_VERSION}"
           QUIC_FINAL="${OPENSSL_QUIC_BUILDENV_VERSION}"
+          echo "OPENSSL_FINAL=${OPENSSL_FINAL}" >> "$GITHUB_OUTPUT"
+          echo "QUIC_FINAL=${QUIC_FINAL}" >> "$GITHUB_OUTPUT"
 
+<<<<<<< Updated upstream
           echo "OPENSSL_FINAL=${OPENSSL_FINAL}" >> $GITHUB_OUTPUT
           echo "QUIC_FINAL=${QUIC_FINAL}" >> $GITHUB_OUTPUT
 
+=======
+>>>>>>> Stashed changes
       - uses: docker/login-action@650006c6eb7dba73a995cc03b0b2d7f5ca915bee # v4
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
