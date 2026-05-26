@@ -56,9 +56,7 @@ jobs:
 
           git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}"
 
-          OPENSSL_VERSION="$(grep '^OPENSSL_BUILDENV_VERSION=' buildvars | cut -d'=' -f2-)"
-          SUBVERSION="$(grep '^SUBVERSION=' buildvars | cut -d'=' -f2-)"
-          TAG="${OPENSSL_VERSION}-${SUBVERSION}"
+          TAG="$(grep -E '^OPENSSL_BUILDENV_VERSION=' buildvars | cut -d'=' -f2-)"
 
           git fetch --prune origin --tags
           if git rev-parse "refs/tags/v${TAG}" >/dev/null 2>&1; then
