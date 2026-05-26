@@ -26,7 +26,7 @@ jobs:
         uses: step-security/harden-runner@f808768d1510423e83855289c910610ca9b43176
         with:
           egress-policy: audit
-          
+
       - name: Get versions
         id: GET_VERSIONS
         run: |
@@ -53,7 +53,7 @@ jobs:
           } >> "$GITHUB_OUTPUT"
 
       - name: Checkout source
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
         with:
           persist-credentials: false
           ref: ${{ github.ref }}
@@ -82,7 +82,7 @@ jobs:
       - name: Import GPG key
         if: ${{ steps.IS_UPDATE_AVAILABLE.outputs.update_available == 'true' }}
         id: IMPORT_GPG
-        uses: crazy-max/ghaction-import-gpg@2dc316deee8e90f13e1a351ab510b4d5bc0c82cd # v7
+        uses: crazy-max/ghaction-import-gpg@2dc316deee8e90f13e1a351ab510b4d5bc0c82cd
         with:
           gpg_private_key: ${{ secrets.BOT_GPG_PRIVATE_KEY }}
           passphrase: ${{ secrets.BOT_GPG_PASSPHRASE }}
@@ -104,8 +104,6 @@ jobs:
 
           BUILDENV_TIMESTAMP="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
           OPENSSL_VERSION="${{ steps.GET_VERSIONS.outputs.OPENSSL_VERSION }}"
-          SUBVERSION="0"
-          ALLOWED_MAJOR_OVERRIDES="${ALLOWED_MAJOR_OVERRIDES:-}"
           OPENSSL_SHA256="${{ steps.IS_UPDATE_AVAILABLE.outputs.OPENSSL_SHA256 }}"
           OPENSSL_BUILDENV_VERSION="${OPENSSL_VERSION}-0"
           OPENSSL_QUIC_BUILDENV_VERSION="${OPENSSL_VERSION}-0-quic"
@@ -115,8 +113,6 @@ jobs:
           {
             echo "BUILDENV_TIMESTAMP=${BUILDENV_TIMESTAMP}"
             echo "OPENSSL_VERSION=${OPENSSL_VERSION}"
-            echo "SUBVERSION=${SUBVERSION}"
-            echo "ALLOWED_MAJOR_OVERRIDES=${ALLOWED_MAJOR_OVERRIDES}"
             echo "OPENSSL_SHA256=${OPENSSL_SHA256}"
             echo "OPENSSL_BUILDENV_VERSION=${OPENSSL_BUILDENV_VERSION}"
             echo "OPENSSL_QUIC_BUILDENV_VERSION=${OPENSSL_QUIC_BUILDENV_VERSION}"
