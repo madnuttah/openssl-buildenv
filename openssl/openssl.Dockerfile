@@ -5,7 +5,6 @@ FROM alpine:3.23.4@sha256:5b10f432ef3da1b8d4c7eb6c487f2f5a8f096bc91145e68878dd4a
 
 ARG TARGETARCH
 ARG BUILDENV_BUILD_DATE
-ARG OPENSSL_BUILDENV_VERSION
 ARG OPENSSL_VERSION
 ARG OPENSSL_SHA256
 
@@ -16,7 +15,6 @@ ENV BUILDENV_BUILD_DATE="${BUILDENV_BUILD_DATE}"
 
 LABEL maintainer="madnuttah" \
       build_date="${BUILDENV_BUILD_DATE}" \
-      openssl_buildenv_version="${OPENSSL_BUILDENV_VERSION}" \
       openssl_version="${OPENSSL_VERSION}"
 
 ENV PREFIX="/usr/local" \
@@ -52,7 +50,7 @@ WORKDIR /src
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 RUN curl -L --fail --no-progress-meter \
-      "https://github.com/openssl/openssl/releases/download/openssl-${OPENSSL_VERSION}/openssl-${OPENSSL_VERSION}.tar.gz" \
+      "https://github.com/openssl/openssl/releases/download/${OPENSSL_VERSION}/${OPENSSL_VERSION}.tar.gz" \
       -o "openssl-${OPENSSL_VERSION}.tar.gz" && \
     echo "${OPENSSL_SHA256}  openssl-${OPENSSL_VERSION}.tar.gz" | sha256sum -c - && \
     tar -xf "openssl-${OPENSSL_VERSION}.tar.gz" && \

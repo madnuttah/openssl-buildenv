@@ -26,7 +26,7 @@ jobs:
           egress-policy: audit
 
       - name: Checkout source
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
         with:
           persist-credentials: false
           ref: ${{ github.ref }}
@@ -34,7 +34,7 @@ jobs:
 
       - name: Import GPG key
         id: IMPORT_GPG
-        uses: crazy-max/ghaction-import-gpg@2dc316deee8e90f13e1a351ab510b4d5bc0c82cd # v7
+        uses: crazy-max/ghaction-import-gpg@2dc316deee8e90f13e1a351ab510b4d5bc0c82cd
         with:
           gpg_private_key: ${{ secrets.BOT_GPG_PRIVATE_KEY }}
           passphrase: ${{ secrets.BOT_GPG_PASSPHRASE }}
@@ -56,7 +56,21 @@ jobs:
 
           git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}"
 
-          TAG="$(grep -E '^OPENSSL_BUILDENV_VERSION=' buildvars | cut -d'=' -f2-)"
+          OPENSSL_VER="$(cat versions/openssl.txt)"
+          BASE_VERSION="${OPENSSL_VER#openssl-}"
+
+          BRANCH="${GITHUB_REF_NAME}"
+
+          if [[ "$BRANCH" =~ ^openssl-[0-9]+\.[0-9]+\.[0-9]+-(.+)$ ]]; then
+            SUFFIX="${BASH_REMATCH[1]}"
+          else
+            SUFFIX="0"
+          fi
+
+          TAG="${BASE_VERSION}-${SUFFIX}"
+          
+          NGTCP2_VER="$(cat versions/ngtcp2.txt)"
+          NGHTTP3_VER="$(cat versions/nghttp3.txt)"
 
           git fetch --prune origin --tags
           if git rev-parse "refs/tags/v${TAG}" >/dev/null 2>&1; then
@@ -66,21 +80,17 @@ jobs:
 
           PREV_TAG=$(git tag --sort=-v:refname | grep -v "v${TAG}$" | head -n 1)
 
-          OPENSSL_VER="$(grep '^OPENSSL_VERSION=' buildvars | cut -d'=' -f2-)"
-          NGTCP2_VER="$(grep '^NGTCP2_VERSION=' buildvars | cut -d'=' -f2-)"
-          NGHTTP3_VER="$(grep '^NGHTTP3_VERSION=' buildvars | cut -d'=' -f2-)"
-
           RELEASE_NOTES="## v${TAG} — $(date -u +"%Y-%m-%d")\n"
           RELEASE_NOTES+="## What's Changed?\n"
           RELEASE_NOTES+="* Updated OpenSSL & OpenSSL+QUIC buildenv\n\n"
-          
+
           RELEASE_NOTES+="OpenSSL: ${OPENSSL_VER}\n"
           RELEASE_NOTES+="ngtcp2: ${NGTCP2_VER}\n"
           RELEASE_NOTES+="nghttp3: ${NGHTTP3_VER}\n\n"
-          
+
           RELEASE_NOTES+="## OpenSSL Release Notes\n"
-          RELEASE_NOTES+="https://github.com/openssl/openssl/releases/tag/openssl-${OPENSSL_VER}\n\n"
-          
+          RELEASE_NOTES+="https://github.com/openssl/openssl/releases/tag/${OPENSSL_VER}\n\n"
+
           RELEASE_NOTES+="## Contributors\n"
 
           git log "${PREV_TAG}..HEAD" --format="%aN|%aE" \

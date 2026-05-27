@@ -5,12 +5,10 @@ FROM alpine:3.23.4@sha256:5b10f432ef3da1b8d4c7eb6c487f2f5a8f096bc91145e68878dd4a
 
 ARG TARGETARCH
 ARG BUILDENV_BUILD_DATE
-ARG OPENSSL_BUILDENV_VERSION
 ARG OPENSSL_VERSION
 ARG OPENSSL_SHA256
 ARG NGTCP2_VERSION
 ARG NGHTTP3_VERSION
-ARG QUIC_BUILDENV_VERSION
 
 ARG TARGETPLATFORM
 ARG TARGETARCH
@@ -19,15 +17,12 @@ ENV BUILDENV_BUILD_DATE="${BUILDENV_BUILD_DATE}"
 
 LABEL maintainer="madnuttah" \
       build_date="${BUILDENV_BUILD_DATE}" \
-      openssl_buildenv_version="${OPENSSL_BUILDENV_VERSION}" \
-      openssl_version="${OPENSSL_VERSION}" \
-      quic_buildenv_version="${QUIC_BUILDENV_VERSION}"
+      openssl_version="${OPENSSL_VERSION}"
 
 ENV PREFIX="/usr/local" \
     PATH="/usr/local/openssl/bin:/usr/local/bin:${PATH}" \
     PKG_CONFIG_PATH="/usr/local/lib/pkgconfig:/usr/local/openssl/lib/pkgconfig"
 
-# hadolint ignore=DL3018
 RUN set -xe; \
   apk --update --no-cache add \
     ca-certificates \
@@ -56,7 +51,7 @@ WORKDIR /src
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 RUN curl -L --fail --no-progress-meter \
-      "https://github.com/openssl/openssl/releases/download/openssl-${OPENSSL_VERSION}/openssl-${OPENSSL_VERSION}.tar.gz" \
+      "https://github.com/openssl/openssl/releases/download/${OPENSSL_VERSION}/${OPENSSL_VERSION}.tar.gz" \
       -o "openssl-${OPENSSL_VERSION}.tar.gz" && \
     echo "${OPENSSL_SHA256}  openssl-${OPENSSL_VERSION}.tar.gz" | sha256sum -c - && \
     tar -xf "openssl-${OPENSSL_VERSION}.tar.gz" && \
@@ -64,7 +59,6 @@ RUN curl -L --fail --no-progress-meter \
 
 WORKDIR /src/openssl
 
-# hadolint ignore=DL3018
 RUN case "$TARGETARCH" in \
       amd64)   CONF="linux-x86_64";    EXTRA="enable-ec_nistp_64_gcc_128 enable-ktls enable-asm";; \
       arm64)   CONF="linux-aarch64";   EXTRA="enable-ec_nistp_64_gcc_128 enable-ktls enable-asm";; \
@@ -156,6 +150,5 @@ FROM alpine:3.23.4@sha256:5b10f432ef3da1b8d4c7eb6c487f2f5a8f096bc91145e68878dd4a
 
 COPY --from=buildenv /usr/local /usr/local
 
-# hadolint ignore=DL3018
 RUN apk --update --no-cache add ca-certificates && \
     update-ca-certificates
