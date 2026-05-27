@@ -16,27 +16,34 @@
   "customManagers": [
     {
       "customType": "regex",
-      "managerFilePatterns": ["/^versions/openssl\\.txt$/"],
-      "matchStrings": ["^(?<currentValue>openssl-[0-9]+\\.[0-9]+\\.[0-9]+)$"],
-      "datasourceTemplate": "github-tags",
+      "managerFilePatterns": ["^versions/openssl\\.txt$"],
+      "matchStrings": [
+        "^(?<currentValue>openssl-[0-9]+\\.[0-9]+\\.[0-9]+)$"
+      ],
+      "datasourceTemplate": "github-releases",
       "depNameTemplate": "openssl/openssl",
-      "versioningTemplate": "regex"
+      "extractVersionTemplate": "^openssl-(?<version>.*)$",
+      "versioningTemplate": "semver"
     },
     {
       "customType": "regex",
-      "managerFilePatterns": ["/^versions/ngtcp2\\.txt$/"],
-      "matchStrings": ["^(?<currentValue>v[0-9]+\\.[0-9]+\\.[0-9]+)$"],
-      "datasourceTemplate": "github-tags",
+      "managerFilePatterns": ["^versions/ngtcp2\\.txt$"],
+      "matchStrings": [
+        "^(?<currentValue>v[0-9]+\\.[0-9]+\\.[0-9]+)$"
+      ],
+      "datasourceTemplate": "github-releases",
       "depNameTemplate": "ngtcp2/ngtcp2",
-      "versioningTemplate": "regex"
+      "versioningTemplate": "semver"
     },
     {
       "customType": "regex",
-      "managerFilePatterns": ["/^versions/nghttp3\\.txt$/"],
-      "matchStrings": ["^(?<currentValue>v[0-9]+\\.[0-9]+\\.[0-9]+)$"],
-      "datasourceTemplate": "github-tags",
+      "managerFilePatterns": ["^versions/nghttp3\\.txt$"],
+      "matchStrings": [
+        "^(?<currentValue>v[0-9]+\\.[0-9]+\\.[0-9]+)$"
+      ],
+      "datasourceTemplate": "github-releases",
       "depNameTemplate": "ngtcp2/nghttp3",
-      "versioningTemplate": "regex"
+      "versioningTemplate": "semver"
     }
   ],
 
