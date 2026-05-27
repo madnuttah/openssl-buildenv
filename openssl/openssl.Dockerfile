@@ -49,12 +49,13 @@ RUN set -xe; \
 WORKDIR /src
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+
 RUN curl -L --fail --no-progress-meter \
       "https://github.com/openssl/openssl/releases/download/${OPENSSL_VERSION}/${OPENSSL_VERSION}.tar.gz" \
-      -o "openssl-${OPENSSL_VERSION}.tar.gz" && \
-    echo "${OPENSSL_SHA256}  openssl-${OPENSSL_VERSION}.tar.gz" | sha256sum -c - && \
-    tar -xf "openssl-${OPENSSL_VERSION}.tar.gz" && \
-    mv "openssl-${OPENSSL_VERSION}" openssl
+      -o "${OPENSSL_VERSION}.tar.gz" && \
+    echo "${OPENSSL_SHA256}  ${OPENSSL_VERSION}.tar.gz" | sha256sum -c - && \
+    tar -xf "${OPENSSL_VERSION}.tar.gz" && \
+    mv "${OPENSSL_VERSION}" openssl
 
 WORKDIR /src/openssl
 
