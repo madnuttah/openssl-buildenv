@@ -108,28 +108,37 @@ jobs:
 
           BASE_VERSION="${OPENSSL_VERSION#openssl-}"
 
-          BRANCH="${GITHUB_REF_NAME}"
+          OPENSSL_SHA256=$(curl -sL \
+            "https://github.com/openssl/openssl/releases/download/${OPENSSL_VERSION}/${OPENSSL_VERSION}.tar.gz.sha256" \
+            | cut -d ' ' -f1)
 
-          if [[ "$BRANCH" =~ ^openssl-[0-9]+\.[0-9]+\.[0-9]+-(.+)$ ]]; then
-            SUFFIX="${BASH_REMATCH[1]}"
+          BUILDENV_BUILD_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+
+          TAGS=$(curl -s "https://hub.docker.com/v2/repositories/madnuttah/openssl-buildenv/tags/?page_size=100" \
+            | jq -r '.results[].name')
+
+          MATCHING=$(echo "$TAGS" | grep -E "^${BASE_VERSION}-[0-9]+$" || true)
+
+          if [[ -z "$MATCHING" ]]; then
+            NEXT_SUB=0
           else
-            SUFFIX="0"
+            LAST_SUB=$(echo "$MATCHING" \
+              | sed "s/${BASE_VERSION}-//" \
+              | sort -n \
+              | tail -1)
+            NEXT_SUB=$((LAST_SUB + 1))
           fi
 
-          OPENSSL_FINAL="${BASE_VERSION}-${SUFFIX}"
-          QUIC_FINAL="${BASE_VERSION}-${SUFFIX}-quic"
-
-          OPENSSL_SHA256=$(curl -sL "https://github.com/openssl/openssl/releases/download/${OPENSSL_VERSION}/${OPENSSL_VERSION}.tar.gz.sha256" | cut -d ' ' -f1)
-          BUILDENV_BUILD_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+          OPENSSL_FINAL="${BASE_VERSION}-${NEXT_SUB}"
+          QUIC_FINAL="${BASE_VERSION}-${NEXT_SUB}-quic"
 
           echo "OPENSSL_VERSION=${OPENSSL_VERSION}" >> "$GITHUB_OUTPUT"
           echo "NGTCP2_VERSION=${NGTCP2_VERSION}" >> "$GITHUB_OUTPUT"
           echo "NGHTTP3_VERSION=${NGHTTP3_VERSION}" >> "$GITHUB_OUTPUT"
-          echo "OPENSSL_FINAL=${OPENSSL_FINAL}" >> "$GITHUB_OUTPUT"
-          echo "QUIC_FINAL=${QUIC_FINAL}" >> "$GITHUB_OUTPUT"
           echo "OPENSSL_SHA256=${OPENSSL_SHA256}" >> "$GITHUB_OUTPUT"
           echo "BUILDENV_BUILD_DATE=${BUILDENV_BUILD_DATE}" >> "$GITHUB_OUTPUT"
-
+          echo "OPENSSL_FINAL=${OPENSSL_FINAL}" >> "$GITHUB_OUTPUT"
+          echo "QUIC_FINAL=${QUIC_FINAL}" >> "$GITHUB_OUTPUT"
 
       - uses: docker/setup-qemu-action@ce360397dd3f832beb865e1373c09c0e9f86d70a
       - uses: docker/setup-buildx-action@d7f5e7f509e45cec5c76c4d5afdd7de93d0b3df5
@@ -196,10 +205,27 @@ jobs:
         id: vars
         run: |
           set -euo pipefail
+
           OPENSSL_VERSION=$(cat versions/openssl.txt)
           BASE_VERSION="${OPENSSL_VERSION#openssl-}"
-          OPENSSL_FINAL="${BASE_VERSION}-0"
-          QUIC_FINAL="${BASE_VERSION}-0-quic"
+
+          TAGS=$(curl -s "https://hub.docker.com/v2/repositories/madnuttah/openssl-buildenv/tags/?page_size=100" \
+            | jq -r '.results[].name')
+
+          MATCHING=$(echo "$TAGS" | grep -E "^${BASE_VERSION}-[0-9]+$" || true)
+
+          if [[ -z "$MATCHING" ]]; then
+            NEXT_SUB=0
+          else
+            LAST_SUB=$(echo "$MATCHING" \
+              | sed "s/${BASE_VERSION}-//" \
+              | sort -n \
+              | tail -1)
+            NEXT_SUB=$((LAST_SUB + 1))
+          fi
+
+          OPENSSL_FINAL="${BASE_VERSION}-${NEXT_SUB}"
+          QUIC_FINAL="${BASE_VERSION}-${NEXT_SUB}-quic"
 
           echo "OPENSSL_FINAL=${OPENSSL_FINAL}" >> "$GITHUB_OUTPUT"
           echo "QUIC_FINAL=${QUIC_FINAL}" >> "$GITHUB_OUTPUT"
