@@ -1,6 +1,7 @@
 name: CD Build OpenSSL QUIC Buildenv
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - main
