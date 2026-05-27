@@ -66,15 +66,6 @@ jobs:
       - name: Is update available
         id: IS_UPDATE_AVAILABLE
         run: |
-          [ -f buildvars ] && . ./buildvars
-
-          LATEST_MAJOR="$(echo "${{ steps.GET_VERSIONS.outputs.OPENSSL_VERSION }}" | cut -d. -f1)"
-
-          if ! echo "$ALLOWED_MAJOR_OVERRIDES" | tr ',' '\n' | grep -qx "$LATEST_MAJOR"; then
-            echo "update_available=false" >> "$GITHUB_OUTPUT"
-            exit 1
-          fi
-
           if dpkg --compare-versions "${{ steps.GET_VERSIONS.outputs.OPENSSL_BUILDENV_VERSION }}" "lt" "${{ steps.GET_VERSIONS.outputs.OPENSSL_VERSION }}"; then
             echo "OPENSSL_SHA256=$(curl -sL https://github.com/openssl/openssl/releases/download/${{ steps.GET_VERSIONS.outputs.OPENSSL_TAG }}/${{ steps.GET_VERSIONS.outputs.OPENSSL_TAG }}.tar.gz.sha256 | cut -d ' ' -f1)" >> "$GITHUB_OUTPUT"
             echo "update_available=true" >> "$GITHUB_OUTPUT"
