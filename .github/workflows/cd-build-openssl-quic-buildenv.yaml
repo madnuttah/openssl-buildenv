@@ -1,7 +1,6 @@
 name: CD Build OpenSSL QUIC Buildenv
 
 on:
-  workflow_dispatch:
   push:
     branches:
       - main
@@ -114,23 +113,8 @@ jobs:
 
           BUILDENV_BUILD_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 
-          TAGS=$(curl -s "https://hub.docker.com/v2/repositories/madnuttah/openssl-buildenv/tags/?page_size=100" \
-            | jq -r '.results[].name')
-
-          MATCHING=$(echo "$TAGS" | grep -E "^${BASE_VERSION}-[0-9]+$" || true)
-
-          if [[ -z "$MATCHING" ]]; then
-            NEXT_SUB=0
-          else
-            LAST_SUB=$(echo "$MATCHING" \
-              | sed "s/${BASE_VERSION}-//" \
-              | sort -n \
-              | tail -1)
-            NEXT_SUB=$((LAST_SUB + 1))
-          fi
-
-          OPENSSL_FINAL="${BASE_VERSION}-${NEXT_SUB}"
-          QUIC_FINAL="${BASE_VERSION}-${NEXT_SUB}-quic"
+          OPENSSL_FINAL="${BASE_VERSION}-0"
+          QUIC_FINAL="${BASE_VERSION}-0-quic"
 
           echo "OPENSSL_VERSION=${OPENSSL_VERSION}" >> "$GITHUB_OUTPUT"
           echo "NGTCP2_VERSION=${NGTCP2_VERSION}" >> "$GITHUB_OUTPUT"
@@ -209,23 +193,8 @@ jobs:
           OPENSSL_VERSION=$(cat versions/openssl.txt)
           BASE_VERSION="${OPENSSL_VERSION#openssl-}"
 
-          TAGS=$(curl -s "https://hub.docker.com/v2/repositories/madnuttah/openssl-buildenv/tags/?page_size=100" \
-            | jq -r '.results[].name')
-
-          MATCHING=$(echo "$TAGS" | grep -E "^${BASE_VERSION}-[0-9]+$" || true)
-
-          if [[ -z "$MATCHING" ]]; then
-            NEXT_SUB=0
-          else
-            LAST_SUB=$(echo "$MATCHING" \
-              | sed "s/${BASE_VERSION}-//" \
-              | sort -n \
-              | tail -1)
-            NEXT_SUB=$((LAST_SUB + 1))
-          fi
-
-          OPENSSL_FINAL="${BASE_VERSION}-${NEXT_SUB}"
-          QUIC_FINAL="${BASE_VERSION}-${NEXT_SUB}-quic"
+          OPENSSL_FINAL="${BASE_VERSION}-0"
+          QUIC_FINAL="${BASE_VERSION}-0-quic"
 
           echo "OPENSSL_FINAL=${OPENSSL_FINAL}" >> "$GITHUB_OUTPUT"
           echo "QUIC_FINAL=${QUIC_FINAL}" >> "$GITHUB_OUTPUT"
