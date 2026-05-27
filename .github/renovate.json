@@ -1,5 +1,6 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+
   "extends": [
     "config:recommended",
     "config:best-practices",
@@ -7,32 +8,49 @@
     ":automergeStableNonMajor",
     ":automergePatch",
     ":automergeDigest",
-    "customManagers:dockerfileVersions",
-    "customManagers:githubActionsVersions",
-    "customManagers:tfvarsVersions",
     "group:allDigest"
   ],
-  "schedule": ["every weekday", "on saturday"],
+
   "timezone": "Europe/Berlin",
-  "pinDigest": {
-    "automerge": true
-  },
-  "packageRules": [
+
+  "regexManagers": [
     {
-      "matchDatasources": ["docker"],
-      "enabled": false,
-      "matchPackageNames": [
-        "/^madnuttah/openssl-buildenv$/"
-      ]
+      "fileMatch": ["^versions/openssl\\.txt$"],
+      "matchStrings": ["(?<currentValue>.*)"],
+      "datasourceTemplate": "github-tags",
+      "depNameTemplate": "openssl/openssl",
+      "versioningTemplate": "regex"
     },
     {
-      "matchFileNames": ["buildvars", "*.sh"],
+      "fileMatch": ["^versions/ngtcp2\\.txt$"],
+      "matchStrings": ["(?<currentValue>.*)"],
+      "datasourceTemplate": "github-tags",
+      "depNameTemplate": "ngtcp2/ngtcp2",
+      "versioningTemplate": "regex"
+    },
+    {
+      "fileMatch": ["^versions/nghttp3\\.txt$"],
+      "matchStrings": ["(?<currentValue>.*)"],
+      "datasourceTemplate": "github-tags",
+      "depNameTemplate": "ngtcp2/nghttp3",
+      "versioningTemplate": "regex"
+    }
+  ],
+
+  "packageRules": [
+    {
+      "matchManagers": ["dockerfile"],
       "enabled": false
     },
     {
       "matchManagers": ["github-actions"],
       "pinDigests": true,
       "automerge": true
+    },
+    {
+      "matchFileNames": ["versions/openssl.txt"],
+      "matchDepNames": ["openssl/openssl"],
+      "allowedVersions": "<4.0.0"
     }
   ]
 }
