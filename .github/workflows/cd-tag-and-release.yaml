@@ -59,29 +59,27 @@ jobs:
           OPENSSL_VER="$(cat versions/openssl.txt)"
           BASE_VERSION="${OPENSSL_VER#openssl-}"
 
-         OPENSSL_VER="$(cat versions/openssl.txt)"
-BASE_VERSION="${OPENSSL_VER#openssl-}"
-
-if [[ "${GITHUB_EVENT_NAME}" == "workflow_dispatch" ]]; then
-  LAST_TAG=$(git tag --sort=-v:refname | grep "^v${BASE_VERSION}-" | head -n 1)
-  if [[ "$LAST_TAG" =~ ^v${BASE_VERSION}-([0-9]+)$ ]]; then
-    SUFFIX=$((BASH_REMATCH[1] + 1))
-  else
-    SUFFIX=0
-  fi
-else
-  BRANCH="${GITHUB_REF_NAME}"
-  if [[ "$BRANCH" =~ ^openssl-[0-9]+\.[0-9]+\.[0-9]+-([0-9]+)$ ]]; then
-    SUFFIX="${BASH_REMATCH[1]}"
-  else
-    echo "Invalid branch name for automatic release: $BRANCH"
-    exit 1
-  fi
-fi
-
-TAG="${BASE_VERSION}-${SUFFIX}"
-
-
+          OPENSSL_VER="$(cat versions/openssl.txt)"
+   
+          BASE_VERSION="${OPENSSL_VER#openssl-}"
+          
+          if [[ "${GITHUB_EVENT_NAME}" == "workflow_dispatch" ]]; then
+            LAST_TAG=$(git tag --sort=-v:refname | grep "^v${BASE_VERSION}-" | head -n 1)
+            if [[ "$LAST_TAG" =~ ^v${BASE_VERSION}-([0-9]+)$ ]]; then
+              SUFFIX=$((BASH_REMATCH[1] + 1))
+            else
+              SUFFIX=0
+            fi
+          else
+            BRANCH="${GITHUB_REF_NAME}"
+            if [[ "$BRANCH" =~ ^openssl-[0-9]+\.[0-9]+\.[0-9]+-([0-9]+)$ ]]; then
+              SUFFIX="${BASH_REMATCH[1]}"
+            else
+              echo "Invalid branch name for automatic release: $BRANCH"
+              exit 1
+            fi
+          fi
+          
           TAG="${BASE_VERSION}-${SUFFIX}"
           
           NGTCP2_VER="$(cat versions/ngtcp2.txt)"
