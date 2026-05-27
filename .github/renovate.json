@@ -13,23 +13,26 @@
 
   "timezone": "Europe/Berlin",
 
-  "regexManagers": [
+  "customManagers": [
     {
-      "fileMatch": ["^versions/openssl\\.txt$"],
+      "customType": "regex",
+      "managerFilePatterns": ["/^versions/openssl\\.txt$/"],
       "matchStrings": ["^(?<currentValue>openssl-[0-9]+\\.[0-9]+\\.[0-9]+)$"],
       "datasourceTemplate": "github-tags",
       "depNameTemplate": "openssl/openssl",
       "versioningTemplate": "regex"
     },
     {
-      "fileMatch": ["^versions/ngtcp2\\.txt$"],
+      "customType": "regex",
+      "managerFilePatterns": ["/^versions/ngtcp2\\.txt$/"],
       "matchStrings": ["^(?<currentValue>v[0-9]+\\.[0-9]+\\.[0-9]+)$"],
       "datasourceTemplate": "github-tags",
       "depNameTemplate": "ngtcp2/ngtcp2",
       "versioningTemplate": "regex"
     },
     {
-      "fileMatch": ["^versions/nghttp3\\.txt$"],
+      "customType": "regex",
+      "managerFilePatterns": ["/^versions/nghttp3\\.txt$/"],
       "matchStrings": ["^(?<currentValue>v[0-9]+\\.[0-9]+\\.[0-9]+)$"],
       "datasourceTemplate": "github-tags",
       "depNameTemplate": "ngtcp2/nghttp3",
