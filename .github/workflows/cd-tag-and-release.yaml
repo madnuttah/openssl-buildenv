@@ -92,7 +92,7 @@ jobs:
 
           PREV_TAG=$(git tag --sort=-v:refname | head -n 1)
 
-          RELEASE_NOTES="## v${TAG} — $(date -u +"%Y-%m-%d")\n"
+          RELEASE_NOTES="## v${TAG} - $(date -u +"%Y-%m-%d")\n"
           RELEASE_NOTES+="## What's Changed?\n"
           RELEASE_NOTES+="* Updated OpenSSL & OpenSSL+QUIC buildenv\n\n"
 
