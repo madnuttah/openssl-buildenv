@@ -184,6 +184,17 @@ jobs:
           tags: |
             madnuttah/openssl-buildenv:${{ steps.vars.outputs.QUIC_FINAL }}-${{ matrix.arch }}
 
+      - name: Save subversion artifact
+        if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.subversion != '' }}
+        run: echo "${{ github.event.inputs.subversion }}" > subversion.txt
+
+      - name: Upload subversion artifact
+        if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.subversion != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: subversion
+          path: subversion.txt
+
   manifest:
     needs: build
     runs-on: ubuntu-latest
