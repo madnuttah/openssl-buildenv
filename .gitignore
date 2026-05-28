@@ -3,6 +3,5 @@ LICENSE
 *.md
 !CHANGELOG.md
 !RELEASE_NOTES.md
-buildvars
 *.tmp
 *.log
