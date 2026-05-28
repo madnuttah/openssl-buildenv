@@ -5,6 +5,11 @@ on:
     workflows: ["CD Build OpenSSL QUIC Buildenv"]
     types: [completed]
   workflow_dispatch:
+    inputs:
+      subversion:
+        description: "Manual subversion number (optional)"
+        required: false
+        type: string
 
 permissions:
   contents: write
@@ -42,21 +47,17 @@ jobs:
           git_push_gpgsign: false
           trust_level: 5
 
-      - name: Download subversion artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: subversion
-        continue-on-error: true
-
       - name: Determine subversion
         id: SUBV
         run: |
-          if [ -f subversion.txt ]; then
-            N="$(cat subversion.txt)"
+          if [ -n "${{ github.event.inputs.subversion }}" ]; then
+            echo "Using manual subversion: ${{ github.event.inputs.subversion }}"
+            N="${{ github.event.inputs.subversion }}"
           else
-            echo "No subversion artifact found, defaulting to 0"
+            echo "No manual subversion provided, defaulting to 0"
             N="0"
           fi
+
           echo "N=$N" >> "$GITHUB_OUTPUT"
 
       - name: Push tag and upload release to GitHub
