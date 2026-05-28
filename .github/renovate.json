@@ -12,7 +12,8 @@
   ],
 
   "timezone": "Europe/Berlin",
-
+  "schedule": ["at any time"],
+  
   "customManagers": [
     {
       "customType": "regex",
