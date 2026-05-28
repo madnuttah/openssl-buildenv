@@ -61,6 +61,16 @@
       "matchFileNames": ["versions/openssl.txt"],
       "matchDepNames": ["openssl/openssl"],
       "allowedVersions": "<4.0.0"
+    },
+    {
+      "matchFileNames": ["versions/ngtcp2.txt"],
+      "matchDepNames": ["ngtcp2/ngtcp2"],
+      "allowedVersions": "<2.0.0"
+    },
+    {
+      "matchFileNames": ["versions/nghttp3.txt"],
+      "matchDepNames": ["ngtcp2/nghttp3"],
+      "allowedVersions": "<2.0.0"
     }
   ]
 }
