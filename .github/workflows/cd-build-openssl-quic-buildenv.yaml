@@ -6,6 +6,12 @@ on:
       - main
     paths:
       - versions/openssl.txt
+  workflow_dispatch:
+    inputs:
+      subversion:
+        description: "Manual subversion bump"
+        required: false
+        type: string
 
 permissions:
   actions: read
@@ -113,8 +119,14 @@ jobs:
 
           BUILDENV_BUILD_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 
-          OPENSSL_FINAL="${BASE_VERSION}-0"
-          QUIC_FINAL="${BASE_VERSION}-0-quic"
+          if [ -n "${{ github.event.inputs.subversion }}" ]; then
+            N="${{ github.event.inputs.subversion }}"
+          else
+            N="0"
+          fi
+          
+          OPENSSL_FINAL="${BASE_VERSION}-${N}"
+          QUIC_FINAL="${BASE_VERSION}-${N}-quic"
 
           echo "OPENSSL_VERSION=${OPENSSL_VERSION}" >> "$GITHUB_OUTPUT"
           echo "NGTCP2_VERSION=${NGTCP2_VERSION}" >> "$GITHUB_OUTPUT"
@@ -193,8 +205,14 @@ jobs:
           OPENSSL_VERSION=$(cat versions/openssl.txt)
           BASE_VERSION="${OPENSSL_VERSION#openssl-}"
 
-          OPENSSL_FINAL="${BASE_VERSION}-0"
-          QUIC_FINAL="${BASE_VERSION}-0-quic"
+          if [ -n "${{ github.event.inputs.subversion }}" ]; then
+            N="${{ github.event.inputs.subversion }}"
+          else
+            N="0"
+          fi
+          
+          OPENSSL_FINAL="${BASE_VERSION}-${N}"
+          QUIC_FINAL="${BASE_VERSION}-${N}-quic"
 
           echo "OPENSSL_FINAL=${OPENSSL_FINAL}" >> "$GITHUB_OUTPUT"
           echo "QUIC_FINAL=${QUIC_FINAL}" >> "$GITHUB_OUTPUT"
