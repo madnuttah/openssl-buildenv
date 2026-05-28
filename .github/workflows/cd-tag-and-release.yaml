@@ -53,8 +53,11 @@ jobs:
           if [ -n "${{ github.event.inputs.subversion }}" ]; then
             echo "Using manual subversion: ${{ github.event.inputs.subversion }}"
             N="${{ github.event.inputs.subversion }}"
+          elif [ -f subversion.txt ]; then
+            echo "Using artifact subversion: $(cat subversion.txt)"
+            N="$(cat subversion.txt)"
           else
-            echo "No manual subversion provided, defaulting to 0"
+            echo "No subversion provided or artifact found, defaulting to 0"
             N="0"
           fi
 
