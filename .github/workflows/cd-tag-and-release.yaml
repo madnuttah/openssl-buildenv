@@ -56,8 +56,14 @@ jobs:
 
           OPENSSL_VER="$(cat versions/openssl.txt)"
           BASE_VERSION="${OPENSSL_VER#openssl-}"
+                    
+          if [ -n "${{ github.event.workflow_run.event.inputs.subversion }}" ]; then
+            N="${{ github.event.workflow_run.event.inputs.subversion }}"
+          else
+            N="0"
+          fi
 
-          TAG="${BASE_VERSION}-0"
+          TAG="${BASE_VERSION}-${N}"
 
           NGTCP2_VER="$(cat versions/ngtcp2.txt)"
           NGHTTP3_VER="$(cat versions/nghttp3.txt)"
