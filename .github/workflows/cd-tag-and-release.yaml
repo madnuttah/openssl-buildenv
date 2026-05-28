@@ -1,21 +1,22 @@
 name: CD Tag And Release
 
-permissions:
-  contents: write
-  actions: read
-
 on:
   workflow_run:
     workflows: ["CD Build OpenSSL QUIC Buildenv"]
-    types:
-      - completed
+    types: [completed]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: read
 
 jobs:
   tag_and_release:
     runs-on: ubuntu-latest
     if: >
-      github.event_name == 'workflow_run' &&
-      github.event.workflow_run.conclusion == 'success'
+      (github.event_name == 'workflow_run' &&
+       github.event.workflow_run.conclusion == 'success') ||
+      github.event_name == 'workflow_dispatch'
 
     steps:
       - name: Harden Runner
@@ -27,7 +28,6 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
         with:
           persist-credentials: false
-          ref: ${{ github.ref }}
           fetch-depth: 0
 
       - name: Import GPG key
@@ -41,6 +41,23 @@ jobs:
           git_tag_gpgsign: false
           git_push_gpgsign: false
           trust_level: 5
+
+      - name: Download subversion artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: subversion
+        continue-on-error: true
+
+      - name: Determine subversion
+        id: SUBV
+        run: |
+          if [ -f subversion.txt ]; then
+            N="$(cat subversion.txt)"
+          else
+            echo "No subversion artifact found, defaulting to 0"
+            N="0"
+          fi
+          echo "N=$N" >> "$GITHUB_OUTPUT"
 
       - name: Push tag and upload release to GitHub
         env:
@@ -56,12 +73,7 @@ jobs:
 
           OPENSSL_VER="$(cat versions/openssl.txt)"
           BASE_VERSION="${OPENSSL_VER#openssl-}"
-                    
-          if [ -n "${{ github.event.workflow_run.event.inputs.subversion }}" ]; then
-            N="${{ github.event.workflow_run.event.inputs.subversion }}"
-          else
-            N="0"
-          fi
+          N="${{ steps.SUBV.outputs.N }}"
 
           TAG="${BASE_VERSION}-${N}"
 
