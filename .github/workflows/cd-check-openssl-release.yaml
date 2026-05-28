@@ -17,7 +17,6 @@ jobs:
       update_available: ${{ steps.IS_UPDATE_AVAILABLE.outputs.update_available }}
       OPENSSL_VERSION: ${{ steps.GET_VERSIONS.outputs.OPENSSL_VERSION }}
       OPENSSL_SHA256: ${{ steps.IS_UPDATE_AVAILABLE.outputs.OPENSSL_SHA256 }}
-      OPENSSL_BUILDENV_VERSION: ${{ steps.GET_VERSIONS.outputs.OPENSSL_BUILDENV_VERSION }}
       NGTCP2_VERSION: ${{ steps.GET_VERSIONS.outputs.NGTCP2_VERSION }}
       NGHTTP3_VERSION: ${{ steps.GET_VERSIONS.outputs.NGHTTP3_VERSION }}
 
@@ -45,10 +44,6 @@ jobs:
             echo "OPENSSL_TAG=${OPENSSL_TAG}"
             echo "OPENSSL_VERSION=${OPENSSL_VERSION}"
 
-            echo "OPENSSL_BUILDENV_VERSION=$(curl -s https://api.github.com/repos/madnuttah/openssl-buildenv/releases \
-              | jq -r '.[0].tag_name' \
-              | sed -E 's/.*?([0-9]+\.[0-9]+\.[0-9]+).*/\1/')"
-
             echo "NGTCP2_VERSION=$(curl -s https://api.github.com/repos/ngtcp2/ngtcp2/releases \
               | jq -r '.[0].tag_name')"
 
@@ -66,7 +61,9 @@ jobs:
       - name: Is update available
         id: IS_UPDATE_AVAILABLE
         run: |
-          if dpkg --compare-versions "${{ steps.GET_VERSIONS.outputs.OPENSSL_BUILDENV_VERSION }}" "lt" "${{ steps.GET_VERSIONS.outputs.OPENSSL_VERSION }}"; then
+          CURRENT="$(cat versions/openssl.txt | sed 's/openssl-//')"
+
+          if dpkg --compare-versions "$CURRENT" "lt" "${{ steps.GET_VERSIONS.outputs.OPENSSL_VERSION }}"; then
             echo "OPENSSL_SHA256=$(curl -sL https://github.com/openssl/openssl/releases/download/${{ steps.GET_VERSIONS.outputs.OPENSSL_TAG }}/${{ steps.GET_VERSIONS.outputs.OPENSSL_TAG }}.tar.gz.sha256 | cut -d ' ' -f1)" >> "$GITHUB_OUTPUT"
             echo "update_available=true" >> "$GITHUB_OUTPUT"
           else
@@ -86,7 +83,7 @@ jobs:
           git_push_gpgsign: false
           trust_level: 5
 
-      - name: Push buildvars to repository
+      - name: Update version files
         if: ${{ steps.IS_UPDATE_AVAILABLE.outputs.update_available == 'true' }}
         env:
           GITHUB_TOKEN: ${{ secrets.BOT_GITHUB_TOKEN }}
@@ -95,28 +92,15 @@ jobs:
           GIT_COMMITTER_NAME: ${{ steps.IMPORT_GPG.outputs.name }}
           GIT_COMMITTER_EMAIL: ${{ steps.IMPORT_GPG.outputs.email }}
         run: |
-          git remote set-url origin "https://x-access-token:${{ secrets.BOT_GITHUB_TOKEN }}@github.com/${{ github.repository }}"
+          git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}"
 
-          BUILDENV_TIMESTAMP="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
-          OPENSSL_VERSION="${{ steps.GET_VERSIONS.outputs.OPENSSL_VERSION }}"
-          OPENSSL_SHA256="${{ steps.IS_UPDATE_AVAILABLE.outputs.OPENSSL_SHA256 }}"
-          OPENSSL_BUILDENV_VERSION="${OPENSSL_VERSION}-0"
-          OPENSSL_QUIC_BUILDENV_VERSION="${OPENSSL_VERSION}-0-quic"
-          NGTCP2_VERSION="${{ steps.GET_VERSIONS.outputs.NGTCP2_VERSION }}"
-          NGHTTP3_VERSION="${{ steps.GET_VERSIONS.outputs.NGHTTP3_VERSION }}"
+          echo "openssl-${{ steps.GET_VERSIONS.outputs.OPENSSL_VERSION }}" > versions/openssl.txt
+          echo "${{ steps.IS_UPDATE_AVAILABLE.outputs.OPENSSL_SHA256 }}" > versions/openssl.sha256
+          echo "${{ steps.GET_VERSIONS.outputs.NGTCP2_VERSION }}" > versions/ngtcp2.txt
+          echo "${{ steps.GET_VERSIONS.outputs.NGHTTP3_VERSION }}" > versions/nghttp3.txt
 
-          {
-            echo "BUILDENV_TIMESTAMP=${BUILDENV_TIMESTAMP}"
-            echo "OPENSSL_VERSION=${OPENSSL_VERSION}"
-            echo "OPENSSL_SHA256=${OPENSSL_SHA256}"
-            echo "OPENSSL_BUILDENV_VERSION=${OPENSSL_BUILDENV_VERSION}"
-            echo "OPENSSL_QUIC_BUILDENV_VERSION=${OPENSSL_QUIC_BUILDENV_VERSION}"
-            echo "NGTCP2_VERSION=${NGTCP2_VERSION}"
-            echo "NGHTTP3_VERSION=${NGHTTP3_VERSION}"
-          } > buildvars
-
-          git add buildvars
-          git commit -m "Updated buildvars" || echo "No changes to commit"
+          git add versions/
+          git commit -m "Update OpenSSL/ngtcp2/nghttp3 versions" || echo "No changes to commit"
           git push origin main
 
           exit 0
