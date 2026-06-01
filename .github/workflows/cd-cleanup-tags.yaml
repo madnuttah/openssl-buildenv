@@ -17,10 +17,16 @@ permissions:
 
 jobs:
   cleanup-tags:
+
     if: >
       github.event_name == 'workflow_dispatch' ||
-      (github.event_name == 'workflow_run' &&
-       github.event.workflow_run.conclusion == 'success')
+      (
+        github.event_name == 'workflow_run' &&
+        github.event.workflow_run.conclusion == 'success' &&
+        github.event.workflow_run.event == 'push' &&
+        github.event.workflow_run.head_branch == 'main'
+      )
+
     runs-on: ubuntu-latest
     env:
       DELETE_SUFFIXES: "-386 -amd64 -armv6 -armv7 -arm64 -ppc64le -s390x -riscv64"

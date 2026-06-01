@@ -9,7 +9,7 @@ on:
 
 permissions:
   contents: write
-  actions: read
+  actions: write
 
 jobs:
   tag_and_release:

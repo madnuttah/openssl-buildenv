@@ -10,7 +10,7 @@ on:
 
 permissions:
   actions: read
-  contents: write
+  contents: read
 
 jobs:
   build:
@@ -47,6 +47,7 @@ jobs:
         with:
           ref: ${{ github.ref }}
           fetch-depth: 0
+          persist-credentials: false
 
       - name: Load versions
         id: vars
@@ -54,7 +55,16 @@ jobs:
           set -euo pipefail
           OPENSSL_VERSION=$(cat versions/openssl.txt)
           BUILDENV_VERSION=$(cat versions/openssl-buildenv.txt)
-          OPENSSL_SHA256=$(curl -sL "https://github.com/openssl/openssl/releases/download/${OPENSSL_VERSION}/${OPENSSL_VERSION}.tar.gz.sha256" | cut -d ' ' -f1)
+                      
+          SHA_URL="https://github.com/openssl/openssl/releases/download/${OPENSSL_VERSION}/${OPENSSL_VERSION}.tar.gz.sha256"
+
+          if ! curl --fail -sL "$SHA_URL" >/dev/null; then
+            echo "ERROR: SHA256 file not found for ${OPENSSL_VERSION}"
+            exit 1
+          fi
+
+          OPENSSL_SHA256=$(curl -sL "$SHA_URL" | awk '{print $1}')
+
           BUILDENV_BUILD_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 
           {
@@ -129,6 +139,7 @@ jobs:
         with:
           ref: ${{ github.ref }}
           fetch-depth: 0
+          persist-credentials: false
 
       - name: Write version artifact
         run: |
