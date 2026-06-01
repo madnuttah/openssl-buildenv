@@ -56,10 +56,13 @@ jobs:
           BUILDENV_VERSION=$(cat versions/openssl-buildenv.txt)
           OPENSSL_SHA256=$(curl -sL "https://github.com/openssl/openssl/releases/download/${OPENSSL_VERSION}/${OPENSSL_VERSION}.tar.gz.sha256" | cut -d ' ' -f1)
           BUILDENV_BUILD_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-          echo "OPENSSL_VERSION=${OPENSSL_VERSION}" >> "$GITHUB_OUTPUT"
-          echo "BUILDENV_VERSION=${BUILDENV_VERSION}" >> "$GITHUB_OUTPUT"
-          echo "OPENSSL_SHA256=${OPENSSL_SHA256}" >> "$GITHUB_OUTPUT"
-          echo "BUILDENV_BUILD_DATE=${BUILDENV_BUILD_DATE}" >> "$GITHUB_OUTPUT"
+
+          {
+            echo "OPENSSL_VERSION=${OPENSSL_VERSION}"
+            echo "BUILDENV_VERSION=${BUILDENV_VERSION}"
+            echo "OPENSSL_SHA256=${OPENSSL_SHA256}"
+            echo "BUILDENV_BUILD_DATE=${BUILDENV_BUILD_DATE}"
+          } >> "$GITHUB_OUTPUT"
 
       - uses: docker/setup-qemu-action@ce360397dd3f832beb865e1373c09c0e9f86d70a
 

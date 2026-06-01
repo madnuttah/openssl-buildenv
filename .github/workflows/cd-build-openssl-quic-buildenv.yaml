@@ -59,11 +59,14 @@ jobs:
           NGHTTP3_VERSION=$(cat versions/nghttp3.txt)
           BUILDENV_QUIC_VERSION=$(cat versions/openssl-quic-buildenv.txt)
           BUILDENV_BUILD_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-          echo "OPENSSL_VERSION=${OPENSSL_VERSION}" >> "$GITHUB_OUTPUT"
-          echo "NGTCP2_VERSION=${NGTCP2_VERSION}" >> "$GITHUB_OUTPUT"
-          echo "NGHTTP3_VERSION=${NGHTTP3_VERSION}" >> "$GITHUB_OUTPUT"
-          echo "BUILDENV_QUIC_VERSION=${BUILDENV_QUIC_VERSION}" >> "$GITHUB_OUTPUT"
-          echo "BUILDENV_BUILD_DATE=${BUILDENV_BUILD_DATE}" >> "$GITHUB_OUTPUT"
+
+          {
+            echo "OPENSSL_VERSION=${OPENSSL_VERSION}"
+            echo "NGTCP2_VERSION=${NGTCP2_VERSION}"
+            echo "NGHTTP3_VERSION=${NGHTTP3_VERSION}"
+            echo "BUILDENV_QUIC_VERSION=${BUILDENV_QUIC_VERSION}"
+            echo "BUILDENV_BUILD_DATE=${BUILDENV_BUILD_DATE}"
+          } >> "$GITHUB_OUTPUT"
 
       - uses: docker/setup-qemu-action@ce360397dd3f832beb865e1373c09c0e9f86d70a
 

@@ -50,17 +50,20 @@ jobs:
           NGTCP2_VERSION=$(cat versions/ngtcp2.txt)
           NGHTTP3_VERSION=$(cat versions/nghttp3.txt)
 
-          echo "OPENSSL_VERSION=${OPENSSL_VERSION}" >> "$GITHUB_OUTPUT"
-          echo "NONQUIC_VERSION=${NONQUIC_VERSION}" >> "$GITHUB_OUTPUT"
-          echo "QUIC_VERSION=${QUIC_VERSION}" >> "$GITHUB_OUTPUT"
-          echo "NGTCP2_VERSION=${NGTCP2_VERSION}" >> "$GITHUB_OUTPUT"
-          echo "NGHTTP3_VERSION=${NGHTTP3_VERSION}" >> "$GITHUB_OUTPUT"
+          {
+            echo "OPENSSL_VERSION=${OPENSSL_VERSION}"
+            echo "NONQUIC_VERSION=${NONQUIC_VERSION}"
+            echo "QUIC_VERSION=${QUIC_VERSION}"
+            echo "NGTCP2_VERSION=${NGTCP2_VERSION}"
+            echo "NGHTTP3_VERSION=${NGHTTP3_VERSION}"
+          } >> "$GITHUB_OUTPUT"
 
-      - name: Download SBOM + provenance artifacts
-        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16
-        with:
-          path: artifacts
-        continue-on-error: true
+
+      # - name: Download SBOM + provenance artifacts
+        # uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16
+        # with:
+          # path: artifacts
+        # continue-on-error: true
 
       - name: Push tags and create releases
         env:
