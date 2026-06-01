@@ -58,7 +58,6 @@ jobs:
             echo "NGHTTP3_VERSION=${NGHTTP3_VERSION}"
           } >> "$GITHUB_OUTPUT"
 
-
       # - name: Download SBOM + provenance artifacts
         # uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16
         # with:
@@ -77,11 +76,11 @@ jobs:
 
           git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}"
 
-          OPENSSL="${{ steps.versions.outputs.OPENSSL_VERSION }}"
-          NONQUIC="${{ steps.versions.outputs.NONQUIC_VERSION }}"
-          QUIC="${{ steps.versions.outputs.QUIC_VERSION }}"
-          NGTCP2="${{ steps.versions.outputs.NGTCP2_VERSION }}"
-          NGHTTP3="${{ steps.versions.outputs.NGHTTP3_VERSION }}"
+          OPENSSL="$(printf '%s' "${{ steps.versions.outputs.OPENSSL_VERSION }}")"
+          NONQUIC="$(printf '%s' "${{ steps.versions.outputs.NONQUIC_VERSION }}")"
+          QUIC="$(printf '%s' "${{ steps.versions.outputs.QUIC_VERSION }}")"
+          NGTCP2="$(printf '%s' "${{ steps.versions.outputs.NGTCP2_VERSION }}")"
+          NGHTTP3="$(printf '%s' "${{ steps.versions.outputs.NGHTTP3_VERSION }}")"
 
           TAG_NONQUIC="v${NONQUIC}"
           TAG_QUIC="v${QUIC}-quic"
@@ -118,6 +117,7 @@ jobs:
             -t "${TAG_QUIC}" \
             -F RELEASE_NOTES.md \
             --latest=false || true
+
 
       # - name: Upload SBOM + provenance to releases
         # env:
