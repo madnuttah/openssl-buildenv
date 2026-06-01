@@ -9,7 +9,6 @@ on:
       - versions/ngtcp2.txt
       - versions/nghttp3.txt
       - versions/openssl-quic-buildenv.txt
-  workflow_dispatch:
 
 permissions:
   actions: read

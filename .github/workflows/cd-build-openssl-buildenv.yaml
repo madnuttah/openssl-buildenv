@@ -7,7 +7,6 @@ on:
     paths:
       - versions/openssl.txt
       - versions/openssl-buildenv.txt
-  workflow_dispatch:
 
 permissions:
   actions: read
