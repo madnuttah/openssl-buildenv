@@ -20,7 +20,7 @@ on:
     branches:
       - main
   schedule:
-    - cron: "0 */6 * * *"   # every 6 hours
+    - cron: "0 */6 * * *"
   workflow_dispatch:
 
 jobs:
@@ -44,7 +44,8 @@ jobs:
         with:
           renovate-version: ${{ env.RENOVATE_VERSION }}
           token: ${{ secrets.GITHUB_TOKEN }}
-          log-level: ${{ env.LOG_LEVEL }}
+        env:
+          RENOVATE_LOG_LEVEL: ${{ env.LOG_LEVEL }}
 
       - name: Upload Logs
         if: always()
@@ -68,13 +69,14 @@ jobs:
           path: ~/.cache/renovate
           key: renovate-cache-${{ github.ref }}
 
-      - name: Run Renovate (Dry Run)
+      - name: Run Renovate (Dry run)
         uses: renovatebot/github-action@v46.1.14
         with:
           renovate-version: ${{ env.RENOVATE_VERSION }}
           token: ${{ secrets.GITHUB_TOKEN }}
-          log-level: ${{ env.LOG_LEVEL }}
           extra-args: --dry-run
+        env:
+          RENOVATE_LOG_LEVEL: ${{ env.LOG_LEVEL }}
 
       - name: Upload Logs
         if: always()
