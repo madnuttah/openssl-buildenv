@@ -26,7 +26,7 @@
       ],
       "datasourceTemplate": "github-releases",
       "depNameTemplate": "openssl",
-      "lookupNameTemplate": "openssl/openssl",
+      "packageNameTemplate": "openssl/openssl",
       "extractVersionTemplate": "^openssl-(?<version>.*)$",
       "versioningTemplate": "semver"
     },
@@ -38,7 +38,7 @@
       ],
       "datasourceTemplate": "github-releases",
       "depNameTemplate": "ngtcp2",
-      "lookupNameTemplate": "ngtcp2/ngtcp2",
+      "packageNameTemplate": "ngtcp2/ngtcp2",
       "versioningTemplate": "semver"
     },
     {
