@@ -25,7 +25,8 @@
         "(?<currentValue>openssl-[0-9]+\\.[0-9]+\\.[0-9]+)"
       ],
       "datasourceTemplate": "github-releases",
-      "depNameTemplate": "openssl/openssl",
+      "depNameTemplate": "openssl",
+      "lookupNameTemplate": "openssl/openssl",
       "extractVersionTemplate": "^openssl-(?<version>.*)$",
       "versioningTemplate": "semver"
     },
@@ -36,7 +37,8 @@
         "(?<currentValue>v[0-9]+\\.[0-9]+\\.[0-9]+)"
       ],
       "datasourceTemplate": "github-releases",
-      "depNameTemplate": "ngtcp2/ngtcp2",
+      "depNameTemplate": "ngtcp2",
+      "lookupNameTemplate": "ngtcp2/ngtcp2",
       "versioningTemplate": "semver"
     },
     {
@@ -62,14 +64,15 @@
       "pinDigests": true,
       "automerge": true
     },
+
     {
       "matchFileNames": ["versions/openssl.txt"],
-      "matchDepNames": ["openssl/openssl"],
+      "matchDepNames": ["openssl"],
       "allowedVersions": "<4.0.0"
     },
     {
       "matchFileNames": ["versions/ngtcp2.txt"],
-      "matchDepNames": ["ngtcp2/ngtcp2"],
+      "matchDepNames": ["ngtcp2"],
       "allowedVersions": "<2.0.0"
     },
     {
@@ -77,6 +80,7 @@
       "matchDepNames": ["nghttp3"],
       "allowedVersions": "<2.0.0"
     },
+
     {
       "groupName": "QUIC stack",
       "matchFileNames": [
@@ -85,6 +89,7 @@
       ],
       "automerge": true
     },
+
     {
       "matchFileNames": ["versions/openssl-buildenv.txt"],
       "enabled": false
