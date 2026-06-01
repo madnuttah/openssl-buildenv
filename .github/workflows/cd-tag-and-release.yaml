@@ -104,14 +104,63 @@ jobs:
             git push origin "${TAG_QUIC}"
           fi
 
-          NOTES="## OpenSSL Buildenv Release\n"
-          NOTES+="OpenSSL: ${OPENSSL}\n"
-          NOTES+="ngtcp2: ${NGTCP2}\n"
-          NOTES+="nghttp3: ${NGHTTP3}\n\n"
-          NOTES+="### Non-QUIC Buildenv\n"
-          NOTES+="- Version: ${NONQUIC}\n"
-          NOTES+="### QUIC Buildenv\n"
-          NOTES+="- Version: ${QUIC}\n"
+          #
+          # SELECTIVE RELEASE NOTES (ONLY WHAT CHANGED)
+          #
+
+          NOTES=""
+
+          UPDATED_OPENSSL=false
+          UPDATED_NGTCP2=false
+          UPDATED_NGHTTP3=false
+          UPDATED_QUIC=false
+
+          if git diff HEAD~1 HEAD -- versions/openssl.txt >/dev/null 2>&1; then
+            UPDATED_OPENSSL=true
+          fi
+
+          if git diff HEAD~1 HEAD -- versions/ngtcp2.txt >/dev/null 2>&1; then
+            UPDATED_NGTCP2=true
+          fi
+
+          if git diff HEAD~1 HEAD -- versions/nghttp3.txt >/dev/null 2>&1; then
+            UPDATED_NGHTTP3=true
+          fi
+
+          if git diff HEAD~1 HEAD -- versions/openssl-quic-buildenv.txt >/dev/null 2>&1; then
+            UPDATED_QUIC=true
+          fi
+
+          #
+          # OpenSSL section (only if OpenSSL changed)
+          #
+          if [ "$UPDATED_OPENSSL" = true ]; then
+            NOTES+="## OpenSSL Buildenv\n"
+            NOTES+="OpenSSL: ${OPENSSL}\n"
+            NOTES+="Release notes: https://github.com/openssl/openssl/releases/tag/${OPENSSL#openssl-}\n"
+            NOTES+="Buildenv version: ${NONQUIC}\n\n"
+          fi
+
+          #
+          # QUIC section (only if QUIC buildenv OR deps changed)
+          #
+          if [ "$UPDATED_QUIC" = true ] || [ "$UPDATED_NGTCP2" = true ] || [ "$UPDATED_NGHTTP3" = true ]; then
+            NOTES+="## OpenSSL QUIC Buildenv\n"
+            NOTES+="Version: ${QUIC}\n"
+            NOTES+="OpenSSL: ${OPENSSL}\n"
+
+            if [ "$UPDATED_NGTCP2" = true ]; then
+              NOTES+="- ngtcp2: ${NGTCP2}\n"
+              NOTES+="  Release notes: https://github.com/ngtcp2/ngtcp2/releases/tag/${NGTCP2}\n"
+            fi
+
+            if [ "$UPDATED_NGHTTP3" = true ]; then
+              NOTES+="- nghttp3: ${NGHTTP3}\n"
+              NOTES+="  Release notes: https://github.com/ngtcp2/nghttp3/releases/tag/${NGHTTP3}\n"
+            fi
+
+            NOTES+="\n"
+          fi
 
           printf "%b" "$NOTES" > RELEASE_NOTES.md
 
@@ -124,7 +173,6 @@ jobs:
             -t "${TAG_QUIC}" \
             -F RELEASE_NOTES.md \
             --latest=false || true
-
 
       # - name: Upload SBOM + provenance to releases
         # env:
@@ -142,3 +190,4 @@ jobs:
               # gh release upload "v${NONQUIC}" "$f" --clobber
             # fi
           # done
+
