@@ -88,12 +88,12 @@ jobs:
           tags: |
             madnuttah/openssl-buildenv:${{ steps.vars.outputs.BUILDENV_VERSION }}-${{ matrix.arch }}
             
-                  - name: Install Syft and Cosign
-        run: |
-          curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin
-          COSIGN_VERSION="v2.4.0"
-          curl -sSfL "https://github.com/sigstore/cosign/releases/download/${COSIGN_VERSION}/cosign-linux-amd64" -o /usr/local/bin/cosign
-          chmod +x /usr/local/bin/cosign
+      # - name: Install Syft and Cosign
+        # run: |
+          # curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin
+          # COSIGN_VERSION="v2.4.0"
+          # curl -sSfL "https://github.com/sigstore/cosign/releases/download/${COSIGN_VERSION}/cosign-linux-amd64" -o /usr/local/bin/cosign
+          # chmod +x /usr/local/bin/cosign
 
       # - name: Generate SBOM for image
         # env:
