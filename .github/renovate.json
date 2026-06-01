@@ -187,11 +187,11 @@
       "automerge": true
     },
     {
-      "matchFileNames": ["versions/openssl-buildenv.txt"],
+      "matchFileNames": ["versions/openssl-buildenv.txt"]
       "enabled": false
     },
     {
-      "matchFileNames": ["versions/openssl-quic-buildenv.txt"],
+      "matchFileNames": ["versions/openssl-quic-buildenv.txt"]
       "enabled": false
     }
   ]
