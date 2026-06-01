@@ -72,6 +72,15 @@
       "matchFileNames": ["versions/nghttp3.txt"],
       "matchDepNames": ["ngtcp2/nghttp3"],
       "allowedVersions": "<2.0.0"
+    },
+
+    {
+      "groupName": "QUIC stack",
+      "matchFileNames": [
+        "versions/ngtcp2.txt",
+        "versions/nghttp3.txt"
+      ],
+      "automerge": true
     }
   ]
 }
