@@ -9,6 +9,7 @@ on:
       - versions/ngtcp2.txt
       - versions/nghttp3.txt
       - versions/openssl-quic-buildenv.txt
+  workflow_dispatch:
 
 permissions:
   actions: read
@@ -57,9 +58,15 @@ jobs:
           set -euo pipefail
 
           OPENSSL_VERSION=$(cat versions/openssl.txt)
+
           NGTCP2_VERSION=$(cat versions/ngtcp2.txt)
           NGHTTP3_VERSION=$(cat versions/nghttp3.txt)
-          BUILDENV_QUIC_VERSION=$(cat versions/openssl-quic-buildenv.txt)
+
+          OPENSSL_BE=$(grep '^openssl=' versions/openssl-quic-buildenv.txt | cut -d= -f2)
+          SUB_BE=$(grep '^sub=' versions/openssl-quic-buildenv.txt | cut -d= -f2)
+
+          BUILDENV_QUIC_VERSION="${OPENSSL_BE}-${SUB_BE}"
+
           BUILDENV_BUILD_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
           SHA_URL="https://github.com/openssl/openssl/releases/download/${OPENSSL_VERSION}/${OPENSSL_VERSION}.tar.gz.sha256"
 
@@ -121,8 +128,9 @@ jobs:
       - name: Write QUIC version artifact
         run: |
           set -euo pipefail
-          BUILDENV_QUIC_VERSION=$(cat versions/openssl-quic-buildenv.txt)
-          echo "${BUILDENV_QUIC_VERSION}" > version.txt
+          OPENSSL_BE=$(grep '^openssl=' versions/openssl-quic-buildenv.txt | cut -d= -f2)
+          SUB_BE=$(grep '^sub=' versions/openssl-quic-buildenv.txt | cut -d= -f2)
+          echo "${OPENSSL_BE}-${SUB_BE}" > version.txt
 
       - name: Upload QUIC version artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a

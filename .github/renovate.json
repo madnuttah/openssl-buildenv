@@ -51,6 +51,58 @@
       "depNameTemplate": "nghttp3",
       "packageNameTemplate": "ngtcp2/nghttp3",
       "versioningTemplate": "semver"
+    },
+
+    /* ------------------------------ */
+    /* QUIC VERSIONING STATE MACHINE  */
+    /* ------------------------------ */
+
+    {
+      "customType": "regex",
+      "managerFilePatterns": ["versions/openssl-quic-buildenv.txt"],
+      "matchStrings": [
+        "openssl=(?<currentValue>[0-9]+\\.[0-9]+\\.[0-9]+)"
+      ],
+      "datasourceTemplate": "github-releases",
+      "depNameTemplate": "openssl",
+      "packageNameTemplate": "openssl/openssl",
+      "versioningTemplate": "semver"
+    },
+    {
+      "customType": "regex",
+      "managerFilePatterns": ["versions/openssl-quic-buildenv.txt"],
+      "matchStrings": [
+        "sub=(?<currentValue>[0-9]+)"
+      ],
+      "datasourceTemplate": "npm",
+      "depNameTemplate": "dummy-quic-subversion",
+      "versioningTemplate": "semver"
+    },
+
+    /* ------------------------------ */
+    /* MAIN OPENSSL BUILDENV VERSION  */
+    /* ------------------------------ */
+
+    {
+      "customType": "regex",
+      "managerFilePatterns": ["versions/openssl-buildenv.txt"],
+      "matchStrings": [
+        "openssl=(?<currentValue>[0-9]+\\.[0-9]+\\.[0-9]+)"
+      ],
+      "datasourceTemplate": "github-releases",
+      "depNameTemplate": "openssl",
+      "packageNameTemplate": "openssl/openssl",
+      "versioningTemplate": "semver"
+    },
+    {
+      "customType": "regex",
+      "managerFilePatterns": ["versions/openssl-buildenv.txt"],
+      "matchStrings": [
+        "sub=(?<currentValue>[0-9]+)"
+      ],
+      "datasourceTemplate": "npm",
+      "depNameTemplate": "dummy-openssl-subversion",
+      "versioningTemplate": "semver"
     }
   ],
 
@@ -90,13 +142,37 @@
       "automerge": true
     },
 
+    /* ------------------------------ */
+    /* QUIC SUBVERSION RULES          */
+    /* ------------------------------ */
+
     {
-      "matchFileNames": ["versions/openssl-buildenv.txt"],
-      "enabled": false
+      "description": "Reset QUIC subversion when OpenSSL updates",
+      "matchFileNames": ["versions/openssl-quic-buildenv.txt"],
+      "matchDepNames": ["openssl"],
+      "extractVersionTemplate": "0"
     },
     {
+      "description": "Increment QUIC subversion when QUIC deps update",
       "matchFileNames": ["versions/openssl-quic-buildenv.txt"],
-      "enabled": false
+      "matchDepNames": ["ngtcp2", "nghttp3"],
+      "semanticCommitType": "fix"
+    },
+
+    /* ------------------------------ */
+    /* MAIN OPENSSL SUBVERSION RULES  */
+    /* ------------------------------ */
+
+    {
+      "description": "Reset OpenSSL buildenv subversion when OpenSSL updates",
+      "matchFileNames": ["versions/openssl-buildenv.txt"],
+      "matchDepNames": ["openssl"],
+      "extractVersionTemplate": "0"
+    },
+    {
+      "description": "Increment OpenSSL buildenv subversion on manual or dependency changes",
+      "matchFileNames": ["versions/openssl-buildenv.txt"],
+      "semanticCommitType": "fix"
     }
   ]
 }

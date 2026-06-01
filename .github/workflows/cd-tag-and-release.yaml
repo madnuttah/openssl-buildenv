@@ -45,8 +45,15 @@ jobs:
         run: |
           set -euo pipefail
           OPENSSL_VERSION=$(cat versions/openssl.txt)
-          NONQUIC_VERSION=$(cat versions/openssl-buildenv.txt)
-          QUIC_VERSION=$(cat versions/openssl-quic-buildenv.txt)
+
+          OPENSSL_BE_NONQUIC=$(grep '^openssl=' versions/openssl-buildenv.txt | cut -d= -f2)
+          SUB_BE_NONQUIC=$(grep '^sub=' versions/openssl-buildenv.txt | cut -d= -f2)
+          NONQUIC_VERSION="${OPENSSL_BE_NONQUIC}-${SUB_BE_NONQUIC}"
+
+          OPENSSL_BE_QUIC=$(grep '^openssl=' versions/openssl-quic-buildenv.txt | cut -d= -f2)
+          SUB_BE_QUIC=$(grep '^sub=' versions/openssl-quic-buildenv.txt | cut -d= -f2)
+          QUIC_VERSION="${OPENSSL_BE_QUIC}-${SUB_BE_QUIC}"
+
           NGTCP2_VERSION=$(cat versions/ngtcp2.txt)
           NGHTTP3_VERSION=$(cat versions/nghttp3.txt)
 

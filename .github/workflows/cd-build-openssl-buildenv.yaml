@@ -7,6 +7,7 @@ on:
     paths:
       - versions/openssl.txt
       - versions/openssl-buildenv.txt
+  workflow_dispatch:
 
 permissions:
   actions: read
@@ -54,7 +55,10 @@ jobs:
         run: |
           set -euo pipefail
           OPENSSL_VERSION=$(cat versions/openssl.txt)
-          BUILDENV_VERSION=$(cat versions/openssl-buildenv.txt)
+
+          OPENSSL_BE=$(grep '^openssl=' versions/openssl-buildenv.txt | cut -d= -f2)
+          SUB_BE=$(grep '^sub=' versions/openssl-buildenv.txt | cut -d= -f2)
+          BUILDENV_VERSION="${OPENSSL_BE}-${SUB_BE}"
                       
           SHA_URL="https://github.com/openssl/openssl/releases/download/${OPENSSL_VERSION}/${OPENSSL_VERSION}.tar.gz.sha256"
 
@@ -144,8 +148,9 @@ jobs:
       - name: Write version artifact
         run: |
           set -euo pipefail
-          BUILDENV_VERSION=$(cat versions/openssl-buildenv.txt)
-          echo "${BUILDENV_VERSION}" > version.txt
+          OPENSSL_BE=$(grep '^openssl=' versions/openssl-buildenv.txt | cut -d= -f2)
+          SUB_BE=$(grep '^sub=' versions/openssl-buildenv.txt | cut -d= -f2)
+          echo "${OPENSSL_BE}-${SUB_BE}" > version.txt
 
       - name: Upload version artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
