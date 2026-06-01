@@ -12,8 +12,10 @@
   ],
 
   "timezone": "Europe/Berlin",
-  "schedule": ["at any time"],
-
+  "schedule": [
+    "at any time",
+    "every 6 hours"
+  ],
   "customManagers": [
     {
       "customType": "regex",
@@ -73,7 +75,6 @@
       "matchDepNames": ["ngtcp2/nghttp3"],
       "allowedVersions": "<2.0.0"
     },
-
     {
       "groupName": "QUIC stack",
       "matchFileNames": [
@@ -81,6 +82,10 @@
         "versions/nghttp3.txt"
       ],
       "automerge": true
+    },
+    {
+      "matchFileNames": ["versions/openssl-buildenv.txt"],
+      "enabled": false
     }
   ]
 }

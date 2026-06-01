@@ -6,8 +6,8 @@ on:
       - main
     paths:
       - versions/openssl.txt
-      - versions/ngtcp2.txt
-      - versions/nghttp3.txt
+#      - versions/ngtcp2.txt
+#      - versions/nghttp3.txt
   workflow_dispatch:
     inputs:
       subversion:
