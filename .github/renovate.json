@@ -10,16 +10,11 @@
     ":automergeDigest",
     "group:allDigest"
   ],
-
-  "logLevel": "debug",
-  "printConfig": true,
-
   "timezone": "Europe/Berlin",
   "schedule": [
     "at any time",
     "every 6 hours"
   ],
-
   "customManagers": [
     {
       "customType": "regex",
