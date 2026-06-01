@@ -11,17 +11,21 @@
     "group:allDigest"
   ],
 
+  "logLevel": "debug",
+  "printConfig": true,
+
   "timezone": "Europe/Berlin",
   "schedule": [
     "at any time",
     "every 6 hours"
   ],
+
   "customManagers": [
     {
       "customType": "regex",
-      "managerFilePatterns": ["^versions/openssl\\.txt$"],
+      "managerFilePatterns": ["versions/openssl.txt"],
       "matchStrings": [
-        "^(?<currentValue>openssl-[0-9]+\\.[0-9]+\\.[0-9]+)\\s*$"
+        "(?<currentValue>openssl-[0-9]+\\.[0-9]+\\.[0-9]+)"
       ],
       "datasourceTemplate": "github-releases",
       "depNameTemplate": "openssl/openssl",
@@ -30,9 +34,9 @@
     },
     {
       "customType": "regex",
-      "managerFilePatterns": ["^versions/ngtcp2\\.txt$"],
+      "managerFilePatterns": ["versions/ngtcp2.txt"],
       "matchStrings": [
-        "^(?<currentValue>v[0-9]+\\.[0-9]+\\.[0-9]+)\\s*$"
+        "(?<currentValue>v[0-9]+\\.[0-9]+\\.[0-9]+)"
       ],
       "datasourceTemplate": "github-releases",
       "depNameTemplate": "ngtcp2/ngtcp2",
@@ -40,9 +44,9 @@
     },
     {
       "customType": "regex",
-      "managerFilePatterns": ["^versions/nghttp3\\.txt$"],
+      "managerFilePatterns": ["versions/nghttp3.txt"],
       "matchStrings": [
-        "^(?<currentValue>v[0-9]+\\.[0-9]+\\.[0-9]+)\\s*$"
+        "(?<currentValue>v[0-9]+\\.[0-9]+\\.[0-9]+)"
       ],
       "datasourceTemplate": "github-releases",
       "depNameTemplate": "ngtcp2/nghttp3",
@@ -88,8 +92,107 @@
       "enabled": false
     },
     {
-      "matchFileNames": ["versions/openssl-buildenv-quic.txt"],
+      "matchFileNames": ["versions/openssl-quic-buildenv.txt"],
+      "enabled": false
+    }
+  ]
+}
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+
+  "extends": [
+    "config:recommended",
+    "config:best-practices",
+    ":semanticCommitsDisabled",
+    ":automergeStableNonMajor",
+    ":automergePatch",
+    ":automergeDigest",
+    "group:allDigest"
+  ],
+
+  "logLevel": "debug",
+  "printConfig": true,
+
+  "timezone": "Europe/Berlin",
+  "schedule": [
+    "at any time",
+    "every 6 hours"
+  ],
+
+  "customManagers": [
+    {
+      "customType": "regex",
+      "managerFilePatterns": ["versions/openssl.txt"],
+      "matchStrings": [
+        "(?<currentValue>openssl-[0-9]+\\.[0-9]+\\.[0-9]+)"
+      ],
+      "datasourceTemplate": "github-releases",
+      "depNameTemplate": "openssl/openssl",
+      "extractVersionTemplate": "^openssl-(?<version>.*)$",
+      "versioningTemplate": "semver"
+    },
+    {
+      "customType": "regex",
+      "managerFilePatterns": ["versions/ngtcp2.txt"],
+      "matchStrings": [
+        "(?<currentValue>v[0-9]+\\.[0-9]+\\.[0-9]+)"
+      ],
+      "datasourceTemplate": "github-releases",
+      "depNameTemplate": "ngtcp2/ngtcp2",
+      "versioningTemplate": "semver"
+    },
+    {
+      "customType": "regex",
+      "managerFilePatterns": ["versions/nghttp3.txt"],
+      "matchStrings": [
+        "(?<currentValue>v[0-9]+\\.[0-9]+\\.[0-9]+)"
+      ],
+      "datasourceTemplate": "github-releases",
+      "depNameTemplate": "ngtcp2/nghttp3",
+      "versioningTemplate": "semver"
+    }
+  ],
+
+  "packageRules": [
+    {
+      "matchManagers": ["dockerfile"],
       "enabled": false
     },
+    {
+      "matchManagers": ["github-actions"],
+      "pinDigests": true,
+      "automerge": true
+    },
+    {
+      "matchFileNames": ["versions/openssl.txt"],
+      "matchDepNames": ["openssl/openssl"],
+      "allowedVersions": "<4.0.0"
+    },
+    {
+      "matchFileNames": ["versions/ngtcp2.txt"],
+      "matchDepNames": ["ngtcp2/ngtcp2"],
+      "allowedVersions": "<2.0.0"
+    },
+    {
+      "matchFileNames": ["versions/nghttp3.txt"],
+      "matchDepNames": ["ngtcp2/nghttp3"],
+      "allowedVersions": "<2.0.0"
+    },
+    {
+      "groupName": "QUIC stack",
+      "matchFileNames": [
+        "versions/ngtcp2.txt",
+        "versions/nghttp3.txt"
+      ],
+      "automerge": true
+    },
+    {
+      "matchFileNames": ["versions/openssl-buildenv.txt"],
+      "enabled": false
+    },
+    {
+      "matchFileNames": ["versions/openssl-quic-buildenv.txt"],
+      "enabled": false
+    }
   ]
 }
