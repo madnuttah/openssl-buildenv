@@ -46,7 +46,7 @@ jobs:
           set -euo pipefail
           OPENSSL_VERSION=$(cat versions/openssl.txt)
           NONQUIC_VERSION=$(cat versions/openssl-buildenv.txt)
-          QUIC_VERSION=$(cat versions/openssl-buildenv-quic.txt)
+          QUIC_VERSION=$(cat versions/openssl-quic-buildenv.txt)
           NGTCP2_VERSION=$(cat versions/ngtcp2.txt)
           NGHTTP3_VERSION=$(cat versions/nghttp3.txt)
 
