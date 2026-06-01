@@ -104,10 +104,6 @@ jobs:
             git push origin "${TAG_QUIC}"
           fi
 
-          #
-          # SELECTIVE RELEASE NOTES (ONLY WHAT CHANGED)
-          #
-
           NOTES=""
 
           UPDATED_OPENSSL=false
@@ -130,10 +126,7 @@ jobs:
           if git diff HEAD~1 HEAD -- versions/openssl-quic-buildenv.txt >/dev/null 2>&1; then
             UPDATED_QUIC=true
           fi
-
-          #
-          # OpenSSL section (only if OpenSSL changed)
-          #
+          
           if [ "$UPDATED_OPENSSL" = true ]; then
             NOTES+="## OpenSSL Buildenv\n"
             NOTES+="OpenSSL: ${OPENSSL}\n"
@@ -141,9 +134,6 @@ jobs:
             NOTES+="Buildenv version: ${NONQUIC}\n\n"
           fi
 
-          #
-          # QUIC section (only if QUIC buildenv OR deps changed)
-          #
           if [ "$UPDATED_QUIC" = true ] || [ "$UPDATED_NGTCP2" = true ] || [ "$UPDATED_NGHTTP3" = true ]; then
             NOTES+="## OpenSSL QUIC Buildenv\n"
             NOTES+="Version: ${QUIC}\n"
