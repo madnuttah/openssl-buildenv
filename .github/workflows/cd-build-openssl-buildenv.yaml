@@ -1,4 +1,4 @@
-name: CD Build OpenSSL QUIC Buildenv
+name: CD Build OpenSSL Buildenv
 
 on:
   push:
@@ -6,9 +6,7 @@ on:
       - main
     paths:
       - versions/openssl.txt
-      - versions/ngtcp2.txt
-      - versions/nghttp3.txt
-      - versions/openssl-buildenv-quic.txt
+      - versions/openssl-buildenv.txt
   workflow_dispatch:
 
 permissions:
@@ -56,14 +54,12 @@ jobs:
         run: |
           set -euo pipefail
           OPENSSL_VERSION=$(cat versions/openssl.txt)
-          NGTCP2_VERSION=$(cat versions/ngtcp2.txt)
-          NGHTTP3_VERSION=$(cat versions/nghttp3.txt)
-          BUILDENV_QUIC_VERSION=$(cat versions/openssl-buildenv-quic.txt)
+          BUILDENV_VERSION=$(cat versions/openssl-buildenv.txt)
+          OPENSSL_SHA256=$(curl -sL "https://github.com/openssl/openssl/releases/download/${OPENSSL_VERSION}/${OPENSSL_VERSION}.tar.gz.sha256" | cut -d ' ' -f1)
           BUILDENV_BUILD_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
           echo "OPENSSL_VERSION=${OPENSSL_VERSION}" >> "$GITHUB_OUTPUT"
-          echo "NGTCP2_VERSION=${NGTCP2_VERSION}" >> "$GITHUB_OUTPUT"
-          echo "NGHTTP3_VERSION=${NGHTTP3_VERSION}" >> "$GITHUB_OUTPUT"
-          echo "BUILDENV_QUIC_VERSION=${BUILDENV_QUIC_VERSION}" >> "$GITHUB_OUTPUT"
+          echo "BUILDENV_VERSION=${BUILDENV_VERSION}" >> "$GITHUB_OUTPUT"
+          echo "OPENSSL_SHA256=${OPENSSL_SHA256}" >> "$GITHUB_OUTPUT"
           echo "BUILDENV_BUILD_DATE=${BUILDENV_BUILD_DATE}" >> "$GITHUB_OUTPUT"
 
       - uses: docker/setup-qemu-action@ce360397dd3f832beb865e1373c09c0e9f86d70a
@@ -75,51 +71,50 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build OpenSSL QUIC
+      - name: Build OpenSSL
         uses: docker/build-push-action@f9f3042f7e2789586610d6e8b85c8f03e5195baf
         with:
           context: .
-          file: ./openssl/openssl-quic.Dockerfile
+          file: ./openssl/openssl.Dockerfile
           platforms: ${{ matrix.platform }}
           push: true
-          cache-from: type=registry,ref=madnuttah/openssl-buildenv:buildcache-${{ matrix.arch }}-quic
-          cache-to: type=registry,ref=madnuttah/openssl-buildenv:buildcache-${{ matrix.arch }}-quic,mode=max
+          cache-from: type=registry,ref=madnuttah/openssl-buildenv:buildcache-${{ matrix.arch }}
+          cache-to: type=registry,ref=madnuttah/openssl-buildenv:buildcache-${{ matrix.arch }},mode=max
           build-args: |
             BUILDENV_BUILD_DATE=${{ steps.vars.outputs.BUILDENV_BUILD_DATE }}
             OPENSSL_VERSION=${{ steps.vars.outputs.OPENSSL_VERSION }}
-            NGTCP2_VERSION=${{ steps.vars.outputs.NGTCP2_VERSION }}
-            NGHTTP3_VERSION=${{ steps.vars.outputs.NGHTTP3_VERSION }}
+            OPENSSL_SHA256=${{ steps.vars.outputs.OPENSSL_SHA256 }}
             TARGETARCH=${{ matrix.arch }}
           tags: |
-            madnuttah/openssl-buildenv:${{ steps.vars.outputs.BUILDENV_QUIC_VERSION }}-quic-${{ matrix.arch }}
+            madnuttah/openssl-buildenv:${{ steps.vars.outputs.BUILDENV_VERSION }}-${{ matrix.arch }}
+            
+                  - name: Install Syft and Cosign
+        run: |
+          curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin
+          COSIGN_VERSION="v2.4.0"
+          curl -sSfL "https://github.com/sigstore/cosign/releases/download/${COSIGN_VERSION}/cosign-linux-amd64" -o /usr/local/bin/cosign
+          chmod +x /usr/local/bin/cosign
 
-      # - name: Install Syft and Cosign
-        # run: |
-          # curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin
-          # COSIGN_VERSION="v2.4.0"
-          # curl -sSfL "https://github.com/sigstore/cosign/releases/download/${COSIGN_VERSION}/cosign-linux-amd64" -o /usr/local/bin/cosign
-          # chmod +x /usr/local/bin/cosign
-
-      # - name: Generate SBOM for QUIC image
+      # - name: Generate SBOM for image
         # env:
-          # IMAGE: madnuttah/openssl-buildenv:${{ steps.vars.outputs.BUILDENV_QUIC_VERSION }}-quic-${{ matrix.arch }}
+          # IMAGE: madnuttah/openssl-buildenv:${{ steps.vars.outputs.BUILDENV_VERSION }}-${{ matrix.arch }}
         # run: |
-          # syft packages "docker:${IMAGE}" -o cyclonedx-json > "sbom-quic-${{ matrix.arch }}.json"
+          # syft packages "docker:${IMAGE}" -o cyclonedx-json > "sbom-${{ matrix.arch }}.json"
 
-      # - name: Upload QUIC SBOM artifact
+      # - name: Upload SBOM artifact
         # uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         # with:
-          # name: sbom-openssl-buildenv-quic-${{ matrix.arch }}
-          # path: sbom-quic-${{ matrix.arch }}.json
+          # name: sbom-openssl-buildenv-${{ matrix.arch }}
+          # path: sbom-${{ matrix.arch }}.json
 
-      # - name: Generate QUIC SLSA provenance attestation
+      # - name: Generate SLSA provenance attestation
         # env:
           # COSIGN_EXPERIMENTAL: "1"
-          # IMAGE: madnuttah/openssl-buildenv:${{ steps.vars.outputs.BUILDENV_QUIC_VERSION }}-quic-${{ matrix.arch }}
+          # IMAGE: madnuttah/openssl-buildenv:${{ steps.vars.outputs.BUILDENV_VERSION }}-${{ matrix.arch }}
         # run: |
           # cosign attest \
             # --predicate-type slsaprovenance.dev/v1 \
-            # --predicate <(echo '{"buildType":"openssl-buildenv-quic","arch":"${{ matrix.arch }}"}') \
+            # --predicate <(echo '{"buildType":"openssl-buildenv","arch":"${{ matrix.arch }}"}') \
             # "${IMAGE}"
 
 
@@ -133,14 +128,14 @@ jobs:
           ref: ${{ github.ref }}
           fetch-depth: 0
 
-      - name: Write QUIC version artifact
+      - name: Write version artifact
         run: |
           set -euo pipefail
-          BUILDENV_QUIC_VERSION=$(cat versions/openssl-buildenv-quic.txt)
-          echo "${BUILDENV_QUIC_VERSION}" > version.txt
+          BUILDENV_VERSION=$(cat versions/openssl-buildenv.txt)
+          echo "${BUILDENV_VERSION}" > version.txt
 
-      - name: Upload QUIC version artifact
+      - name: Upload version artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: openssl-buildenv-quic-version
+          name: openssl-buildenv-version
           path: version.txt

@@ -86,6 +86,10 @@
     {
       "matchFileNames": ["versions/openssl-buildenv.txt"],
       "enabled": false
-    }
+    },
+    {
+      "matchFileNames": ["versions/openssl-buildenv-quic.txt"],
+      "enabled": false
+    },
   ]
 }

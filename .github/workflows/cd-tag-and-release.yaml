@@ -2,14 +2,10 @@ name: CD Tag And Release
 
 on:
   workflow_run:
-    workflows: ["CD Build OpenSSL QUIC Buildenv"]
-    types: [completed]
-  workflow_dispatch:
-    inputs:
-      subversion:
-        description: "Manual subversion number (optional)"
-        required: false
-        type: string
+    workflows:
+      - CD Publish OpenSSL Buildenv Manifests
+    types:
+      - completed
 
 permissions:
   contents: write
@@ -18,10 +14,7 @@ permissions:
 jobs:
   tag_and_release:
     runs-on: ubuntu-latest
-    if: >
-      (github.event_name == 'workflow_run' &&
-       github.event.workflow_run.conclusion == 'success') ||
-      github.event_name == 'workflow_dispatch'
+    if: github.event.workflow_run.conclusion == 'success'
 
     steps:
       - name: Harden Runner
@@ -47,23 +40,29 @@ jobs:
           git_push_gpgsign: false
           trust_level: 5
 
-      - name: Determine subversion
-        id: SUBV
+      - name: Read version files
+        id: versions
         run: |
-          if [ -n "${{ github.event.inputs.subversion }}" ]; then
-            echo "Using manual subversion: ${{ github.event.inputs.subversion }}"
-            N="${{ github.event.inputs.subversion }}"
-          elif [ -f subversion.txt ]; then
-            echo "Using artifact subversion: $(cat subversion.txt)"
-            N="$(cat subversion.txt)"
-          else
-            echo "No subversion provided or artifact found, defaulting to 0"
-            N="0"
-          fi
+          set -euo pipefail
+          OPENSSL_VERSION=$(cat versions/openssl.txt)
+          NONQUIC_VERSION=$(cat versions/openssl-buildenv.txt)
+          QUIC_VERSION=$(cat versions/openssl-buildenv-quic.txt)
+          NGTCP2_VERSION=$(cat versions/ngtcp2.txt)
+          NGHTTP3_VERSION=$(cat versions/nghttp3.txt)
 
-          echo "N=$N" >> "$GITHUB_OUTPUT"
+          echo "OPENSSL_VERSION=${OPENSSL_VERSION}" >> "$GITHUB_OUTPUT"
+          echo "NONQUIC_VERSION=${NONQUIC_VERSION}" >> "$GITHUB_OUTPUT"
+          echo "QUIC_VERSION=${QUIC_VERSION}" >> "$GITHUB_OUTPUT"
+          echo "NGTCP2_VERSION=${NGTCP2_VERSION}" >> "$GITHUB_OUTPUT"
+          echo "NGHTTP3_VERSION=${NGHTTP3_VERSION}" >> "$GITHUB_OUTPUT"
 
-      - name: Push tag and upload release to GitHub
+      - name: Download SBOM + provenance artifacts
+        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16
+        with:
+          path: artifacts
+        continue-on-error: true
+
+      - name: Push tags and create releases
         env:
           GITHUB_TOKEN: ${{ secrets.BOT_GITHUB_TOKEN }}
           GIT_AUTHOR_NAME: ${{ steps.IMPORT_GPG.outputs.name }}
@@ -75,64 +74,61 @@ jobs:
 
           git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}"
 
-          OPENSSL_VER="$(cat versions/openssl.txt)"
-          BASE_VERSION="${OPENSSL_VER#openssl-}"
-          N="${{ steps.SUBV.outputs.N }}"
+          OPENSSL="${{ steps.versions.outputs.OPENSSL_VERSION }}"
+          NONQUIC="${{ steps.versions.outputs.NONQUIC_VERSION }}"
+          QUIC="${{ steps.versions.outputs.QUIC_VERSION }}"
+          NGTCP2="${{ steps.versions.outputs.NGTCP2_VERSION }}"
+          NGHTTP3="${{ steps.versions.outputs.NGHTTP3_VERSION }}"
 
-          TAG="${BASE_VERSION}-${N}"
-
-          NGTCP2_VER="$(cat versions/ngtcp2.txt)"
-          NGHTTP3_VER="$(cat versions/nghttp3.txt)"
+          TAG_NONQUIC="v${NONQUIC}"
+          TAG_QUIC="v${QUIC}-quic"
 
           git fetch --prune origin --tags
-          if git rev-parse "refs/tags/v${TAG}" >/dev/null 2>&1; then
-            echo "Tag v${TAG} already exists."
-            exit 1
+
+          if ! git rev-parse "${TAG_NONQUIC}" >/dev/null 2>&1; then
+            git tag "${TAG_NONQUIC}"
+            git push origin "${TAG_NONQUIC}"
           fi
 
-          PREV_TAG=$(git tag --sort=-v:refname | head -n 1)
+          if ! git rev-parse "${TAG_QUIC}" >/dev/null 2>&1; then
+            git tag "${TAG_QUIC}"
+            git push origin "${TAG_QUIC}"
+          fi
 
-          RELEASE_NOTES="## v${TAG} - $(date -u +"%Y-%m-%d")\n"
-          RELEASE_NOTES+="## What's Changed?\n"
-          RELEASE_NOTES+="* Updated OpenSSL & OpenSSL+QUIC buildenv\n\n"
+          NOTES="## OpenSSL Buildenv Release\n"
+          NOTES+="OpenSSL: ${OPENSSL}\n"
+          NOTES+="ngtcp2: ${NGTCP2}\n"
+          NOTES+="nghttp3: ${NGHTTP3}\n\n"
+          NOTES+="### Non-QUIC Buildenv\n"
+          NOTES+="- Version: ${NONQUIC}\n"
+          NOTES+="### QUIC Buildenv\n"
+          NOTES+="- Version: ${QUIC}\n"
 
-          RELEASE_NOTES+="OpenSSL: ${OPENSSL_VER}\n"
-          RELEASE_NOTES+="ngtcp2: ${NGTCP2_VER}\n"
-          RELEASE_NOTES+="nghttp3: ${NGHTTP3_VER}\n\n"
+          printf "%b" "$NOTES" > RELEASE_NOTES.md
 
-          RELEASE_NOTES+="## OpenSSL Release Notes\n"
-          RELEASE_NOTES+="https://github.com/openssl/openssl/releases/tag/${OPENSSL_VER}\n\n"
-
-          RELEASE_NOTES+="## Contributors\n"
-
-          git log "${PREV_TAG}..HEAD" --format="%aN|%aE" \
-            | sort -u \
-            | while IFS='|' read -r NAME EMAIL; do
-                LOWER=$(echo "$NAME" | tr '[:upper:]' '[:lower:]')
-                if echo "$LOWER" | grep -Eq "bot|github-actions"; then
-                  continue
-                fi
-                USER=$(curl -s "https://api.github.com/search/users?q=${EMAIL}" \
-                  | jq -r '.items[0].login // empty')
-                if [ -n "$USER" ]; then
-                  RELEASE_NOTES+="- @${USER}\n"
-                else
-                  RELEASE_NOTES+="- ${NAME}\n"
-                fi
-              done
-
-          printf "%b" "$RELEASE_NOTES" > RELEASE_NOTES.md
-
-          git tag "v${TAG}"
-          git push origin "v${TAG}"
-
-          git checkout -b "${TAG}" "v${TAG}"
-          git push --set-upstream origin "${TAG}"
-
-          gh release create "v${TAG}" \
-            -t "${TAG}" \
+          gh release create "${TAG_NONQUIC}" \
+            -t "${TAG_NONQUIC}" \
             -F RELEASE_NOTES.md \
-            --latest || \
-          gh release edit "v${TAG}" \
-            -t "${TAG}" \
-            -F RELEASE_NOTES.md
+            --latest=false || true
+
+          gh release create "${TAG_QUIC}" \
+            -t "${TAG_QUIC}" \
+            -F RELEASE_NOTES.md \
+            --latest=false || true
+
+      # - name: Upload SBOM + provenance to releases
+        # env:
+          # GITHUB_TOKEN: ${{ secrets.BOT_GITHUB_TOKEN }}
+        # run: |
+          # set -euo pipefail
+
+          # NONQUIC="${{ steps.versions.outputs.NONQUIC_VERSION }}"
+          # QUIC="${{ steps.versions.outputs.QUIC_VERSION }}"
+
+          # for f in $(find artifacts -type f); do
+            # if echo "$f" | grep -q "quic"; then
+              # gh release upload "v${QUIC}-quic" "$f" --clobber
+            # else
+              # gh release upload "v${NONQUIC}" "$f" --clobber
+            # fi
+          # done
