@@ -47,7 +47,7 @@
       ],
       "datasourceTemplate": "github-releases",
       "depNameTemplate": "nghttp3",
-      "lookupNameTemplate": "ngtcp2/nghttp3",
+      "packageNameTemplate": "ngtcp2/nghttp3",
       "versioningTemplate": "semver"
     }
   ],
