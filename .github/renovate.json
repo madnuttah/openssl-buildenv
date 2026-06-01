@@ -1,6 +1,5 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-
   "extends": [
     "config:recommended",
     "config:best-practices",
@@ -10,13 +9,11 @@
     ":automergeDigest",
     "group:allDigest"
   ],
-
   "timezone": "Europe/Berlin",
   "schedule": [
     "at any time",
     "every 6 hours"
   ],
-
   "customManagers": [
     {
       "customType": "regex",
@@ -52,11 +49,6 @@
       "packageNameTemplate": "ngtcp2/nghttp3",
       "versioningTemplate": "semver"
     },
-
-    /* ------------------------------ */
-    /* QUIC VERSIONING STATE MACHINE  */
-    /* ------------------------------ */
-
     {
       "customType": "regex",
       "managerFilePatterns": ["versions/openssl-quic-buildenv.txt"],
@@ -78,11 +70,18 @@
       "depNameTemplate": "dummy-quic-subversion",
       "versioningTemplate": "semver"
     },
-
-    /* ------------------------------ */
-    /* MAIN OPENSSL BUILDENV VERSION  */
-    /* ------------------------------ */
-
+    {
+      "customType": "regex",
+      "managerFilePatterns": ["versions/openssl-quic-buildenv.txt"],
+      "matchStrings": [
+        "sub=(?<currentValue>[0-9]+)"
+      ],
+      "datasourceTemplate": "github-releases",
+      "depNameTemplate": "openssl",
+      "packageNameTemplate": "openssl/openssl",
+      "extractVersionTemplate": "0",
+      "versioningTemplate": "semver"
+    },
     {
       "customType": "regex",
       "managerFilePatterns": ["versions/openssl-buildenv.txt"],
@@ -103,9 +102,20 @@
       "datasourceTemplate": "npm",
       "depNameTemplate": "dummy-openssl-subversion",
       "versioningTemplate": "semver"
+    },
+    {
+      "customType": "regex",
+      "managerFilePatterns": ["versions/openssl-buildenv.txt"],
+      "matchStrings": [
+        "sub=(?<currentValue>[0-9]+)"
+      ],
+      "datasourceTemplate": "github-releases",
+      "depNameTemplate": "openssl",
+      "packageNameTemplate": "openssl/openssl",
+      "extractVersionTemplate": "0",
+      "versioningTemplate": "semver"
     }
   ],
-
   "packageRules": [
     {
       "matchManagers": ["dockerfile"],
@@ -116,7 +126,6 @@
       "pinDigests": true,
       "automerge": true
     },
-
     {
       "matchFileNames": ["versions/openssl.txt"],
       "matchDepNames": ["openssl"],
@@ -132,7 +141,6 @@
       "matchDepNames": ["nghttp3"],
       "allowedVersions": "<2.0.0"
     },
-
     {
       "groupName": "QUIC stack",
       "matchFileNames": [
@@ -141,33 +149,11 @@
       ],
       "automerge": true
     },
-
-    /* ------------------------------ */
-    /* QUIC SUBVERSION RULES          */
-    /* ------------------------------ */
-
-    {
-      "description": "Reset QUIC subversion when OpenSSL updates",
-      "matchFileNames": ["versions/openssl-quic-buildenv.txt"],
-      "matchDepNames": ["openssl"],
-      "extractVersionTemplate": "0"
-    },
     {
       "description": "Increment QUIC subversion when QUIC deps update",
       "matchFileNames": ["versions/openssl-quic-buildenv.txt"],
       "matchDepNames": ["ngtcp2", "nghttp3"],
       "semanticCommitType": "fix"
-    },
-
-    /* ------------------------------ */
-    /* MAIN OPENSSL SUBVERSION RULES  */
-    /* ------------------------------ */
-
-    {
-      "description": "Reset OpenSSL buildenv subversion when OpenSSL updates",
-      "matchFileNames": ["versions/openssl-buildenv.txt"],
-      "matchDepNames": ["openssl"],
-      "extractVersionTemplate": "0"
     },
     {
       "description": "Increment OpenSSL buildenv subversion on manual or dependency changes",
