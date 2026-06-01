@@ -46,6 +46,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
         env:
           RENOVATE_LOG_LEVEL: ${{ env.LOG_LEVEL }}
+          RENOVATE_DOCKERLESS: true
 
       - name: Upload Logs
         if: always()
@@ -77,6 +78,7 @@ jobs:
           extra-args: --dry-run
         env:
           RENOVATE_LOG_LEVEL: ${{ env.LOG_LEVEL }}
+          RENOVATE_DOCKERLESS: true
 
       - name: Upload Logs
         if: always()
