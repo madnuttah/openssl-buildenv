@@ -11,7 +11,7 @@
   ],
   "timezone": "Europe/Berlin",
   "schedule": [
-    "every 6 hours"
+    "0 */6 * * *"
   ],
   "customManagers": [
     {
