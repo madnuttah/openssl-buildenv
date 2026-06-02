@@ -14,7 +14,9 @@
   "customManagers": [
     {
       "customType": "regex",
-      "fileMatch": ["(^|/)versions/openssl\\.txt$"],
+      "managerFilePatterns": [
+        "/(^|/)versions/openssl\\.txt$/"
+      ],
       "matchStrings": [
         "(?<currentValue>openssl-[0-9]+\\.[0-9]+\\.[0-9]+[a-z]?)"
       ],
@@ -26,7 +28,9 @@
     },
     {
       "customType": "regex",
-      "fileMatch": ["(^|/)versions/ngtcp2\\.txt$"],
+      "managerFilePatterns": [
+        "/(^|/)versions/ngtcp2\\.txt$/"
+      ],
       "matchStrings": [
         "v(?<currentValue>[0-9]+\\.[0-9]+\\.[0-9]+)"
       ],
@@ -37,7 +41,9 @@
     },
     {
       "customType": "regex",
-      "fileMatch": ["(^|/)versions/nghttp3\\.txt$"],
+      "managerFilePatterns": [
+        "/(^|/)versions/nghttp3\\.txt$/"
+      ],
       "matchStrings": [
         "v(?<currentValue>[0-9]+\\.[0-9]+\\.[0-9]+)"
       ],
@@ -48,7 +54,9 @@
     },
     {
       "customType": "regex",
-      "fileMatch": ["(^|/)versions/openssl-quic-buildenv\\.txt$"],
+      "managerFilePatterns": [
+        "/(^|/)versions/openssl-quic-buildenv\\.txt$/"
+      ],
       "matchStrings": [
         "openssl=(?<currentValue>[0-9]+\\.[0-9]+\\.[0-9]+[a-z]?)"
       ],
@@ -59,7 +67,9 @@
     },
     {
       "customType": "regex",
-      "fileMatch": ["(^|/)versions/openssl-quic-buildenv\\.txt$"],
+      "managerFilePatterns": [
+        "/(^|/)versions/openssl-quic-buildenv\\.txt$/"
+      ],
       "matchStrings": [
         "sub=(?<currentValue>[0-9]+)"
       ],
@@ -69,7 +79,9 @@
     },
     {
       "customType": "regex",
-      "fileMatch": ["(^|/)versions/openssl-buildenv\\.txt$"],
+      "managerFilePatterns": [
+        "/(^|/)versions/openssl-buildenv\\.txt$/"
+      ],
       "matchStrings": [
         "openssl=(?<currentValue>[0-9]+\\.[0-9]+\\.[0-9]+[a-z]?)"
       ],
@@ -80,7 +92,9 @@
     },
     {
       "customType": "regex",
-      "fileMatch": ["(^|/)versions/openssl-buildenv\\.txt$"],
+      "managerFilePatterns": [
+        "/(^|/)versions/openssl-buildenv\\.txt$/"
+      ],
       "matchStrings": [
         "sub=(?<currentValue>[0-9]+)"
       ],
