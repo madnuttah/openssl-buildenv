@@ -88,14 +88,26 @@ jobs:
 
           git fetch --prune origin --tags
 
+          #
+          # NON‑QUIC TAG + BRANCH (Unbound style)
+          #
           if ! git rev-parse "${TAG_NONQUIC}" >/dev/null 2>&1; then
             git tag -a "${TAG_NONQUIC}" -m "${TAG_NONQUIC}"
             git push origin "${TAG_NONQUIC}"
+
+            git checkout -b "${NONQUIC}" "${TAG_NONQUIC}"
+            git push --set-upstream origin "${NONQUIC}"
           fi
 
+          #
+          # QUIC TAG + BRANCH (Unbound style)
+          #
           if ! git rev-parse "${TAG_QUIC}" >/dev/null 2>&1; then
             git tag -a "${TAG_QUIC}" -m "${TAG_QUIC}"
             git push origin "${TAG_QUIC}"
+
+            git checkout -b "${QUIC}-quic" "${TAG_QUIC}"
+            git push --set-upstream origin "${QUIC}-quic"
           fi
 
           NOTES=""
