@@ -11,15 +11,14 @@
   ],
   "timezone": "Europe/Berlin",
   "schedule": [
-    "at any time",
     "every 6 hours"
   ],
   "customManagers": [
     {
       "customType": "regex",
-      "managerFilePatterns": ["versions/openssl.txt"],
+      "fileMatch": ["(^|/)versions/openssl\\.txt$"],
       "matchStrings": [
-        "(?<currentValue>openssl-[0-9]+\\.[0-9]+\\.[0-9]+)"
+        "(?<currentValue>openssl-[0-9]+\\.[0-9]+\\.[0-9]+[a-z]?)"
       ],
       "datasourceTemplate": "github-releases",
       "depNameTemplate": "openssl",
@@ -29,9 +28,9 @@
     },
     {
       "customType": "regex",
-      "managerFilePatterns": ["versions/ngtcp2.txt"],
+      "fileMatch": ["(^|/)versions/ngtcp2\\.txt$"],
       "matchStrings": [
-        "(?<currentValue>v[0-9]+\\.[0-9]+\\.[0-9]+)"
+        "v(?<currentValue>[0-9]+\\.[0-9]+\\.[0-9]+)"
       ],
       "datasourceTemplate": "github-releases",
       "depNameTemplate": "ngtcp2",
@@ -40,9 +39,9 @@
     },
     {
       "customType": "regex",
-      "managerFilePatterns": ["versions/nghttp3.txt"],
+      "fileMatch": ["(^|/)versions/nghttp3\\.txt$"],
       "matchStrings": [
-        "(?<currentValue>v[0-9]+\\.[0-9]+\\.[0-9]+)"
+        "v(?<currentValue>[0-9]+\\.[0-9]+\\.[0-9]+)"
       ],
       "datasourceTemplate": "github-releases",
       "depNameTemplate": "nghttp3",
@@ -51,9 +50,9 @@
     },
     {
       "customType": "regex",
-      "managerFilePatterns": ["versions/openssl-quic-buildenv.txt"],
+      "fileMatch": ["(^|/)versions/openssl-quic-buildenv\\.txt$"],
       "matchStrings": [
-        "openssl=(?<currentValue>[0-9]+\\.[0-9]+\\.[0-9]+)"
+        "openssl=(?<currentValue>[0-9]+\\.[0-9]+\\.[0-9]+[a-z]?)"
       ],
       "datasourceTemplate": "github-releases",
       "depNameTemplate": "openssl",
@@ -62,7 +61,7 @@
     },
     {
       "customType": "regex",
-      "managerFilePatterns": ["versions/openssl-quic-buildenv.txt"],
+      "fileMatch": ["(^|/)versions/openssl-quic-buildenv\\.txt$"],
       "matchStrings": [
         "sub=(?<currentValue>[0-9]+)"
       ],
@@ -72,21 +71,9 @@
     },
     {
       "customType": "regex",
-      "managerFilePatterns": ["versions/openssl-quic-buildenv.txt"],
+      "fileMatch": ["(^|/)versions/openssl-buildenv\\.txt$"],
       "matchStrings": [
-        "sub=(?<currentValue>[0-9]+)"
-      ],
-      "datasourceTemplate": "github-releases",
-      "depNameTemplate": "openssl",
-      "packageNameTemplate": "openssl/openssl",
-      "extractVersionTemplate": "0",
-      "versioningTemplate": "semver"
-    },
-    {
-      "customType": "regex",
-      "managerFilePatterns": ["versions/openssl-buildenv.txt"],
-      "matchStrings": [
-        "openssl=(?<currentValue>[0-9]+\\.[0-9]+\\.[0-9]+)"
+        "openssl=(?<currentValue>[0-9]+\\.[0-9]+\\.[0-9]+[a-z]?)"
       ],
       "datasourceTemplate": "github-releases",
       "depNameTemplate": "openssl",
@@ -95,24 +82,12 @@
     },
     {
       "customType": "regex",
-      "managerFilePatterns": ["versions/openssl-buildenv.txt"],
+      "fileMatch": ["(^|/)versions/openssl-buildenv\\.txt$"],
       "matchStrings": [
         "sub=(?<currentValue>[0-9]+)"
       ],
       "datasourceTemplate": "npm",
       "depNameTemplate": "dummy-openssl-subversion",
-      "versioningTemplate": "semver"
-    },
-    {
-      "customType": "regex",
-      "managerFilePatterns": ["versions/openssl-buildenv.txt"],
-      "matchStrings": [
-        "sub=(?<currentValue>[0-9]+)"
-      ],
-      "datasourceTemplate": "github-releases",
-      "depNameTemplate": "openssl",
-      "packageNameTemplate": "openssl/openssl",
-      "extractVersionTemplate": "0",
       "versioningTemplate": "semver"
     }
   ],
