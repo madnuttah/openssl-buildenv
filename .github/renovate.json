@@ -10,9 +10,7 @@
     "group:allDigest"
   ],
   "timezone": "Europe/Berlin",
-  "schedule": [
-    "0 */6 * * *"
-  ],
+  "schedule": ["every weekday", "on saturday"],
   "customManagers": [
     {
       "customType": "regex",
