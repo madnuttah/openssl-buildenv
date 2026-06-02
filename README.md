@@ -66,23 +66,11 @@ The repository uses a hardened CI pipeline with the following components:
 - Stripped binaries and removed static archives
 - Architecture‑specific build logic
 
-### Release Automation
-- Automatic tagging and GitHub Releases
-- Version extraction from tracked files
-- Optional GPG signing
-- Generated release notes including upstream component versions
-
 ---
 
 ## Usage
 
-These images are intended to be used as build‑time toolchains. Example:
-
-```bash
-docker run --rm -it madnuttah/openssl-buildenv:latest openssl version
-```
-
-They can also be used in multi‑stage Docker builds to provide a consistent OpenSSL or QUIC‑enabled toolchain.
+These images are intended to be used as build‑time toolchains. They can also be used in multi‑stage Docker builds to provide a consistent OpenSSL or QUIC‑enabled toolchain.
 
 ---
 
