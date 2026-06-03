@@ -184,7 +184,6 @@ jobs:
         run: |
           set -euo pipefail
           
-          # Sign tags as attestations for supply chain verification
           cosign attest --yes \
             --predicate-type slsaprovenance.dev/v1 \
             --predicate <(echo '{"buildType":"git-tag","tag":"v'"${NONQUIC_VERSION}"'"}') \
@@ -201,7 +200,6 @@ jobs:
         run: |
           set -euo pipefail
           
-          # Organize SBOMs for release
           mkdir -p release-artifacts
           
           if [ -d sbom-artifacts ]; then
@@ -210,7 +208,6 @@ jobs:
             done
           fi
           
-          # Create checksums
           cd release-artifacts
           if [ -n "$(ls -A)" ]; then
             find . -type f ! -name "*.sha256" -exec sha256sum {} \; > CHECKSUMS.sha256
@@ -226,7 +223,6 @@ jobs:
           NONQUIC_VERSION="${{ steps.versions.outputs.NONQUIC_VERSION }}"
           QUIC_VERSION="${{ steps.versions.outputs.QUIC_VERSION }}"
           
-          # Upload SBOM artifacts to non-QUIC release
           if [ -d release-artifacts ] && [ -n "$(ls -A release-artifacts)" ]; then
             cd release-artifacts
             for file in *; do
