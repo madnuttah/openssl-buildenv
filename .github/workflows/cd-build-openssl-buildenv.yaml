@@ -12,6 +12,8 @@ on:
 permissions:
   actions: read
   contents: read
+  packages: write
+  id-token: write
 
 jobs:
   build:
@@ -87,7 +89,7 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build OpenSSL
+      - name: Build and push OpenSSL image
         uses: docker/build-push-action@f9f3042f7e2789586610d6e8b85c8f03e5195baf
         with:
           context: .
@@ -103,36 +105,77 @@ jobs:
             TARGETARCH=${{ matrix.arch }}
           tags: |
             madnuttah/openssl-buildenv:${{ steps.vars.outputs.BUILDENV_VERSION }}-${{ matrix.arch }}
-            
-      # - name: Install Syft and Cosign
-        # run: |
-          # curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin
-          # COSIGN_VERSION="v2.4.0"
-          # curl -sSfL "https://github.com/sigstore/cosign/releases/download/${COSIGN_VERSION}/cosign-linux-amd64" -o /usr/local/bin/cosign
-          # chmod +x /usr/local/bin/cosign
 
-      # - name: Generate SBOM for image
-        # env:
-          # IMAGE: madnuttah/openssl-buildenv:${{ steps.vars.outputs.BUILDENV_VERSION }}-${{ matrix.arch }}
-        # run: |
-          # syft packages "docker:${IMAGE}" -o cyclonedx-json > "sbom-${{ matrix.arch }}.json"
+  sbom:
+    needs: build
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+          - arch: 386
+          - arch: armv6
+          - arch: armv7
+          - arch: arm64
+          - arch: ppc64le
+          - arch: s390x
+          - arch: riscv64
 
-      # - name: Upload SBOM artifact
-        # uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
-        # with:
-          # name: sbom-openssl-buildenv-${{ matrix.arch }}
-          # path: sbom-${{ matrix.arch }}.json
+    steps:
+      - name: Install Syft
+        run: |
+          curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin
 
-      # - name: Generate SLSA provenance attestation
-        # env:
-          # COSIGN_EXPERIMENTAL: "1"
-          # IMAGE: madnuttah/openssl-buildenv:${{ steps.vars.outputs.BUILDENV_VERSION }}-${{ matrix.arch }}
-        # run: |
-          # cosign attest \
-            # --predicate-type slsaprovenance.dev/v1 \
-            # --predicate <(echo '{"buildType":"openssl-buildenv","arch":"${{ matrix.arch }}"}') \
-            # "${IMAGE}"
+      - name: Generate SBOM for ${{ matrix.arch }}
+        env:
+          IMAGE: madnuttah/openssl-buildenv:${{ needs.build.outputs.buildenv_version }}-${{ matrix.arch }}
+        run: |
+          syft packages "docker:${IMAGE}" \
+            -o cyclonedx-json \
+            -o json \
+            --file sbom-${{ matrix.arch }}.cyclonedx.json \
+            --file sbom-${{ matrix.arch }}.json || true
 
+      - name: Upload SBOM artifacts
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: sbom-openssl-buildenv-${{ matrix.arch }}
+          path: sbom-${{ matrix.arch }}.*
+          if-no-files-found: ignore
+
+  sign:
+    needs: build
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+          - arch: 386
+          - arch: armv6
+          - arch: armv7
+          - arch: arm64
+          - arch: ppc64le
+          - arch: s390x
+          - arch: riscv64
+
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Install Cosign
+        uses: sigstore/cosign-installer@v3
+        with:
+          cosign-release: 'v2.4.0'
+
+      - name: Sign image with Cosign
+        env:
+          COSIGN_EXPERIMENTAL: "1"
+          IMAGE: madnuttah/openssl-buildenv:${{ needs.build.outputs.buildenv_version }}-${{ matrix.arch }}
+        run: |
+          cosign sign --yes "${IMAGE}"
 
   version-artifact:
     needs: build

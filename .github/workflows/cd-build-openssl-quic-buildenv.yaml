@@ -6,6 +6,7 @@ on:
       - main
     paths:
       - versions/openssl.txt
+      - versions/openssl-quic-buildenv.txt
       - versions/ngtcp2.txt
       - versions/nghttp3.txt
   workflow_dispatch:
@@ -13,6 +14,8 @@ on:
 permissions:
   actions: read
   contents: read
+  packages: write
+  id-token: write
 
 jobs:
   build:
@@ -94,7 +97,7 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build OpenSSL QUIC
+      - name: Build and push OpenSSL QUIC image
         uses: docker/build-push-action@f9f3042f7e2789586610d6e8b85c8f03e5195baf
         with:
           context: .
@@ -112,6 +115,77 @@ jobs:
             TARGETARCH=${{ matrix.arch }}
           tags: |
             madnuttah/openssl-buildenv:${{ steps.vars.outputs.BUILDENV_QUIC_VERSION }}-quic-${{ matrix.arch }}
+
+  sbom:
+    needs: build
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+          - arch: 386
+          - arch: armv6
+          - arch: armv7
+          - arch: arm64
+          - arch: ppc64le
+          - arch: s390x
+          - arch: riscv64
+
+    steps:
+      - name: Install Syft
+        run: |
+          curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin
+
+      - name: Generate SBOM for ${{ matrix.arch }}
+        env:
+          IMAGE: madnuttah/openssl-buildenv:${{ needs.build.outputs.buildenv_quic_version }}-quic-${{ matrix.arch }}
+        run: |
+          syft packages "docker:${IMAGE}" \
+            -o cyclonedx-json \
+            -o json \
+            --file sbom-${{ matrix.arch }}.cyclonedx.json \
+            --file sbom-${{ matrix.arch }}.json || true
+
+      - name: Upload SBOM artifacts
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: sbom-openssl-quic-buildenv-${{ matrix.arch }}
+          path: sbom-${{ matrix.arch }}.*
+          if-no-files-found: ignore
+
+  sign:
+    needs: build
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+          - arch: 386
+          - arch: armv6
+          - arch: armv7
+          - arch: arm64
+          - arch: ppc64le
+          - arch: s390x
+          - arch: riscv64
+
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Install Cosign
+        uses: sigstore/cosign-installer@v3
+        with:
+          cosign-release: 'v2.4.0'
+
+      - name: Sign image with Cosign
+        env:
+          COSIGN_EXPERIMENTAL: "1"
+          IMAGE: madnuttah/openssl-buildenv:${{ needs.build.outputs.buildenv_quic_version }}-quic-${{ matrix.arch }}
+        run: |
+          cosign sign --yes "${IMAGE}"
 
   version-artifact:
     needs: build
