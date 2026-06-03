@@ -53,17 +53,15 @@ jobs:
 
           OPENSSL_BE_QUIC=$(grep '^openssl=' versions/openssl-quic-buildenv.txt | cut -d= -f2)
           SUB_BE_QUIC=$(grep '^sub=' versions/openssl-quic-buildenv.txt | cut -d= -f2)
-          QUIC_VERSION="${OPENSSL_BE_QUIC}-${SUB_BE_QUIC}"
+
+          echo "QUIC_VERSION=${OPENSSL_BE_QUIC}-${SUB_BE_QUIC}" >> "$GITHUB_OUTPUT"
 
           NGTCP2_VERSION=$(cat versions/ngtcp2.txt)
           NGHTTP3_VERSION=$(cat versions/nghttp3.txt)
 
-          : "${QUIC_VERSION}"
-
           {
             echo "OPENSSL_VERSION=${OPENSSL_VERSION}"
             echo "NONQUIC_VERSION=${NONQUIC_VERSION}"
-            echo "QUIC_VERSION=${QUIC_VERSION}"
             echo "NGTCP2_VERSION=${NGTCP2_VERSION}"
             echo "NGHTTP3_VERSION=${NGHTTP3_VERSION}"
           } >> "$GITHUB_OUTPUT"
