@@ -58,6 +58,8 @@ jobs:
           NGTCP2_VERSION=$(cat versions/ngtcp2.txt)
           NGHTTP3_VERSION=$(cat versions/nghttp3.txt)
 
+          : "${QUIC_VERSION}"
+
           {
             echo "OPENSSL_VERSION=${OPENSSL_VERSION}"
             echo "NONQUIC_VERSION=${NONQUIC_VERSION}"
@@ -203,7 +205,7 @@ jobs:
           mkdir -p release-artifacts
           
           if [ -d sbom-artifacts ]; then
-            find sbom-artifacts -name "*.json" -o -name "*.cyclonedx.json" | while read sbom; do
+            find sbom-artifacts -name "*.json" -o -name "*.cyclonedx.json" | while read -r sbom; do
               cp "$sbom" release-artifacts/ || true
             done
           fi
