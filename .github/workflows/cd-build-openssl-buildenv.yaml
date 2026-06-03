@@ -18,6 +18,8 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+    outputs:
+      buildenv_version: ${{ steps.vars.outputs.BUILDENV_VERSION }}
 
     strategy:
       fail-fast: false

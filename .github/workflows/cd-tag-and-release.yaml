@@ -118,19 +118,19 @@ jobs:
           UPDATED_NGHTTP3=false
           UPDATED_QUIC=false
 
-          if git diff HEAD~1 HEAD -- versions/openssl.txt >/dev/null 2>&1; then
+          if ! git diff --quiet HEAD~1 HEAD -- versions/openssl.txt; then
             UPDATED_OPENSSL=true
           fi
 
-          if git diff HEAD~1 HEAD -- versions/ngtcp2.txt >/dev/null 2>&1; then
+          if ! git diff --quiet HEAD~1 HEAD -- versions/ngtcp2.txt; then
             UPDATED_NGTCP2=true
           fi
 
-          if git diff HEAD~1 HEAD -- versions/nghttp3.txt >/dev/null 2>&1; then
+          if ! git diff --quiet HEAD~1 HEAD -- versions/nghttp3.txt; then
             UPDATED_NGHTTP3=true
           fi
 
-          if git diff HEAD~1 HEAD -- versions/openssl-quic-buildenv.txt >/dev/null 2>&1; then
+          if ! git diff --quiet HEAD~1 HEAD -- versions/openssl-quic-buildenv.txt; then
             UPDATED_QUIC=true
           fi
           
@@ -171,46 +171,43 @@ jobs:
             -F RELEASE_NOTES.md \
             --latest=false || true
 
-      - name: Install Cosign
-        uses: sigstore/cosign-installer@398d4b0eeef1380460a10c8013a76f728fb906ac # v3
-        with:
-          cosign-release: 'v2.4.0'
+      # - name: Install Cosign
+        # uses: sigstore/cosign-installer@v3
+        # with:
+          # cosign-release: 'v2.4.0'
 
-      - name: Sign Git tags with Cosign
-        env:
-          COSIGN_EXPERIMENTAL: "1"
-          NONQUIC_VERSION: ${{ steps.versions.outputs.NONQUIC_VERSION }}
-          QUIC_VERSION: ${{ steps.versions.outputs.QUIC_VERSION }}
-        run: |
-          set -euo pipefail
+      # - name: Sign Git tags with Cosign
+        # env:
+          # COSIGN_EXPERIMENTAL: "1"
+          # NONQUIC_VERSION: ${{ steps.versions.outputs.NONQUIC_VERSION }}
+          # QUIC_VERSION: ${{ steps.versions.outputs.QUIC_VERSION }}
+        # run: |
+          # set -euo pipefail
           
-          # Sign tags as attestations for supply chain verification
-          cosign attest --yes \
-            --predicate-type slsaprovenance.dev/v1 \
-            --predicate <(echo '{"buildType":"git-tag","tag":"v'"${NONQUIC_VERSION}"'"}') \
-            --tag-only "v${NONQUIC_VERSION}" \
-            "ghcr.io/${{ github.repository }}" || true
+          # cosign attest --yes \
+            # --predicate-type slsaprovenance.dev/v1 \
+            # --predicate <(echo '{"buildType":"git-tag","tag":"v'"${NONQUIC_VERSION}"'"}') \
+            # --tag-only "v${NONQUIC_VERSION}" \
+            # "ghcr.io/${{ github.repository }}" || true
           
-          cosign attest --yes \
-            --predicate-type slsaprovenance.dev/v1 \
-            --predicate <(echo '{"buildType":"git-tag","tag":"v'"${QUIC_VERSION}"'-quic"}') \
-            --tag-only "v${QUIC_VERSION}-quic" \
-            "ghcr.io/${{ github.repository }}" || true
+          # cosign attest --yes \
+            # --predicate-type slsaprovenance.dev/v1 \
+            # --predicate <(echo '{"buildType":"git-tag","tag":"v'"${QUIC_VERSION}"'-quic"}') \
+            # --tag-only "v${QUIC_VERSION}-quic" \
+            # "ghcr.io/${{ github.repository }}" || true
 
       - name: Prepare release artifacts
         run: |
           set -euo pipefail
           
-          # Organize SBOMs for release
           mkdir -p release-artifacts
           
           if [ -d sbom-artifacts ]; then
-            find sbom-artifacts -name "*.json" -o -name "*.cyclonedx.json" | while read sbom; do
+            find sbom-artifacts -name "*.json" -o -name "*.cyclonedx.json" | while read -r sbom; do
               cp "$sbom" release-artifacts/ || true
             done
           fi
           
-          # Create checksums
           cd release-artifacts
           if [ -n "$(ls -A)" ]; then
             find . -type f ! -name "*.sha256" -exec sha256sum {} \; > CHECKSUMS.sha256
@@ -226,11 +223,16 @@ jobs:
           NONQUIC_VERSION="${{ steps.versions.outputs.NONQUIC_VERSION }}"
           QUIC_VERSION="${{ steps.versions.outputs.QUIC_VERSION }}"
           
-          # Upload SBOM artifacts to non-QUIC release
           if [ -d release-artifacts ] && [ -n "$(ls -A release-artifacts)" ]; then
             cd release-artifacts
-            for file in *; do
+
+            for file in sbom-openssl-buildenv-*; do
               [ -f "$file" ] && gh release upload "v${NONQUIC_VERSION}" "$file" --clobber || true
             done
+
+            for file in sbom-openssl-quic-buildenv-*; do
+              [ -f "$file" ] && gh release upload "v${QUIC_VERSION}-quic" "$file" --clobber || true
+            done
+
             cd -
           fi

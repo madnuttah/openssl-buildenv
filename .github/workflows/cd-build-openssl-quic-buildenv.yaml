@@ -20,6 +20,8 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+    outputs:
+      buildenv_quic_version: ${{ steps.vars.outputs.BUILDENV_QUIC_VERSION }}
 
     strategy:
       fail-fast: false
