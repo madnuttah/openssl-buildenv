@@ -146,59 +146,59 @@ jobs:
           path: sbom-${{ matrix.arch }}.*
           if-no-files-found: ignore
 
-  sign:
-    needs: build
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - arch: amd64
-          - arch: 386
-          - arch: armv6
-          - arch: armv7
-          - arch: arm64
-          - arch: ppc64le
-          - arch: s390x
-          - arch: riscv64
+  # sign:
+    # needs: build
+    # runs-on: ubuntu-latest
+    # strategy:
+      # fail-fast: false
+      # matrix:
+        # include:
+          # - arch: amd64
+          # - arch: 386
+          # - arch: armv6
+          # - arch: armv7
+          # - arch: arm64
+          # - arch: ppc64le
+          # - arch: s390x
+          # - arch: riscv64
 
-    permissions:
-      contents: read
-      id-token: write
+    # permissions:
+      # contents: read
+      # id-token: write
 
-    steps:
-      - name: Install Cosign
-        uses: sigstore/cosign-installer@v3
-        with:
-          cosign-release: 'v2.4.0'
+    # steps:
+      # - name: Install Cosign
+        # uses: sigstore/cosign-installer@v3
+        # with:
+          # cosign-release: 'v2.4.0'
 
-      - name: Sign image with Cosign
-        env:
-          COSIGN_EXPERIMENTAL: "1"
-          IMAGE: madnuttah/openssl-buildenv:${{ needs.build.outputs.buildenv_version }}-${{ matrix.arch }}
-        run: |
-          cosign sign --yes "${IMAGE}"
+      # - name: Sign image with Cosign
+        # env:
+          # COSIGN_EXPERIMENTAL: "1"
+          # IMAGE: madnuttah/openssl-buildenv:${{ needs.build.outputs.buildenv_version }}-${{ matrix.arch }}
+        # run: |
+          # cosign sign --yes "${IMAGE}"
 
-  version-artifact:
-    needs: build
-    runs-on: ubuntu-latest
+  # version-artifact:
+    # needs: build
+    # runs-on: ubuntu-latest
 
-    steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
-        with:
-          ref: ${{ github.ref }}
-          fetch-depth: 0
-          persist-credentials: false
+    # steps:
+      # - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        # with:
+          # ref: ${{ github.ref }}
+          # fetch-depth: 0
+          # persist-credentials: false
 
-      - name: Write version artifact
-        run: |
-          set -euo pipefail
-          OPENSSL_BE=$(grep '^openssl=' versions/openssl-buildenv.txt | cut -d= -f2)
-          SUB_BE=$(grep '^sub=' versions/openssl-buildenv.txt | cut -d= -f2)
-          echo "${OPENSSL_BE}-${SUB_BE}" > version.txt
+      # - name: Write version artifact
+        # run: |
+          # set -euo pipefail
+          # OPENSSL_BE=$(grep '^openssl=' versions/openssl-buildenv.txt | cut -d= -f2)
+          # SUB_BE=$(grep '^sub=' versions/openssl-buildenv.txt | cut -d= -f2)
+          # echo "${OPENSSL_BE}-${SUB_BE}" > version.txt
 
-      - name: Upload version artifact
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
-        with:
-          name: openssl-buildenv-version
-          path: version.txt
+      # - name: Upload version artifact
+        # uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        # with:
+          # name: openssl-buildenv-version
+          # path: version.txt
