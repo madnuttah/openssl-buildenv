@@ -156,7 +156,7 @@ jobs:
           path: sbom-${{ matrix.arch }}.*
           if-no-files-found: ignore
 
-sign:
+#sign:
     # needs: build
     # runs-on: ubuntu-latest
     # strategy:
