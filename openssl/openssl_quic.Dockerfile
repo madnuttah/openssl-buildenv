@@ -23,6 +23,7 @@ ENV PREFIX="/usr/local" \
     PATH="/usr/local/openssl/bin:/usr/local/bin:${PATH}" \
     PKG_CONFIG_PATH="/usr/local/lib/pkgconfig:/usr/local/openssl/lib/pkgconfig"
 
+# hadolint ignore=DL3018
 RUN set -xe; \
   apk --update --no-cache add \
     ca-certificates \
@@ -57,7 +58,6 @@ RUN curl -L --fail --no-progress-meter \
     echo "${OPENSSL_SHA256}  ${OPENSSL_VERSION}.tar.gz" | sha256sum -c - && \
     tar -xf "${OPENSSL_VERSION}.tar.gz" && \
     mv "${OPENSSL_VERSION}" openssl
-
 
 WORKDIR /src/openssl
 

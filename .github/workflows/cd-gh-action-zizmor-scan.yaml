@@ -10,7 +10,6 @@ permissions:
   actions: read
   contents: read
 
-
 jobs:
   zizmor:
     name: Run zizmor

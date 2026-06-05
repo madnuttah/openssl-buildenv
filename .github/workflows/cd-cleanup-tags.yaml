@@ -64,6 +64,8 @@ jobs:
           DRY_RUN: ${{ env.DRY_RUN }}
           JWT: ${{ steps.auth.outputs.DOCKERHUB_TOKEN_JWT }}
         run: |
+          set -euo pipefail
+
           is_final_tag() {
             tag="$1"
             for s in $SUFFIXES; do

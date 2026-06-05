@@ -103,50 +103,50 @@ jobs:
             madnuttah/openssl-buildenv:${VERSION}-quic-riscv64
 
       # - name: Install Cosign
-        # uses: sigstore/cosign-installer@v3
-        # with:
-          # cosign-release: 'v2.4.0'
+      #   uses: sigstore/cosign-installer@v3
+      #   with:
+      #     cosign-release: 'v2.4.0'
 
       # - name: Sign non-QUIC manifest
-        # if: ${{ steps.versions.outputs.NONQUIC_VERSION != '' }}
-        # env:
-          # COSIGN_EXPERIMENTAL: "1"
-          # VERSION: ${{ steps.versions.outputs.NONQUIC_VERSION }}
-        # run: |
-          # set -euo pipefail
-          # cosign sign --yes "madnuttah/openssl-buildenv:${VERSION}"
-          # cosign sign --yes "madnuttah/openssl-buildenv:latest"
+      #   if: ${{ steps.versions.outputs.NONQUIC_VERSION != '' }}
+      #   env:
+      #     COSIGN_EXPERIMENTAL: "1"
+      #     VERSION: ${{ steps.versions.outputs.NONQUIC_VERSION }}
+      #   run: |
+      #     set -euo pipefail
+      #     cosign sign --yes "madnuttah/openssl-buildenv:${VERSION}"
+      #     cosign sign --yes "madnuttah/openssl-buildenv:latest"
 
       # - name: Sign QUIC manifest
-        # if: ${{ steps.versions.outputs.QUIC_VERSION != '' }}
-        # env:
-          # COSIGN_EXPERIMENTAL: "1"
-          # VERSION: ${{ steps.versions.outputs.QUIC_VERSION }}
-        # run: |
-          # set -euo pipefail
-          # cosign sign --yes "madnuttah/openssl-buildenv:${VERSION}-quic"
-          # cosign sign --yes "madnuttah/openssl-buildenv:latest-quic"
+      #   if: ${{ steps.versions.outputs.QUIC_VERSION != '' }}
+      #   env:
+      #     COSIGN_EXPERIMENTAL: "1"
+      #     VERSION: ${{ steps.versions.outputs.QUIC_VERSION }}
+      #   run: |
+      #     set -euo pipefail
+      #     cosign sign --yes "madnuttah/openssl-buildenv:${VERSION}-quic"
+      #     cosign sign --yes "madnuttah/openssl-buildenv:latest-quic"
 
       # - name: Attest non-QUIC manifest
-        # if: ${{ steps.versions.outputs.NONQUIC_VERSION != '' }}
-        # env:
-          # COSIGN_EXPERIMENTAL: "1"
-          # VERSION: ${{ steps.versions.outputs.NONQUIC_VERSION }}
-        # run: |
-          # set -euo pipefail
-          # cosign attest --yes \
-            # --predicate-type slsaprovenance.dev/v1 \
-            # --predicate <(echo '{"buildType":"openssl-buildenv-manifest","flavor":"non-quic","version":"'"${VERSION}"'"}') \
-            # "madnuttah/openssl-buildenv:${VERSION}"
+      #   if: ${{ steps.versions.outputs.NONQUIC_VERSION != '' }}
+      #   env:
+      #     COSIGN_EXPERIMENTAL: "1"
+      #     VERSION: ${{ steps.versions.outputs.NONQUIC_VERSION }}
+      #   run: |
+      #     set -euo pipefail
+      #     cosign attest --yes \
+      #       --predicate-type slsaprovenance.dev/v1 \
+      #       --predicate <(echo '{"buildType":"openssl-buildenv-manifest","flavor":"non-quic","version":"'"${VERSION}"'"}') \
+      #       "madnuttah/openssl-buildenv:${VERSION}"
 
       # - name: Attest QUIC manifest
-        # if: ${{ steps.versions.outputs.QUIC_VERSION != '' }}
-        # env:
-          # COSIGN_EXPERIMENTAL: "1"
-          # VERSION: ${{ steps.versions.outputs.QUIC_VERSION }}
-        # run: |
-          # set -euo pipefail
-          # cosign attest --yes \
-            # --predicate-type slsaprovenance.dev/v1 \
-            # --predicate <(echo '{"buildType":"openssl-buildenv-manifest","flavor":"quic","version":"'"${VERSION}"'"}') \
-            # "madnuttah/openssl-buildenv:${VERSION}-quic"
+      #   if: ${{ steps.versions.outputs.QUIC_VERSION != '' }}
+      #   env:
+      #     COSIGN_EXPERIMENTAL: "1"
+      #     VERSION: ${{ steps.versions.outputs.QUIC_VERSION }}
+      #   run: |
+      #     set -euo pipefail
+      #     cosign attest --yes \
+      #       --predicate-type slsaprovenance.dev/v1 \
+      #       --predicate <(echo '{"buildType":"openssl-buildenv-manifest","flavor":"quic","version":"'"${VERSION}"'"}') \
+      #       "madnuttah/openssl-buildenv:${VERSION}-quic"

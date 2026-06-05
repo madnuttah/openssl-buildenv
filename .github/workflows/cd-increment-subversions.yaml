@@ -9,7 +9,7 @@ jobs:
     if: github.actor == 'renovate[bot]' && (contains(github.event.pull_request.labels.*.name, 'bump-quic-subversion') || contains(github.event.pull_request.labels.*.name, 'bump-openssl-subversion'))
 
     runs-on: ubuntu-latest
-    
+
     permissions:
       contents: write
 
@@ -39,30 +39,31 @@ jobs:
           python-version: '3.x'
 
       - name: Process Subversion Logic
+        shell: python
         run: |
           import re
           import os
           import subprocess
 
           labels = "${{ join(github.event.pull_request.labels.*.name, ',') }}".split(',')
-          
+
           def modify_subversion(filepath, reset=False):
               if not os.path.exists(filepath):
                   print(f"File not found: {filepath}")
                   return False
-              
+
               with open(filepath, 'r') as f:
                   content = f.read()
-              
+
               match = re.search(r'sub=(\d+)', content)
               if match:
                   old_sub = int(match.group(1))
                   new_sub = 0 if reset else old_sub + 1
-                  
+
                   if old_sub == new_sub:
                       print(f"{filepath} already is on sub={new_sub}. No change necessary.")
                       return False
-                      
+
                   new_content = content.replace(f"sub={old_sub}", f"sub={new_sub}")
                   with open(filepath, 'w') as f:
                       f.write(new_content)
@@ -85,19 +86,19 @@ jobs:
           ngtcp2_changed = "versions/ngtcp2.txt" in changed_files
           nghttp3_changed = "versions/nghttp3.txt" in changed_files
           quic_deps_changed = ngtcp2_changed or nghttp3_changed
-          
+
           print(f"Changed files: {changed_files}")
           print(f"OpenSSL changed: {openssl_changed}")
           print(f"QUIC deps changed (ngtcp2/nghttp3): {quic_deps_changed}")
-          
+
           if 'bump-openssl-subversion' in labels:
               print("Processing 'bump-openssl-subversion' label...")
-              
+
               if modify_subversion('versions/openssl-buildenv.txt', reset=True):
                   changed = True
               if modify_subversion('versions/openssl-quic-buildenv.txt', reset=True):
                   changed = True
-          
+
           elif 'bump-quic-subversion' in labels:
               print("Processing 'bump-quic-subversion' label...")
 
@@ -109,7 +110,6 @@ jobs:
 
           with open(os.environ['GITHUB_ENV'], 'a') as f:
               f.write(f"HAS_CHANGES={str(changed).lower()}\n")
-        shell: python
 
       - name: Commit and Push Changes
         if: env.HAS_CHANGES == 'true'

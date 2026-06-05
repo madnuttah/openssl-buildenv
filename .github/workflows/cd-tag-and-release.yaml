@@ -133,30 +133,30 @@ jobs:
           if ! git diff --quiet HEAD~1 HEAD -- versions/openssl-quic-buildenv.txt; then
             UPDATED_QUIC=true
           fi
-          
+
           if [ "$UPDATED_OPENSSL" = true ]; then
-            NOTES+="## OpenSSL Buildenv\n"
-            NOTES+="OpenSSL: ${OPENSSL}\n"
-            NOTES+="Release notes: https://github.com/openssl/openssl/releases/tag/${OPENSSL#openssl-}\n"
-            NOTES+="Buildenv version: ${NONQUIC}\n\n"
+            NOTES+="## OpenSSL Buildenv\\n"
+            NOTES+="OpenSSL: ${OPENSSL}\\n"
+            NOTES+="Release notes: https://github.com/openssl/openssl/releases/tag/${OPENSSL#openssl-}\\n"
+            NOTES+="Buildenv version: ${NONQUIC}\\n\\n"
           fi
 
           if [ "$UPDATED_QUIC" = true ] || [ "$UPDATED_NGTCP2" = true ] || [ "$UPDATED_NGHTTP3" = true ]; then
-            NOTES+="## OpenSSL QUIC Buildenv\n"
-            NOTES+="Version: ${QUIC}\n"
-            NOTES+="OpenSSL: ${OPENSSL}\n"
+            NOTES+="## OpenSSL QUIC Buildenv\\n"
+            NOTES+="Version: ${QUIC}\\n"
+            NOTES+="OpenSSL: ${OPENSSL}\\n"
 
             if [ "$UPDATED_NGTCP2" = true ]; then
-              NOTES+="- ngtcp2: ${NGTCP2}\n"
-              NOTES+="  Release notes: https://github.com/ngtcp2/ngtcp2/releases/tag/${NGTCP2}\n"
+              NOTES+="- ngtcp2: ${NGTCP2}\\n"
+              NOTES+="  Release notes: https://github.com/ngtcp2/ngtcp2/releases/tag/${NGTCP2}\\n"
             fi
 
             if [ "$UPDATED_NGHTTP3" = true ]; then
-              NOTES+="- nghttp3: ${NGHTTP3}\n"
-              NOTES+="  Release notes: https://github.com/ngtcp2/nghttp3/releases/tag/${NGHTTP3}\n"
+              NOTES+="- nghttp3: ${NGHTTP3}\\n"
+              NOTES+="  Release notes: https://github.com/ngtcp2/nghttp3/releases/tag/${NGHTTP3}\\n"
             fi
 
-            NOTES+="\n"
+            NOTES+="\\n"
           fi
 
           printf "%b" "$NOTES" > RELEASE_NOTES.md
@@ -170,20 +170,9 @@ jobs:
             -t "${TAG_QUIC}" \
             -F RELEASE_NOTES.md \
             --latest=false || true
-
-      # - name: Install Cosign
-        # uses: sigstore/cosign-installer@v3
-        # with:
-          # cosign-release: 'v2.4.0'
-
-      # - name: Sign Git tags with Cosign
-        # env:
-          # COSIGN_EXPERIMENTAL: "1"
-          # NONQUIC_VERSION: ${{ steps.versions.outputs.NONQUIC_VERSION }}
-          # QUIC_VERSION: ${{ steps.versions.outputs.QUIC_VERSION }}
-        # run: |
-          # set -euo pipefail
-          
+            
+            .github\workflows\cd-tag-and-release.yaml
+            
           # cosign attest --yes \
             # --predicate-type slsaprovenance.dev/v1 \
             # --predicate <(echo '{"buildType":"git-tag","tag":"v'"${NONQUIC_VERSION}"'"}') \
@@ -199,15 +188,16 @@ jobs:
       - name: Prepare release artifacts
         run: |
           set -euo pipefail
-          
+
           mkdir -p release-artifacts
-          
+
           if [ -d sbom-artifacts ]; then
-            find sbom-artifacts -name "*.json" -o -name "*.cyclonedx.json" | while read -r sbom; do
+            find sbom-artifacts -type f \( -name "*.json" -o -name "*.cyclonedx.json" \) -print0 | \
+            while IFS= read -r -d '' sbom; do
               cp "$sbom" release-artifacts/ || true
             done
           fi
-          
+
           cd release-artifacts
           if [ -n "$(ls -A)" ]; then
             find . -type f ! -name "*.sha256" -exec sha256sum {} \; > CHECKSUMS.sha256
@@ -219,10 +209,10 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.BOT_GITHUB_TOKEN }}
         run: |
           set -euo pipefail
-          
+
           NONQUIC_VERSION="${{ steps.versions.outputs.NONQUIC_VERSION }}"
           QUIC_VERSION="${{ steps.versions.outputs.QUIC_VERSION }}"
-          
+
           if [ -d release-artifacts ] && [ -n "$(ls -A release-artifacts)" ]; then
             cd release-artifacts
 
@@ -236,3 +226,28 @@ jobs:
 
             cd -
           fi
+
+      # - name: Install Cosign
+      #   uses: sigstore/cosign-installer@v3
+      #   with:
+      #     cosign-release: 'v2.4.0'
+
+      # - name: Sign Git tags with Cosign
+      #   env:
+      #     COSIGN_EXPERIMENTAL: "1"
+      #     NONQUIC_VERSION: ${{ steps.versions.outputs.NONQUIC_VERSION }}
+      #     QUIC_VERSION: ${{ steps.versions.outputs.QUIC_VERSION }}
+      #   run: |
+      #     set -euo pipefail
+      #
+      #     cosign attest --yes \
+      #       --predicate-type slsaprovenance.dev/v1 \
+      #       --predicate <(echo '{"buildType":"git-tag","tag":"v'"${NONQUIC_VERSION}"'"}') \
+      #       --tag-only "v${NONQUIC_VERSION}" \
+      #       "ghcr.io/${{ github.repository }}" || true
+      #
+      #     cosign attest --yes \
+      #       --predicate-type slsaprovenance.dev/v1 \
+      #       --predicate <(echo '{"buildType":"git-tag","tag":"v'"${QUIC_VERSION}"'-quic"}') \
+      #       --tag-only "v${QUIC_VERSION}-quic" \
+      #       "ghcr.io/${{ github.repository }}" || true
