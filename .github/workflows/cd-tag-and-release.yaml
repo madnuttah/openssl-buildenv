@@ -111,8 +111,6 @@ jobs:
             git push --set-upstream origin "${QUIC}-quic"
           fi
 
-          NOTES=""
-
           UPDATED_OPENSSL=false
           UPDATED_NGTCP2=false
           UPDATED_NGHTTP3=false
@@ -135,31 +133,35 @@ jobs:
           fi
 
           if [ "$UPDATED_OPENSSL" = true ]; then
-            NOTES+="## OpenSSL Buildenv\\n"
-            NOTES+="OpenSSL: ${OPENSSL}\\n"
-            NOTES+="Release notes: https://github.com/openssl/openssl/releases/tag/${OPENSSL#openssl-}\\n"
-            NOTES+="Buildenv version: ${NONQUIC}\\n\\n"
+          {
+            printf "## OpenSSL Buildenv\n"
+            printf "OpenSSL: %s\n" "$OPENSSL"
+            printf "Release notes: https://github.com/openssl/openssl/releases/tag/%s\n" "${OPENSSL#openssl-}"
+            printf "Buildenv version: %s\n\n" "$NONQUIC"
+          } >> RELEASE_NOTES.md
+
           fi
 
           if [ "$UPDATED_QUIC" = true ] || [ "$UPDATED_NGTCP2" = true ] || [ "$UPDATED_NGHTTP3" = true ]; then
-            NOTES+="## OpenSSL QUIC Buildenv\\n"
-            NOTES+="Version: ${QUIC}\\n"
-            NOTES+="OpenSSL: ${OPENSSL}\\n"
+          {
+            printf "## OpenSSL QUIC Buildenv\n"
+            printf "Version: %s\n" "$QUIC"
+            printf "OpenSSL: %s\n" "$OPENSSL"
 
             if [ "$UPDATED_NGTCP2" = true ]; then
-              NOTES+="- ngtcp2: ${NGTCP2}\\n"
-              NOTES+="  Release notes: https://github.com/ngtcp2/ngtcp2/releases/tag/${NGTCP2}\\n"
+              printf "- ngtcp2: %s\n" "$NGTCP2"
+              printf "  Release notes: https://github.com/ngtcp2/ngtcp2/releases/tag/%s\n" "$NGTCP2"
             fi
 
             if [ "$UPDATED_NGHTTP3" = true ]; then
-              NOTES+="- nghttp3: ${NGHTTP3}\\n"
-              NOTES+="  Release notes: https://github.com/ngtcp2/nghttp3/releases/tag/${NGHTTP3}\\n"
+              printf "- nghttp3: %s\n" "$NGHTTP3"
+              printf "  Release notes: https://github.com/ngtcp2/nghttp3/releases/tag/%s\n" "$NGHTTP3"
             fi
 
-            NOTES+="\\n"
-          fi
+            printf "\n"
+          } >> RELEASE_NOTES.md
 
-          printf "%b" "$NOTES" > RELEASE_NOTES.md
+          fi
 
           gh release create "${TAG_NONQUIC}" \
             -t "${TAG_NONQUIC}" \
@@ -170,8 +172,6 @@ jobs:
             -t "${TAG_QUIC}" \
             -F RELEASE_NOTES.md \
             --latest=false || true
-            
-            .github\workflows\cd-tag-and-release.yaml
             
           # cosign attest --yes \
             # --predicate-type slsaprovenance.dev/v1 \
