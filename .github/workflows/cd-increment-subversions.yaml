@@ -1,4 +1,4 @@
-name: CD Auto-Increment Subversions
+name: CD Increment Subversions
 
 on:
   pull_request:
