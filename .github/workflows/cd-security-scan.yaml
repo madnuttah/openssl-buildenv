@@ -50,11 +50,7 @@ jobs:
       - name: Upload SARIF result
         id: UPLOAD_SARIF
         if: ${{ github.event_name != 'pull_request' }}
-<<<<<<< Updated upstream
         uses: github/codeql-action/upload-sarif@8aad20d150bbac5944a9f9d289da16a4b0d87c1e # v4.36.2
-=======
-        uses: github/codeql-action/upload-sarif@8aad20d149bbac5944a9f9d289da16a4b0d87c1e # v4.36.2
->>>>>>> Stashed changes
         with:
           sarif_file: "scan-results-latest.sarif"
 
