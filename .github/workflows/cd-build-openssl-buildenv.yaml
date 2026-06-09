@@ -81,6 +81,15 @@ jobs:
             echo "OPENSSL_SHA256=${OPENSSL_SHA256}"
             echo "BUILDENV_BUILD_DATE=${BUILDENV_BUILD_DATE}"
           } >> "$GITHUB_OUTPUT"
+          
+      - name: Show versions
+        run: |
+          {
+            echo "BUILDENV_BUILD_DATE=${{ steps.vars.outputs.BUILDENV_BUILD_DATE }}"
+            echo "OPENSSL_VERSION=${{ steps.vars.outputs.OPENSSL_VERSION }}"
+            echo "BUILDENV_VERSION=${{ steps.vars.outputs.BUILDENV_VERSION }}"
+            echo "OPENSSL_SHA256=${{ steps.vars.outputs.OPENSSL_SHA256 }}"
+          }
 
       - uses: docker/setup-qemu-action@ce360397dd3f832beb865e1373c09c0e9f86d70a
 

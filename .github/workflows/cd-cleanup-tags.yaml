@@ -76,6 +76,21 @@ jobs:
             return 0
           }
 
+          should_delete() {          
+            local tag="$1"          
+
+            if [[ "$tag" == *"buildcache"* ]]; then          
+              return 1       
+            fi          
+
+            for s in $SUFFIXES; do          
+              if [[ "$tag" == *"$s" ]]; then          
+                return 0     
+              fi          
+            done          
+            return 1     
+          }
+
           delete_tag() {
             tag="$1"
             if [ "$DRY_RUN" = "true" ]; then
@@ -93,16 +108,11 @@ jobs:
             body=$(curl -s "$page")
             page=$(echo "$body" | jq -r '.next')
             echo "$body" | jq -r '.results[].name' | while read -r tag; do
-              for s in $SUFFIXES; do
-                if [[ "$tag" == *"$s" ]]; then
-                  if is_final_tag "$tag"; then
-                    echo "skip: $tag"
-                  else
-                    delete_tag "$tag"
-                  fi
-                  break
-                fi
-              done
+              if should_delete "$tag"; then
+                delete_tag "$tag"
+              else
+                echo "skip: $tag"
+              fi
             done
           done
 
