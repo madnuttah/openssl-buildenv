@@ -6,7 +6,7 @@ on:
 
 jobs:
   bump-sub:
-    if: github.actor == 'renovate[bot]' && (contains(github.event.pull_request.labels.*.name, 'bump-quic-subversion') || contains(github.event.pull_request.labels.*.name, 'bump-openssl-subversion'))
+    if: github.actor == 'renovate[bot]'
 
     runs-on: ubuntu-latest
 
@@ -90,6 +90,13 @@ jobs:
           print(f"Changed files: {changed_files}")
           print(f"OpenSSL changed: {openssl_changed}")
           print(f"QUIC deps changed (ngtcp2/nghttp3): {quic_deps_changed}")
+          
+          if openssl_changed:
+            print("OpenSSL changed → resetting subversions")
+            if modify_subversion('versions/openssl-buildenv.txt', reset=True):
+                changed = True
+            if modify_subversion('versions/openssl-quic-buildenv.txt', reset=True):
+                changed = True
 
           if 'bump-openssl-subversion' in labels:
               print("Processing 'bump-openssl-subversion' label...")
