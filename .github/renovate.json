@@ -24,7 +24,7 @@
       "depNameTemplate": "openssl",
       "packageNameTemplate": "openssl/openssl",
       "extractVersionTemplate": "^openssl-(?<version>.*)$",
-      "versioningTemplate": "semver"
+      "versioningTemplate": "loose"
     },
     {
       "customType": "regex",
