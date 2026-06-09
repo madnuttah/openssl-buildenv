@@ -18,7 +18,7 @@
         "/(^|/)versions/openssl\\.txt$/"
       ],
       "matchStrings": [
-        "openssl-(?<currentValue>[0-9]+\.[0-9]+\.[0-9]+)"
+        "openssl-(?<currentValue>[0-9]+\\.[0-9]+\\.[0-9]+)"
       ],
       "datasourceTemplate": "github-tags",
       "depNameTemplate": "openssl",
@@ -58,7 +58,7 @@
         "/(^|/)versions/openssl-quic-buildenv\\.txt$/"
       ],
       "matchStrings": [
-        "openssl=(?<currentValue>[0-9]+\.[0-9]+\.[0-9]+)"
+        "openssl=(?<currentValue>[0-9]+\\.[0-9]+\\.[0-9]+)"
       ],
       "datasourceTemplate": "github-tags",
       "depNameTemplate": "openssl",
@@ -83,7 +83,7 @@
         "/(^|/)versions/openssl-buildenv\\.txt$/"
       ],
       "matchStrings": [
-        "openssl=(?<currentValue>[0-9]+\.[0-9]+\.[0-9]+)"
+        "openssl=(?<currentValue>[0-9]+\\.[0-9]+\\.[0-9]+)"
       ],
       "datasourceTemplate": "github-tags",
       "depNameTemplate": "openssl",
