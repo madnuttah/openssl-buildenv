@@ -20,7 +20,7 @@
       "matchStrings": [
         "(?<currentValue>openssl-[0-9]+\\.[0-9]+\\.[0-9]+[a-z]?)"
       ],
-      "datasourceTemplate": "github-releases",
+      "datasourceTemplate": "github-tags",
       "depNameTemplate": "openssl",
       "packageNameTemplate": "openssl/openssl",
       "extractVersionTemplate": "^openssl-(?<version>.*)$",
