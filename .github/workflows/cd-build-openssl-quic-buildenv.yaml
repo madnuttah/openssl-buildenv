@@ -6,7 +6,7 @@ on:
       - main
     paths:
       - versions/openssl.txt
-      - versions/openssl-quic-buildenv.txt
+#      - versions/openssl-quic-buildenv.txt
       - versions/ngtcp2.txt
       - versions/nghttp3.txt
   workflow_dispatch:
