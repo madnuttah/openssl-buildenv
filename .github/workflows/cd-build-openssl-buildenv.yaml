@@ -58,11 +58,10 @@ jobs:
         id: vars
         run: |
           set -euo pipefail
-          OPENSSL_VERSION=$(cat versions/openssl.txt)
 
-          OPENSSL_BE=$(grep '^openssl=' versions/openssl-buildenv.txt | cut -d= -f2)
-          SUB_BE=$(grep '^sub=' versions/openssl-buildenv.txt | cut -d= -f2)
-          BUILDENV_VERSION="${OPENSSL_BE}-${SUB_BE}"
+          OPENSSL_VERSION="$(cat versions/openssl.txt)"
+
+          BUILDENV_VERSION="$(grep -oP '(?<=openssl=).*' versions/openssl-buildenv.txt)"
 
           SHA_URL="https://github.com/openssl/openssl/releases/download/${OPENSSL_VERSION}/${OPENSSL_VERSION}.tar.gz.sha256"
 
@@ -71,9 +70,9 @@ jobs:
             exit 1
           fi
 
-          OPENSSL_SHA256=$(curl -sL "$SHA_URL" | awk '{print $1}')
+          OPENSSL_SHA256="$(curl -sL "$SHA_URL" | awk '{print $1}')"
 
-          BUILDENV_BUILD_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+          BUILDENV_BUILD_DATE="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
 
           {
             echo "OPENSSL_VERSION=${OPENSSL_VERSION}"
@@ -116,6 +115,26 @@ jobs:
             TARGETARCH=${{ matrix.arch }}
           tags: |
             madnuttah/openssl-buildenv:${{ steps.vars.outputs.BUILDENV_VERSION }}-${{ matrix.arch }}
+
+  upload-pipeline-metadata:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Create Isolated Metadata
+        run: |
+          mkdir -p metadata-payload
+          printf "%s" "${{ needs.build.outputs.buildenv_version }}" > metadata-payload/version.txt
+          printf "stable" > metadata-payload/variant.txt
+
+      - name: Upload Metadata Artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: openssl-buildenv-metadata
+          path: metadata-payload/
+          retention-days: 1
+
+
 
   sbom:
     needs: build

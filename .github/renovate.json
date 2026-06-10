@@ -68,18 +68,6 @@
     {
       "customType": "regex",
       "managerFilePatterns": [
-        "/(^|/)versions/openssl-quic-buildenv\\.txt$/"
-      ],
-      "matchStrings": [
-        "sub=(?<currentValue>[0-9]+)"
-      ],
-      "datasourceTemplate": "npm",
-      "depNameTemplate": "dummy-quic-subversion",
-      "versioningTemplate": "semver"
-    },
-    {
-      "customType": "regex",
-      "managerFilePatterns": [
         "/(^|/)versions/openssl-buildenv\\.txt$/"
       ],
       "matchStrings": [
@@ -89,18 +77,6 @@
       "depNameTemplate": "openssl",
       "packageNameTemplate": "openssl/openssl",
       "versioningTemplate": "loose"
-    },
-    {
-      "customType": "regex",
-      "managerFilePatterns": [
-        "/(^|/)versions/openssl-buildenv\\.txt$/"
-      ],
-      "matchStrings": [
-        "sub=(?<currentValue>[0-9]+)"
-      ],
-      "datasourceTemplate": "npm",
-      "depNameTemplate": "dummy-openssl-subversion",
-      "versioningTemplate": "semver"
     }
   ],
   "packageRules": [

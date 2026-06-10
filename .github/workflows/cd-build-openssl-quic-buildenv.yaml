@@ -61,17 +61,14 @@ jobs:
         run: |
           set -euo pipefail
 
-          OPENSSL_VERSION=$(cat versions/openssl.txt)
+          OPENSSL_VERSION="$(cat versions/openssl.txt)"
+          NGTCP2_VERSION="$(cat versions/ngtcp2.txt)"
+          NGHTTP3_VERSION="$(cat versions/nghttp3.txt)"
 
-          NGTCP2_VERSION=$(cat versions/ngtcp2.txt)
-          NGHTTP3_VERSION=$(cat versions/nghttp3.txt)
+          BUILDENV_QUIC_VERSION="$(grep -oP '(?<=openssl=).*' versions/openssl-quic-buildenv.txt)"
 
-          OPENSSL_BE=$(grep '^openssl=' versions/openssl-quic-buildenv.txt | cut -d= -f2)
-          SUB_BE=$(grep '^sub=' versions/openssl-quic-buildenv.txt | cut -d= -f2)
+          BUILDENV_BUILD_DATE="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
 
-          BUILDENV_QUIC_VERSION="${OPENSSL_BE}-${SUB_BE}"
-
-          BUILDENV_BUILD_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
           SHA_URL="https://github.com/openssl/openssl/releases/download/${OPENSSL_VERSION}/${OPENSSL_VERSION}.tar.gz.sha256"
 
           if ! curl --fail -sL "$SHA_URL" >/dev/null; then
@@ -79,7 +76,7 @@ jobs:
             exit 1
           fi
 
-          OPENSSL_SHA256=$(curl -sL "$SHA_URL" | awk '{print $1}')
+          OPENSSL_SHA256="$(curl -sL "$SHA_URL" | awk '{print $1}')"
 
           {
             echo "OPENSSL_VERSION=${OPENSSL_VERSION}"
@@ -89,6 +86,7 @@ jobs:
             echo "BUILDENV_BUILD_DATE=${BUILDENV_BUILD_DATE}"
             echo "OPENSSL_SHA256=${OPENSSL_SHA256}"
           } >> "$GITHUB_OUTPUT"
+
           
       - name: Show versions
         run: |
@@ -127,7 +125,25 @@ jobs:
             NGHTTP3_VERSION=${{ steps.vars.outputs.NGHTTP3_VERSION }}
             TARGETARCH=${{ matrix.arch }}
           tags: |
-            madnuttah/openssl-buildenv:${{ steps.vars.outputs.BUILDENV_QUIC_VERSION }}-quic-${{ matrix.arch }}
+            madnuttah/openssl-buildenv:${{ steps.vars.outputs.BUILDENV_QUIC_VERSION }}-${{ matrix.arch }}
+            
+  upload-pipeline-metadata:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Create Isolated Metadata
+        run: |
+          mkdir -p metadata-payload
+          printf "%s" "${{ needs.build.outputs.buildenv_quic_version }}" > metadata-payload/version.txt
+          printf "quic" > metadata-payload/variant.txt
+
+      - name: Upload Metadata Artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: openssl-quic-buildenv-metadata
+          path: metadata-payload/
+          retention-days: 1
 
   sbom:
     needs: build
@@ -152,7 +168,7 @@ jobs:
 
       - name: Generate SBOM for ${{ matrix.arch }}
         env:
-          IMAGE: madnuttah/openssl-buildenv:${{ needs.build.outputs.buildenv_quic_version }}-quic-${{ matrix.arch }}
+          IMAGE: madnuttah/openssl-buildenv:${{ needs.build.outputs.buildenv_quic_version }}-${{ matrix.arch }}
         run: |
           syft packages "docker:${IMAGE}" \
             -o cyclonedx-json \
