@@ -132,6 +132,11 @@ jobs:
 
           with open(os.environ['GITHUB_ENV'], 'a') as f:
               f.write("HAS_CHANGES=true\n")
+              
+      - name: Export PR branch
+        env:
+          PR_BRANCH: ${{ github.event.pull_request.head.ref }}
+        run: echo "PR_BRANCH=$PR_BRANCH" >> "$GITHUB_ENV"
 
       - name: Commit and Push Changes
         if: env.HAS_CHANGES == 'true'
@@ -150,5 +155,5 @@ jobs:
             echo "No real differences to commit."
           else
             git commit -m "fix: auto-manage openssl subversion"
-            git push origin HEAD:${{ github.event.pull_request.head.ref }}
+            git push origin HEAD:"$PR_BRANCH"
           fi
