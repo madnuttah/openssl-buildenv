@@ -65,7 +65,7 @@ jobs:
           NGTCP2_VERSION="$(cat versions/ngtcp2.txt)"
           NGHTTP3_VERSION="$(cat versions/nghttp3.txt)"
 
-          BUILDENV_QUIC_VERSION="$(grep -oP '(?<=openssl=).*' versions/openssl-quic-buildenv.txt)"
+          BUILDENV_QUIC_VERSION="$(grep '^openssl=' versions/openssl-quic-buildenv.txt | cut -d= -f2)"
 
           BUILDENV_BUILD_DATE="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
 
@@ -136,12 +136,12 @@ jobs:
         run: |
           mkdir -p metadata-payload
           printf "%s" "${{ needs.build.outputs.buildenv_quic_version }}" > metadata-payload/version.txt
-          printf "quic" > metadata-payload/variant.txt
+          printf "stable-quic" > metadata-payload/variant.txt
 
       - name: Upload Metadata Artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: openssl-quic-buildenv-metadata
+          name: openssl-buildenv-metadata
           path: metadata-payload/
           retention-days: 1
 

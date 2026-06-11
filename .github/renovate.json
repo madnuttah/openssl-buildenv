@@ -10,12 +10,18 @@
     "group:allDigest"
   ],
   "timezone": "Europe/Berlin",
-  "schedule": ["every weekday", "on saturday"],
+  "schedule": ["every weekday", "on saturday", "on sunday"],
+  "automergeType": "branch",
+  "automerge": true,
+  "automergeStrategy": "merge-commit",
+  "prConcurrentLimit": 0,
+  "prHourlyLimit": 0,
+
   "customManagers": [
     {
       "customType": "regex",
       "managerFilePatterns": [
-        "/(^|/)versions/openssl\\.txt$/"
+        "(^|/)versions/openssl\\.txt$"
       ],
       "matchStrings": [
         "openssl-(?<currentValue>[0-9]+\\.[0-9]+\\.[0-9]+)"
@@ -29,7 +35,7 @@
     {
       "customType": "regex",
       "managerFilePatterns": [
-        "/(^|/)versions/ngtcp2\\.txt$/"
+        "(^|/)versions/ngtcp2\\.txt$"
       ],
       "matchStrings": [
         "v(?<currentValue>[0-9]+\\.[0-9]+\\.[0-9]+)"
@@ -42,7 +48,7 @@
     {
       "customType": "regex",
       "managerFilePatterns": [
-        "/(^|/)versions/nghttp3\\.txt$/"
+        "(^|/)versions/nghttp3\\.txt$"
       ],
       "matchStrings": [
         "v(?<currentValue>[0-9]+\\.[0-9]+\\.[0-9]+)"
@@ -51,32 +57,6 @@
       "depNameTemplate": "nghttp3",
       "packageNameTemplate": "ngtcp2/nghttp3",
       "versioningTemplate": "semver"
-    },
-    {
-      "customType": "regex",
-      "managerFilePatterns": [
-        "/(^|/)versions/openssl-quic-buildenv\\.txt$/"
-      ],
-      "matchStrings": [
-        "openssl=(?<currentValue>[0-9]+\\.[0-9]+\\.[0-9]+)"
-      ],
-      "datasourceTemplate": "github-tags",
-      "depNameTemplate": "openssl",
-      "packageNameTemplate": "openssl/openssl",
-      "versioningTemplate": "loose"
-    },
-    {
-      "customType": "regex",
-      "managerFilePatterns": [
-        "/(^|/)versions/openssl-buildenv\\.txt$/"
-      ],
-      "matchStrings": [
-        "openssl=(?<currentValue>[0-9]+\\.[0-9]+\\.[0-9]+)"
-      ],
-      "datasourceTemplate": "github-tags",
-      "depNameTemplate": "openssl",
-      "packageNameTemplate": "openssl/openssl",
-      "versioningTemplate": "loose"
     }
   ],
   "packageRules": [
@@ -111,17 +91,6 @@
         "versions/nghttp3.txt"
       ],
       "automerge": true
-    },
-    {
-      "description": "Increment QUIC subversion when QUIC deps update",
-      "matchFileNames": ["versions/openssl-quic-buildenv.txt"],
-      "matchDepNames": ["ngtcp2", "nghttp3"],
-      "semanticCommitType": "fix"
-    },
-    {
-      "description": "Increment OpenSSL buildenv subversion on manual or dependency changes",
-      "matchFileNames": ["versions/openssl-buildenv.txt"],
-      "semanticCommitType": "fix"
     }
   ]
 }

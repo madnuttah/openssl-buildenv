@@ -48,8 +48,8 @@ jobs:
 
           OPENSSL_VERSION=$(cat versions/openssl.txt)
 
-          NONQUIC_VERSION="$(grep -oP '(?<=openssl=).*' versions/openssl-buildenv.txt)"
-          QUIC_VERSION="$(grep -oP '(?<=openssl=).*' versions/openssl-quic-buildenv.txt)"
+          NONQUIC_VERSION="$(grep '^openssl=' versions/openssl-buildenv.txt | cut -d= -f2)"
+          QUIC_VERSION="$(grep '^openssl=' versions/openssl-quic-buildenv.txt | cut -d= -f2)"
 
           NGTCP2_VERSION=$(cat versions/ngtcp2.txt)
           NGHTTP3_VERSION=$(cat versions/nghttp3.txt)
@@ -237,12 +237,4 @@ jobs:
       #
       #     cosign attest --yes \
       #       --predicate-type slsaprovenance.dev/v1 \
-      #       --predicate <(echo '{"buildType":"git-tag","tag":"v'"${NONQUIC_VERSION}"'"}') \
-      #       --tag-only "v${NONQUIC_VERSION}" \
-      #       "ghcr.io/${{ github.repository }}" || true
-      #
-      #     cosign attest --yes \
-      #       --predicate-type slsaprovenance.dev/v1 \
-      #       --predicate <(echo '{"buildType":"git-tag","tag":"v'"${QUIC_VERSION}"'-quic"}') \
-      #       --tag-only "v${QUIC_VERSION}-quic" \
-      #       "ghcr.io/${{ github.repository }}" || true
+      #       --predicate <(echo '{"buildType":"git-tag","tag":"v'"$u

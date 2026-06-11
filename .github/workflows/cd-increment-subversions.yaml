@@ -19,9 +19,10 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
         with:
-          persist-credentials: false
+          persist-credentials: true
           repository: ${{ github.event.pull_request.head.repo.full_name }}
           ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
 
       - name: Import GPG key
         id: IMPORT_GPG
@@ -45,6 +46,7 @@ jobs:
         run: |
           import re
           import os
+          import sys
           import subprocess
 
           def modify_subversion(filepath, reset=False):
@@ -105,7 +107,6 @@ jobs:
           print(f"OpenSSL changed: {openssl_changed}")
           print(f"QUIC deps changed: {quic_deps_changed}")
 
-          # 1) OpenSSL changed → reset both
           if openssl_changed:
               print("OpenSSL changed → resetting subversions")
               if modify_subversion('versions/openssl-buildenv.txt', reset=True):
@@ -113,28 +114,41 @@ jobs:
               if modify_subversion('versions/openssl-quic-buildenv.txt', reset=True):
                   changed = True
 
-          # 2) QUIC deps changed → bump only QUIC
           if quic_deps_changed:
               print("QUIC deps changed → bumping QUIC subversion")
               if modify_subversion('versions/openssl-quic-buildenv.txt', reset=False):
                   changed = True
 
+          if not changed:
+              expected_change = openssl_changed or quic_deps_changed              
+              if expected_change:
+                  print("::error::Expected to bump subversion for a relevant file, but no changes were made. Failing pipeline.")
+                  sys.exit(1)
+              else:
+                  print("PR does not affect OpenSSL or QUIC dependency versions. Skipping commit step.")
+                  with open(os.environ['GITHUB_ENV'], 'a') as f:
+                      f.write("HAS_CHANGES=false\n")
+                  sys.exit(0)
+
           with open(os.environ['GITHUB_ENV'], 'a') as f:
-              f.write(f"HAS_CHANGES={'true' if changed else 'false'}\n")
+              f.write("HAS_CHANGES=true\n")
 
       - name: Commit and Push Changes
         if: env.HAS_CHANGES == 'true'
+        env:
+          GITHUB_TOKEN: ${{ secrets.BOT_GITHUB_TOKEN }}
         run: |
           set -euo pipefail
+
+          git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@://github.com{{ github.repository }}"
 
           git config --local user.name "${{ steps.IMPORT_GPG.outputs.name }}"
           git config --local user.email "${{ steps.IMPORT_GPG.outputs.email }}"
           git add versions/*.txt
-          git commit -m "fix: auto-manage openssl subversion"
-          git push
-
-      - name: Fail if no changes were made
-        if: env.HAS_CHANGES == 'false'
-        run: |
-          echo "Expected to bump subversion but no changes were made."
-          exit 1
+          
+          if git diff --staged --quiet; then
+            echo "No real differences to commit."
+          else
+            git commit -m "fix: auto-manage openssl subversion"
+            git push origin HEAD:${{ github.event.pull_request.head.ref }}
+          fi

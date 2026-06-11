@@ -13,6 +13,7 @@ permissions:
   contents: read
   packages: write
   id-token: write
+  attestations: write
 
 jobs:
   publish-manifests:
@@ -25,21 +26,13 @@ jobs:
         with:
           egress-policy: audit
 
-      - name: Download non-QUIC metadata
+      - name: Download metadata artifact
         uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16
         with:
           name: openssl-buildenv-metadata
           repository: ${{ github.repository }}
           run-id: ${{ github.event.workflow_run.id }}
-        continue-on-error: true
-
-      - name: Download QUIC metadata
-        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16
-        with:
-          name: openssl-quic-buildenv-metadata
-          repository: ${{ github.repository }}
-          run-id: ${{ github.event.workflow_run.id }}
-        continue-on-error: true
+          path: metadata
 
       - name: Read versions
         id: versions
@@ -49,17 +42,18 @@ jobs:
           NONQUIC_VERSION=""
           QUIC_VERSION=""
 
-          if [ -f openssl-buildenv-metadata/version.txt ]; then
-            NONQUIC_VERSION=$(cat openssl-buildenv-metadata/version.txt)
-          fi
-
-          if [ -f openssl-quic-buildenv-metadata/version.txt ]; then
-            QUIC_VERSION=$(cat openssl-quic-buildenv-metadata/version.txt)
-          fi
-
-          if [ -z "$NONQUIC_VERSION" ] && [ -z "$QUIC_VERSION" ]; then
+          if [ ! -f metadata/variant.txt ]; then
             echo "No metadata artifacts found, nothing to do."
             exit 0
+          fi
+
+          VARIANT="$(cat metadata/variant.txt)"
+          VERSION="$(cat metadata/version.txt)"
+
+          if [ "$VARIANT" = "stable" ]; then
+            NONQUIC_VERSION="$VERSION"
+          elif [ "$VARIANT" = "stable-quic" ]; then
+            QUIC_VERSION="$VERSION"
           fi
 
           echo "NONQUIC_VERSION=${NONQUIC_VERSION}" >> "$GITHUB_OUTPUT"
@@ -76,11 +70,13 @@ jobs:
 
       - name: Create non-QUIC manifest
         if: ${{ steps.versions.outputs.NONQUIC_VERSION != '' }}
+        id: nonquic_manifest
         run: |
           set -euo pipefail
           VERSION="${{ steps.versions.outputs.NONQUIC_VERSION }}"
+          METADATA_FILE="nonquic-metadata.json"
 
-          docker buildx imagetools create \
+          docker buildx imagetools create --metadata-file "$METADATA_FILE" \
             -t madnuttah/openssl-buildenv:${VERSION} \
             -t madnuttah/openssl-buildenv:latest \
             madnuttah/openssl-buildenv:${VERSION}-amd64 \
@@ -92,13 +88,18 @@ jobs:
             madnuttah/openssl-buildenv:${VERSION}-s390x \
             madnuttah/openssl-buildenv:${VERSION}-riscv64
 
+          DIGEST=$(jq -r '.["containerimage.descriptor"].digest' "$METADATA_FILE")
+          echo "DIGEST=$DIGEST" >> "$GITHUB_OUTPUT"
+
       - name: Create QUIC manifest
         if: ${{ steps.versions.outputs.QUIC_VERSION != '' }}
+        id: quic_manifest
         run: |
           set -euo pipefail
           VERSION="${{ steps.versions.outputs.QUIC_VERSION }}"
+          METADATA_FILE="quic-metadata.json"
 
-          docker buildx imagetools create \
+          docker buildx imagetools create --metadata-file "$METADATA_FILE" \
             -t madnuttah/openssl-buildenv:${VERSION} \
             -t madnuttah/openssl-buildenv:latest-quic \
             madnuttah/openssl-buildenv:${VERSION}-amd64 \
@@ -109,52 +110,24 @@ jobs:
             madnuttah/openssl-buildenv:${VERSION}-ppc64le \
             madnuttah/openssl-buildenv:${VERSION}-s390x \
             madnuttah/openssl-buildenv:${VERSION}-riscv64
-            
-      # - name: Install Cosign
-      #   uses: sigstore/cosign-installer@v3
-      #   with:
-      #     cosign-release: 'v2.4.0'
 
-      # - name: Sign non-QUIC manifest
-      #   if: ${{ steps.versions.outputs.NONQUIC_VERSION != '' }}
-      #   env:
-      #     COSIGN_EXPERIMENTAL: "1"
-      #     VERSION: ${{ steps.versions.outputs.NONQUIC_VERSION }}
-      #   run: |
-      #     set -euo pipefail
-      #     cosign sign --yes "madnuttah/openssl-buildenv:${VERSION}"
-      #     cosign sign --yes "madnuttah/openssl-buildenv:latest"
+          DIGEST=$(jq -r '.["containerimage.descriptor"].digest' "$METADATA_FILE")
+          echo "DIGEST=$DIGEST" >> "$GITHUB_OUTPUT"
 
-      # - name: Sign QUIC manifest
-      #   if: ${{ steps.versions.outputs.QUIC_VERSION != '' }}
-      #   env:
-      #     COSIGN_EXPERIMENTAL: "1"
-      #     VERSION: ${{ steps.versions.outputs.QUIC_VERSION }}
-      #   run: |
-      #     set -euo pipefail
-      #     cosign sign --yes "madnuttah/openssl-buildenv:${VERSION}-quic"
-      #     cosign sign --yes "madnuttah/openssl-buildenv:latest-quic"
+      - name: Generate SLSA Build Provenance (non-QUIC)
+        if: ${{ steps.versions.outputs.NONQUIC_VERSION != '' }}
+        uses: actions/attest@v4
+        continue-on-error: true
+        with:
+          subject-name: index.docker.io/madnuttah/openssl-buildenv
+          subject-digest: ${{ steps.nonquic_manifest.outputs.DIGEST }}
+          push-to-registry: true
 
-      # - name: Attest non-QUIC manifest
-      #   if: ${{ steps.versions.outputs.NONQUIC_VERSION != '' }}
-      #   env:
-      #     COSIGN_EXPERIMENTAL: "1"
-      #     VERSION: ${{ steps.versions.outputs.NONQUIC_VERSION }}
-      #   run: |
-      #     set -euo pipefail
-      #     cosign attest --yes \
-      #       --predicate-type slsaprovenance.dev/v1 \
-      #       --predicate <(echo '{"buildType":"openssl-buildenv-manifest","flavor":"non-quic","version":"'"${VERSION}"'"}') \
-      #       "madnuttah/openssl-buildenv:${VERSION}"
-
-      # - name: Attest QUIC manifest
-      #   if: ${{ steps.versions.outputs.QUIC_VERSION != '' }}
-      #   env:
-      #     COSIGN_EXPERIMENTAL: "1"
-      #     VERSION: ${{ steps.versions.outputs.QUIC_VERSION }}
-      #   run: |
-      #     set -euo pipefail
-      #     cosign attest --yes \
-      #       --predicate-type slsaprovenance.dev/v1 \
-      #       --predicate <(echo '{"buildType":"openssl-buildenv-manifest","flavor":"quic","version":"'"${VERSION}"'"}') \
-      #       "madnuttah/openssl-buildenv:${VERSION}-quic"
+      - name: Generate SLSA Build Provenance (QUIC)
+        if: ${{ steps.versions.outputs.QUIC_VERSION != '' }}
+        uses: actions/attest@v4
+        continue-on-error: true
+        with:
+          subject-name: index.docker.io/madnuttah/openssl-buildenv
+          subject-digest: ${{ steps.quic_manifest.outputs.DIGEST }}
+          push-to-registry: true

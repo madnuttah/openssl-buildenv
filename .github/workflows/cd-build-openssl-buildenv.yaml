@@ -61,7 +61,7 @@ jobs:
 
           OPENSSL_VERSION="$(cat versions/openssl.txt)"
 
-          BUILDENV_VERSION="$(grep -oP '(?<=openssl=).*' versions/openssl-buildenv.txt)"
+          BUILDENV_VERSION="$(grep '^openssl=' versions/openssl-buildenv.txt | cut -d= -f2)"
 
           SHA_URL="https://github.com/openssl/openssl/releases/download/${OPENSSL_VERSION}/${OPENSSL_VERSION}.tar.gz.sha256"
 
@@ -133,8 +133,6 @@ jobs:
           name: openssl-buildenv-metadata
           path: metadata-payload/
           retention-days: 1
-
-
 
   sbom:
     needs: build
