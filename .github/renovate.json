@@ -16,9 +16,6 @@
   "automergeStrategy": "merge-commit",
   "prConcurrentLimit": 0,
   "prHourlyLimit": 0,
-
-  /* Allow GitHub Actions to commit into Renovate branches and force rebase when behind main */
-  "gitNoCommits": false,
   "rebaseWhen": "behind-base-branch",
 
   "customManagers": [
