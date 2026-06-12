@@ -104,7 +104,7 @@ jobs:
         run: |
           set -euo pipefail
 
-          git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@://github.com{{ github.repository }}"
+          git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}"
 
           OPENSSL="${{ steps.versions.outputs.OPENSSL_VERSION }}"
           NONQUIC="${{ steps.versions.outputs.NONQUIC_VERSION }}"
@@ -160,7 +160,7 @@ jobs:
           {
             printf "## OpenSSL Buildenv\n"
             printf "OpenSSL: %s\n" "$OPENSSL"
-            printf "Release notes: https://github.com\n" "${OPENSSL#openssl-}"
+            printf "Release notes: https://github.com/openssl/openssl/releases/tag/%s\n" "${OPENSSL#openssl-}"
             printf "Buildenv version: %s\n\n" "$NONQUIC"
           } >> RELEASE_NOTES.md
           fi
@@ -173,12 +173,12 @@ jobs:
 
             if [ "$UPDATED_NGTCP2" = true ]; then
               printf "- ngtcp2: %s\n" "$NGTCP2"
-              printf "  Release notes: https://github.com\n" "$NGTCP2"
+              printf "  Release notes: https://github.com/ngtcp2/ngtcp2/releases/tag/%s\n" "$NGTCP2"
             fi
 
             if [ "$UPDATED_NGHTTP3" = true ]; then
               printf "- nghttp3: %s\n" "$NGHTTP3"
-              printf "  Release notes: https://github.com\n" "$NGHTTP3"
+              printf "  Release notes: https://github.com/ngtcp2/nghttp3/releases/tag/%s\n" "$NGHTTP3"
             fi
 
             printf "\n"
@@ -194,6 +194,7 @@ jobs:
             -t "${TAG_QUIC}" \
             -F RELEASE_NOTES.md \
             --latest=false || true
+            
             
             # --predicate-type slsaprovenance.dev/v1 \
             # --predicate <(echo '{"buildType":"git-tag","tag":"v'"${NONQUIC_VERSION}"'"}') \
