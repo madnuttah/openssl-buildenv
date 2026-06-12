@@ -40,10 +40,12 @@ jobs:
           set -euo pipefail
 
           if [ ! -f metadata/variant.txt ]; then
-            echo "No metadata artifacts found, nothing to do."
-            echo "HAS_METADATA=false" >> "$GITHUB_OUTPUT"
-            echo "NONQUIC_VERSION=" >> "$GITHUB_OUTPUT"
-            echo "QUIC_VERSION=" >> "$GITHUB_OUTPUT"
+            {
+              echo "No metadata artifacts found, nothing to do."
+              echo "HAS_METADATA=false"
+              echo "NONQUIC_VERSION="
+              echo "QUIC_VERSION="
+            } >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
@@ -58,9 +60,11 @@ jobs:
             QUIC_VERSION="$VERSION"
           fi
 
-          echo "HAS_METADATA=true" >> "$GITHUB_OUTPUT"
-          echo "NONQUIC_VERSION=${NONQUIC_VERSION}" >> "$GITHUB_OUTPUT"
-          echo "QUIC_VERSION=${QUIC_VERSION}" >> "$GITHUB_OUTPUT"
+          {
+            echo "HAS_METADATA=true"
+            echo "NONQUIC_VERSION=${NONQUIC_VERSION}"
+            echo "QUIC_VERSION=${QUIC_VERSION}"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Set up QEMU
         if: ${{ steps.versions.outputs.HAS_METADATA == 'true' }}
@@ -86,18 +90,18 @@ jobs:
           METADATA_FILE="nonquic-metadata.json"
 
           docker buildx imagetools create --metadata-file "$METADATA_FILE" \
-            -t madnuttah/openssl-buildenv:${VERSION} \
-            -t madnuttah/openssl-buildenv:latest \
-            madnuttah/openssl-buildenv:${VERSION}-amd64 \
-            madnuttah/openssl-buildenv:${VERSION}-386 \
-            madnuttah/openssl-buildenv:${VERSION}-armv6 \
-            madnuttah/openssl-buildenv:${VERSION}-armv7 \
-            madnuttah/openssl-buildenv:${VERSION}-arm64 \
-            madnuttah/openssl-buildenv:${VERSION}-ppc64le \
-            madnuttah/openssl-buildenv:${VERSION}-s390x \
-            madnuttah/openssl-buildenv:${VERSION}-riscv64
+            -t "madnuttah/openssl-buildenv:${VERSION}" \
+            -t "madnuttah/openssl-buildenv:latest" \
+            "madnuttah/openssl-buildenv:${VERSION}-amd64" \
+            "madnuttah/openssl-buildenv:${VERSION}-386" \
+            "madnuttah/openssl-buildenv:${VERSION}-armv6" \
+            "madnuttah/openssl-buildenv:${VERSION}-armv7" \
+            "madnuttah/openssl-buildenv:${VERSION}-arm64" \
+            "madnuttah/openssl-buildenv:${VERSION}-ppc64le" \
+            "madnuttah/openssl-buildenv:${VERSION}-s390x" \
+            "madnuttah/openssl-buildenv:${VERSION}-riscv64"
 
-          DIGEST=$(jq -r '.["containerimage.descriptor"].digest' "$METADATA_FILE")
+          DIGEST="$(jq -r '.["containerimage.descriptor"].digest' "$METADATA_FILE")"
           echo "DIGEST=$DIGEST" >> "$GITHUB_OUTPUT"
 
       - name: Create QUIC manifest
@@ -109,19 +113,30 @@ jobs:
           METADATA_FILE="quic-metadata.json"
 
           docker buildx imagetools create --metadata-file "$METADATA_FILE" \
-            -t madnuttah/openssl-buildenv:${VERSION} \
-            -t madnuttah/openssl-buildenv:latest-quic \
-            madnuttah/openssl-buildenv:${VERSION}-amd64 \
-            madnuttah/openssl-buildenv:${VERSION}-386 \
-            madnuttah/openssl-buildenv:${VERSION}-armv6 \
-            madnuttah/openssl-buildenv:${VERSION}-armv7 \
-            madnuttah/openssl-buildenv:${VERSION}-arm64 \
-            madnuttah/openssl-buildenv:${VERSION}-ppc64le \
-            madnuttah/openssl-buildenv:${VERSION}-s390x \
-            madnuttah/openssl-buildenv:${VERSION}-riscv64
+            -t "madnuttah/openssl-buildenv:${VERSION}" \
+            -t "madnuttah/openssl-buildenv:latest-quic" \
+            "madnuttah/openssl-buildenv:${VERSION}-amd64" \
+            "madnuttah/openssl-buildenv:${VERSION}-386" \
+            "madnuttah/openssl-buildenv:${VERSION}-armv6" \
+            "madnuttah/openssl-buildenv:${VERSION}-armv7" \
+            "madnuttah/openssl-buildenv:${VERSION}-arm64" \
+            "madnuttah/openssl-buildenv:${VERSION}-ppc64le" \
+            "madnuttah/openssl-buildenv:${VERSION}-s390x" \
+            "madnuttah/openssl-buildenv:${VERSION}-riscv64"
 
-          DIGEST=$(jq -r '.["containerimage.descriptor"].digest' "$METADATA_FILE")
+          DIGEST="$(jq -r '.["containerimage.descriptor"].digest' "$METADATA_FILE")"
           echo "DIGEST=$DIGEST" >> "$GITHUB_OUTPUT"
+
+      - name: Upload manifest metadata artifacts
+        if: ${{ steps.versions.outputs.HAS_METADATA == 'true' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: openssl-manifest-metadata
+          path: |
+            nonquic-metadata.json
+            quic-metadata.json
+          retention-days: 1
+          if-no-files-found: ignore
 
       - name: Generate SLSA Build Provenance (non-QUIC)
         if: ${{ steps.versions.outputs.HAS_METADATA == 'true' && steps.versions.outputs.NONQUIC_VERSION != '' }}

@@ -49,13 +49,11 @@ jobs:
         run: |
           set -euo pipefail
 
-          OPENSSL_VERSION=$(cat versions/openssl.txt)
-
+          OPENSSL_VERSION="$(cat versions/openssl.txt)"
           NONQUIC_VERSION="$(grep '^openssl=' versions/openssl-buildenv.txt | cut -d= -f2)"
           QUIC_VERSION="$(grep '^openssl=' versions/openssl-quic-buildenv.txt | cut -d= -f2)"
-
-          NGTCP2_VERSION=$(cat versions/ngtcp2.txt)
-          NGHTTP3_VERSION=$(cat versions/nghttp3.txt)
+          NGTCP2_VERSION="$(cat versions/ngtcp2.txt)"
+          NGHTTP3_VERSION="$(cat versions/nghttp3.txt)"
 
           {
             echo "OPENSSL_VERSION=${OPENSSL_VERSION}"
@@ -72,39 +70,40 @@ jobs:
           TARGET_REPO: ${{ github.repository }}
         run: |
           set -euo pipefail
-          
-          # Resolve the original build run ID via API to step backward over the workflow chain
+
           MANIFEST_RUN_ID="${{ github.event.workflow_run.id }}"
-          PREVIOUS_URL=$(gh api repos/$TARGET_REPO/actions/runs/$MANIFEST_RUN_ID --jq '.previous_attempt_url // empty')
-          
+          PREVIOUS_URL="$(gh api repos/"$TARGET_REPO"/actions/runs/"$MANIFEST_RUN_ID" --jq '.previous_attempt_url // empty')"
+
           BUILD_RUN_ID=""
-          
+
           if [ -n "$PREVIOUS_URL" ]; then
-            BUILD_RUN_ID=$(echo "$PREVIOUS_URL" | grep -oE '[0-9]+$' | tail -1)
+            BUILD_RUN_ID="$(echo "$PREVIOUS_URL" | grep -oE '[0-9]+$' | tail -1)"
           else
             echo "Using fallback search via API..."
-            
+
             WORKFLOWS=(
               "CD Build OpenSSL Buildenv"
               "CD Build OpenSSL QUIC Buildenv"
             )
-            
+
             for wf in "${WORKFLOWS[@]}"; do
-              ID=$(gh run list --repo "$TARGET_REPO" --workflow="$wf" --status=success --limit=1 --json databaseId --jq '..databaseId // empty')
+              ID="$(gh run list --repo "$TARGET_REPO" --workflow="$wf" --status=success --limit=1 --json databaseId --jq '..databaseId // empty')"
               if [ -n "$ID" ]; then
                 BUILD_RUN_ID="$ID"
                 break
               fi
             done
           fi
-          
+
           if [ -z "$BUILD_RUN_ID" ]; then
             echo "Error: Could not resolve root build run ID." >&2
             exit 1
           fi
-          
-          echo "Resolved Build Run ID: $BUILD_RUN_ID"
-          echo "BUILD_RUN_ID=$BUILD_RUN_ID" >> "$GITHUB_OUTPUT"
+
+          {
+            echo "Resolved Build Run ID: $BUILD_RUN_ID"
+            echo "BUILD_RUN_ID=$BUILD_RUN_ID"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Download SBOM artifacts
         uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16
@@ -112,6 +111,15 @@ jobs:
           run-id: ${{ steps.resolve_id.outputs.BUILD_RUN_ID }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
           path: sbom-artifacts
+        continue-on-error: true
+        
+      - name: Download manifest metadata artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: openssl-manifest-metadata
+          run-id: ${{ steps.resolve_id.outputs.BUILD_RUN_ID }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: manifest-metadata
         continue-on-error: true
 
       - name: Push tags and create releases
@@ -124,7 +132,7 @@ jobs:
         run: |
           set -euo pipefail
 
-          git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@://github.com{{ github.repository }}"
+          git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}"
 
           OPENSSL="${{ steps.versions.outputs.OPENSSL_VERSION }}"
           NONQUIC="${{ steps.versions.outputs.NONQUIC_VERSION }}"
@@ -137,20 +145,20 @@ jobs:
 
           git fetch --prune origin --tags
 
-          if ! git rev-parse "${TAG_NONQUIC}" >/dev/null 2>&1; then
-            git tag -a "${TAG_NONQUIC}" -m "${TAG_NONQUIC}"
-            git push origin "${TAG_NONQUIC}"
+          if ! git rev-parse "$TAG_NONQUIC" >/dev/null 2>&1; then
+            git tag -a "$TAG_NONQUIC" -m "$TAG_NONQUIC"
+            git push origin "$TAG_NONQUIC"
 
-            git checkout -b "${NONQUIC}" "${TAG_NONQUIC}"
-            git push --set-upstream origin "${NONQUIC}"
+            git checkout -b "$NONQUIC" "$TAG_NONQUIC"
+            git push --set-upstream origin "$NONQUIC"
           fi
 
-          if ! git rev-parse "${TAG_QUIC}" >/dev/null 2>&1; then
-            git tag -a "${TAG_QUIC}" -m "${TAG_QUIC}"
-            git push origin "${TAG_QUIC}"
+          if ! git rev-parse "$TAG_QUIC" >/dev/null 2>&1; then
+            git tag -a "$TAG_QUIC" -m "$TAG_QUIC"
+            git push origin "$TAG_QUIC"
 
-            git checkout -b "${QUIC}" "${TAG_QUIC}"
-            git push --set-upstream origin "${QUIC}"
+            git checkout -b "$QUIC" "$TAG_QUIC"
+            git push --set-upstream origin "$QUIC"
           fi
 
           UPDATED_OPENSSL=false
@@ -158,19 +166,19 @@ jobs:
           UPDATED_NGHTTP3=false
           UPDATED_QUIC=false
 
-          if ! git diff --quiet HEAD~1 HEAD -- versions/openssl.txt; then
+          if ! git diff --quiet HEAD~1 HEAD -- "versions/openssl.txt"; then
             UPDATED_OPENSSL=true
           fi
 
-          if ! git diff --quiet HEAD~1 HEAD -- versions/ngtcp2.txt; then
+          if ! git diff --quiet HEAD~1 HEAD -- "versions/ngtcp2.txt"; then
             UPDATED_NGTCP2=true
           fi
 
-          if ! git diff --quiet HEAD~1 HEAD -- versions/nghttp3.txt; then
+          if ! git diff --quiet HEAD~1 HEAD -- "versions/nghttp3.txt"; then
             UPDATED_NGHTTP3=true
           fi
 
-          if ! git diff --quiet HEAD~1 HEAD -- versions/openssl-quic-buildenv.txt; then
+          if ! git diff --quiet HEAD~1 HEAD -- "versions/openssl-quic-buildenv.txt"; then
             UPDATED_QUIC=true
           fi
 
@@ -181,7 +189,7 @@ jobs:
           {
             printf "## OpenSSL Buildenv\n"
             printf "OpenSSL: %s\n" "$OPENSSL"
-            printf "Release notes: https://github.com\n" "${OPENSSL#openssl-}"
+            printf "Release notes: https://github.com/%s\n" "${OPENSSL#openssl-}"
             printf "Buildenv version: %s\n\n" "$NONQUIC"
           } >> RELEASE_NOTES.md
           fi
@@ -194,28 +202,28 @@ jobs:
 
             if [ "$UPDATED_NGTCP2" = true ]; then
               printf "- ngtcp2: %s\n" "$NGTCP2"
-              printf "  Release notes: https://github.com\n" "$NGTCP2"
+              printf "  Release notes: https://github.com/%s\n" "$NGTCP2"
             fi
 
             if [ "$UPDATED_NGHTTP3" = true ]; then
               printf "- nghttp3: %s\n" "$NGHTTP3"
-              printf "  Release notes: https://github.com\n" "$NGHTTP3"
+              printf "  Release notes: https://github.com/%s\n" "$NGHTTP3"
             fi
 
             printf "\n"
           } >> RELEASE_NOTES.md
           fi
 
-          gh release create "${TAG_NONQUIC}" \
-            -t "${TAG_NONQUIC}" \
+          gh release create "$TAG_NONQUIC" \
+            -t "$TAG_NONQUIC" \
             -F RELEASE_NOTES.md \
             --latest || true
 
-          gh release create "${TAG_QUIC}" \
-            -t "${TAG_QUIC}" \
+          gh release create "$TAG_QUIC" \
+            -t "$TAG_QUIC" \
             -F RELEASE_NOTES.md \
             --latest=false || true
-
+            
       - name: Prepare release artifacts
         run: |
           set -euo pipefail
@@ -223,13 +231,13 @@ jobs:
           mkdir -p release-artifacts
 
           if [ -d sbom-artifacts ]; then
-            find sbom-artifacts -type f \( -name "*.json" -o -name "*.cyclonedx.json" \) -print0 | \
+            find sbom-artifacts -type f \( -name "*.json" -o -name "*.cyclonedx.json" \) -print0 |
             while IFS= read -r -d '' sbom; do
               cp "$sbom" release-artifacts/ || true
             done
           fi
 
           cd release-artifacts
-          if [ -n "$(ls -A)" ]; then
+          if [ -n "$(ls -A .)" ]; then
             find . -type f ! -name "*.sha256" -exec sha256sum {} \; > checksums.sha256
           fi
