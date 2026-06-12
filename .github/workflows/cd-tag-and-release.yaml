@@ -15,7 +15,7 @@ permissions:
 jobs:
   tag_and_release:
     runs-on: ubuntu-latest
-    if: github.event.workflow_run.conclusion == 'success'
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
 
     steps:
       - name: Harden Runner
@@ -40,6 +40,9 @@ jobs:
           git_tag_gpgsign: true
           git_push_gpgsign: false
           trust_level: 5
+        env:
+          GITHUB_TOKEN: ${{ secrets.BOT_GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.BOT_GITHUB_TOKEN }}
 
       - name: Read version files
         id: versions
@@ -66,21 +69,38 @@ jobs:
         id: resolve_id
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TARGET_REPO: ${{ github.repository }}
         run: |
           set -euo pipefail
           
           # Resolve the original build run ID via API to step backward over the workflow chain
           MANIFEST_RUN_ID="${{ github.event.workflow_run.id }}"
-          PREVIOUS_URL=$(gh api repos/${{ github.repository }}/actions/runs/$MANIFEST_RUN_ID --jq '.previous_attempt_url // empty')
+          PREVIOUS_URL=$(gh api repos/$TARGET_REPO/actions/runs/$MANIFEST_RUN_ID --jq '.previous_attempt_url // empty')
+          
+          BUILD_RUN_ID=""
           
           if [ -n "$PREVIOUS_URL" ]; then
             BUILD_RUN_ID=$(echo "$PREVIOUS_URL" | grep -oE '[0-9]+$' | tail -1)
           else
             echo "Using fallback search via API..."
-            BUILD_RUN_ID=$(gh run list --workflow="CD Build OpenSSL Buildenv" --status=success --limit=1 --json databaseId --jq '..databaseId')
-            if [ -z "$BUILD_RUN_ID" ] || [ "$BUILD_RUN_ID" = "null" ]; then
-              BUILD_RUN_ID=$(gh run list --workflow="CD Build OpenSSL QUIC Buildenv" --status=success --limit=1 --json databaseId --jq '..databaseId')
-            fi
+            
+            WORKFLOWS=(
+              "CD Build OpenSSL Buildenv"
+              "CD Build OpenSSL QUIC Buildenv"
+            )
+            
+            for wf in "${WORKFLOWS[@]}"; do
+              ID=$(gh run list --repo "$TARGET_REPO" --workflow="$wf" --status=success --limit=1 --json databaseId --jq '..databaseId // empty')
+              if [ -n "$ID" ]; then
+                BUILD_RUN_ID="$ID"
+                break
+              fi
+            done
+          fi
+          
+          if [ -z "$BUILD_RUN_ID" ]; then
+            echo "Error: Could not resolve root build run ID." >&2
+            exit 1
           fi
           
           echo "Resolved Build Run ID: $BUILD_RUN_ID"
@@ -104,7 +124,7 @@ jobs:
         run: |
           set -euo pipefail
 
-          git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}"
+          git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@://github.com{{ github.repository }}"
 
           OPENSSL="${{ steps.versions.outputs.OPENSSL_VERSION }}"
           NONQUIC="${{ steps.versions.outputs.NONQUIC_VERSION }}"
@@ -155,12 +175,13 @@ jobs:
           fi
 
           rm -f RELEASE_NOTES.md
+          touch RELEASE_NOTES.md
 
           if [ "$UPDATED_OPENSSL" = true ]; then
           {
             printf "## OpenSSL Buildenv\n"
             printf "OpenSSL: %s\n" "$OPENSSL"
-            printf "Release notes: https://github.com/openssl/openssl/releases/tag/%s\n" "${OPENSSL#openssl-}"
+            printf "Release notes: https://github.com\n" "${OPENSSL#openssl-}"
             printf "Buildenv version: %s\n\n" "$NONQUIC"
           } >> RELEASE_NOTES.md
           fi
@@ -173,12 +194,12 @@ jobs:
 
             if [ "$UPDATED_NGTCP2" = true ]; then
               printf "- ngtcp2: %s\n" "$NGTCP2"
-              printf "  Release notes: https://github.com/ngtcp2/ngtcp2/releases/tag/%s\n" "$NGTCP2"
+              printf "  Release notes: https://github.com\n" "$NGTCP2"
             fi
 
             if [ "$UPDATED_NGHTTP3" = true ]; then
               printf "- nghttp3: %s\n" "$NGHTTP3"
-              printf "  Release notes: https://github.com/ngtcp2/nghttp3/releases/tag/%s\n" "$NGHTTP3"
+              printf "  Release notes: https://github.com\n" "$NGHTTP3"
             fi
 
             printf "\n"
@@ -194,18 +215,6 @@ jobs:
             -t "${TAG_QUIC}" \
             -F RELEASE_NOTES.md \
             --latest=false || true
-            
-            
-            # --predicate-type slsaprovenance.dev/v1 \
-            # --predicate <(echo '{"buildType":"git-tag","tag":"v'"${NONQUIC_VERSION}"'"}') \
-            # --tag-only "v${NONQUIC_VERSION}" \
-            # "ghcr.io/${{ github.repository }}" || true
-          
-          # cosign attest --yes \
-            # --predicate-type slsaprovenance.dev/v1 \
-            # --predicate <(echo '{"buildType":"git-tag","tag":"v'"${QUIC_VERSION}"'-quic"}') \
-            # --tag-only "v${QUIC_VERSION}-quic" \
-            # "ghcr.io/${{ github.repository }}" || true
 
       - name: Prepare release artifacts
         run: |
@@ -214,7 +223,6 @@ jobs:
           mkdir -p release-artifacts
 
           if [ -d sbom-artifacts ]; then
-            # Modified find to copy JSON structures out of v4 sub-directories recursively
             find sbom-artifacts -type f \( -name "*.json" -o -name "*.cyclonedx.json" \) -print0 | \
             while IFS= read -r -d '' sbom; do
               cp "$sbom" release-artifacts/ || true
@@ -223,46 +231,5 @@ jobs:
 
           cd release-artifacts
           if [ -n "$(ls -A)" ]; then
-            find . -type f ! -name "*.sha256" -exec sha256sum {} \; > CHECKSUMS.sha256
+            find . -type f ! -name "*.sha256" -exec sha256sum {} \; > checksums.sha256
           fi
-          cd -
-
-      - name: Upload release artifacts to releases
-        env:
-          GITHUB_TOKEN: ${{ secrets.BOT_GITHUB_TOKEN }}
-        run: |
-          set -euo pipefail
-
-          NONQUIC_VERSION="${{ steps.versions.outputs.NONQUIC_VERSION }}"
-          QUIC_VERSION="${{ steps.versions.outputs.QUIC_VERSION }}"
-
-          if [ -d release-artifacts ] && [ -n "$(ls -A release-artifacts)" ]; then
-            cd release-artifacts
-
-            for file in sbom-openssl-buildenv-*; do
-              [ -f "$file" ] && gh release upload "v${NONQUIC_VERSION}" "$file" --clobber || true
-            done
-
-            for file in sbom-openssl-quic-buildenv-*; do
-              [ -f "$file" ] && gh release upload "v${QUIC_VERSION}" "$file" --clobber || true
-            done
-
-            cd -
-          fi
-          
-    # - name: Install Cosign
-      #   uses: sigstore/cosign-installer@v3
-      #   with:
-      #     cosign-release: 'v2.4.0'
-
-      # - name: Sign Git tags with Cosign
-      #   env:
-      #     COSIGN_EXPERIMENTAL: "1"
-      #     NONQUIC_VERSION: ${{ steps.versions.outputs.NONQUIC_VERSION }}
-      #     QUIC_VERSION: ${{ steps.versions.outputs.QUIC_VERSION }}
-      #   run: |
-      #     set -euo pipefail
-      #
-      #     cosign attest --yes \
-      #       --predicate-type slsaprovenance.dev/v1 \
-      #       --predicate <(echo '{"buildType":"git-tag","ta

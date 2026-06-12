@@ -31,7 +31,7 @@ jobs:
         with:
           name: openssl-buildenv-metadata
           run-id: ${{ github.event.workflow_run.id }}
-          github-token: ${{ secrets.GITHUB_TOKEN }} # Needed for cross-workflow downloads in v4
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           path: metadata
 
       - name: Read versions
@@ -39,16 +39,18 @@ jobs:
         run: |
           set -euo pipefail
 
-          NONQUIC_VERSION=""
-          QUIC_VERSION=""
-
           if [ ! -f metadata/variant.txt ]; then
             echo "No metadata artifacts found, nothing to do."
+            echo "HAS_METADATA=false" >> "$GITHUB_OUTPUT"
+            echo "NONQUIC_VERSION=" >> "$GITHUB_OUTPUT"
+            echo "QUIC_VERSION=" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
           VARIANT="$(cat metadata/variant.txt)"
           VERSION="$(cat metadata/version.txt)"
+          NONQUIC_VERSION=""
+          QUIC_VERSION=""
 
           if [ "$VARIANT" = "stable" ]; then
             NONQUIC_VERSION="$VERSION"
@@ -56,20 +58,27 @@ jobs:
             QUIC_VERSION="$VERSION"
           fi
 
+          echo "HAS_METADATA=true" >> "$GITHUB_OUTPUT"
           echo "NONQUIC_VERSION=${NONQUIC_VERSION}" >> "$GITHUB_OUTPUT"
           echo "QUIC_VERSION=${QUIC_VERSION}" >> "$GITHUB_OUTPUT"
 
-      - uses: docker/setup-qemu-action@ce360397dd3f832beb865e1373c09c0e9f86d70a
+      - name: Set up QEMU
+        if: ${{ steps.versions.outputs.HAS_METADATA == 'true' }}
+        uses: docker/setup-qemu-action@ce360397dd3f832beb865e1373c09c0e9f86d70a
 
-      - uses: docker/setup-buildx-action@d7f5e7f509e45cec5c76c4d5afdd7de93d0b3df5
+      - name: Set up Docker Buildx
+        if: ${{ steps.versions.outputs.HAS_METADATA == 'true' }}
+        uses: docker/setup-buildx-action@d7f5e7f509e45cec5c76c4d5afdd7de93d0b3df5
 
-      - uses: docker/login-action@650006c6eb7dba73a995cc03b0b2d7f5ca915bee
+      - name: Log in to Docker Hub
+        if: ${{ steps.versions.outputs.HAS_METADATA == 'true' }}
+        uses: docker/login-action@650006c6eb7dba73a995cc03b0b2d7f5ca915bee
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Create non-QUIC manifest
-        if: ${{ steps.versions.outputs.NONQUIC_VERSION != '' }}
+        if: ${{ steps.versions.outputs.HAS_METADATA == 'true' && steps.versions.outputs.NONQUIC_VERSION != '' }}
         id: nonquic_manifest
         run: |
           set -euo pipefail
@@ -92,7 +101,7 @@ jobs:
           echo "DIGEST=$DIGEST" >> "$GITHUB_OUTPUT"
 
       - name: Create QUIC manifest
-        if: ${{ steps.versions.outputs.QUIC_VERSION != '' }}
+        if: ${{ steps.versions.outputs.HAS_METADATA == 'true' && steps.versions.outputs.QUIC_VERSION != '' }}
         id: quic_manifest
         run: |
           set -euo pipefail
@@ -115,8 +124,8 @@ jobs:
           echo "DIGEST=$DIGEST" >> "$GITHUB_OUTPUT"
 
       - name: Generate SLSA Build Provenance (non-QUIC)
-        if: ${{ steps.versions.outputs.NONQUIC_VERSION != '' }}
-        uses: actions/attest@v4
+        if: ${{ steps.versions.outputs.HAS_METADATA == 'true' && steps.versions.outputs.NONQUIC_VERSION != '' }}
+        uses: actions/attest@59d89421af93a897026c735860bf21b6eb4f7b26
         continue-on-error: true
         with:
           subject-name: index.docker.io/madnuttah/openssl-buildenv
@@ -124,8 +133,8 @@ jobs:
           push-to-registry: true
 
       - name: Generate SLSA Build Provenance (QUIC)
-        if: ${{ steps.versions.outputs.QUIC_VERSION != '' }}
-        uses: actions/attest@v4
+        if: ${{ steps.versions.outputs.HAS_METADATA == 'true' && steps.versions.outputs.QUIC_VERSION != '' }}
+        uses: actions/attest@59d89421af93a897026c735860bf21b6eb4f7b26
         continue-on-error: true
         with:
           subject-name: index.docker.io/madnuttah/openssl-buildenv
