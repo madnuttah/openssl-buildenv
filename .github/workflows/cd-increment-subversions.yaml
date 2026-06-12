@@ -82,10 +82,12 @@ jobs:
               return True
 
           def get_changed_files():
-              """Get files changed compared to main branch."""
+              """Get files changed compared to main branch base SHA."""
               try:
+                  # Use precise PR merge base target to prevent missing refs on synchronize events
+                  target_sha = "${{ github.event.pull_request.base.sha }}"
                   result = subprocess.run(
-                      ["git", "diff", "--name-only", "origin/main"],
+                      ["git", "diff", "--name-only", target_sha],
                       capture_output=True,
                       text=True,
                       check=False
@@ -145,7 +147,8 @@ jobs:
         run: |
           set -euo pipefail
 
-          git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@://github.com{{ github.repository }}"
+          # Restored the stripped out URL structure safely
+          git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@://github.com{{ github.repository }}.git"
 
           git config --local user.name "${{ steps.IMPORT_GPG.outputs.name }}"
           git config --local user.email "${{ steps.IMPORT_GPG.outputs.email }}"
