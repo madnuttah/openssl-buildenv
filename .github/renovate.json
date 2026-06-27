@@ -41,7 +41,7 @@
       "matchStrings": [
         "v(?<currentValue>[0-9]+\\.[0-9]+\\.[0-9]+)"
       ],
-      "datasourceTemplate": "github-releases",
+      "datasourceTemplate": "github-tags",
       "depNameTemplate": "ngtcp2",
       "packageNameTemplate": "ngtcp2/ngtcp2",
       "versioningTemplate": "semver"
@@ -54,7 +54,7 @@
       "matchStrings": [
         "v(?<currentValue>[0-9]+\\.[0-9]+\\.[0-9]+)"
       ],
-      "datasourceTemplate": "github-releases",
+      "datasourceTemplate": "github-tags",
       "depNameTemplate": "nghttp3",
       "packageNameTemplate": "ngtcp2/nghttp3",
       "versioningTemplate": "semver"
