@@ -10,19 +10,22 @@
     "group:allDigest"
   ],
   "timezone": "Europe/Berlin",
-  "schedule": ["every weekday", "on saturday", "on sunday"],
+  "schedule": [
+    "every weekday",
+    "on saturday",
+    "on sunday"
+  ],
   "automergeType": "branch",
   "automerge": true,
   "automergeStrategy": "merge-commit",
   "prConcurrentLimit": 0,
   "prHourlyLimit": 0,
   "rebaseWhen": "behind-base-branch",
-
   "customManagers": [
     {
       "customType": "regex",
       "managerFilePatterns": [
-        "(^|/)versions/openssl\\.txt$"
+        "/^versions\\/openssl\\.txt$/"
       ],
       "matchStrings": [
         "openssl-(?<currentValue>[0-9]+\\.[0-9]+\\.[0-9]+)"
@@ -36,7 +39,7 @@
     {
       "customType": "regex",
       "managerFilePatterns": [
-        "(^|/)versions/ngtcp2\\.txt$"
+        "/^versions\\/ngtcp2\\.txt$/"
       ],
       "matchStrings": [
         "(?m)^\\s*v(?<currentValue>[0-9]+\\.[0-9]+\\.[0-9]+)\\s*$"
@@ -49,7 +52,7 @@
     {
       "customType": "regex",
       "managerFilePatterns": [
-        "(^|/)versions/nghttp3\\.txt$"
+        "/^versions\\/nghttp3\\.txt$/"
       ],
       "matchStrings": [
         "(?m)^\\s*v(?<currentValue>[0-9]+\\.[0-9]+\\.[0-9]+)\\s*$"
@@ -62,17 +65,25 @@
   ],
   "packageRules": [
     {
-      "matchManagers": ["dockerfile"],
+      "matchManagers": [
+        "dockerfile"
+      ],
       "enabled": false
     },
     {
-      "matchManagers": ["github-actions"],
+      "matchManagers": [
+        "github-actions"
+      ],
       "pinDigests": true,
       "automerge": true
     },
     {
-      "matchFileNames": ["versions/openssl.txt"],
-      "matchDepNames": ["openssl"],
+      "matchFileNames": [
+        "versions/openssl.txt"
+      ],
+      "matchDepNames": [
+        "openssl"
+      ],
       "allowedVersions": "<4.0.0"
     },
     {
