@@ -1,0 +1,53 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended",
+    "config:best-practices",
+    ":semanticCommitsDisabled",
+    ":automergeStableNonMajor",
+    ":automergePatch",
+    ":automergeDigest",
+    "group:allDigest"
+  ],
+  "timezone": "Europe/Berlin",
+  "schedule": ["every weekday", "on saturday", "on sunday"],
+  "automergeType": "branch",
+  "automerge": true,
+  "automergeStrategy": "merge-commit",
+  "prConcurrentLimit": 0,
+  "prHourlyLimit": 0,
+  "rebaseWhen": "behind-base-branch",
+
+  "customManagers": [
+    {
+      "customType": "regex",
+      "managerFilePatterns": [
+        "(^|/)versions/ngtcp2\\.txt$"
+      ],
+      "matchStrings": [
+        "v(?<currentValue>[0-9]+\\.[0-9]+\\.[0-9]+)"
+      ],
+      "datasourceTemplate": "github-tags",
+      "depNameTemplate": "ngtcp2",
+      "packageNameTemplate": "ngtcp2/ngtcp2",
+      "versioningTemplate": "semver"
+    }
+  ],
+
+  "packageRules": [
+    {
+      "matchManagers": ["dockerfile"],
+      "enabled": false
+    },
+    {
+      "matchManagers": ["github-actions"],
+      "pinDigests": true,
+      "automerge": true
+    },
+    {
+      "matchFileNames": ["versions/ngtcp2.txt"],
+      "matchDepNames": ["ngtcp2"],
+      "allowedVersions": "<2.0.0"
+    }
+  ]
+}
