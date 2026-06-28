@@ -76,16 +76,6 @@
       "allowedVersions": "<4.0.0"
     },
     {
-      "matchFileNames": ["versions/ngtcp2.txt"],
-      "matchDepNames": ["ngtcp2"],
-      "allowedVersions": "<2.0.0"
-    },
-    {
-      "matchFileNames": ["versions/nghttp3.txt"],
-      "matchDepNames": ["nghttp3"],
-      "allowedVersions": "<2.0.0"
-    },
-    {
       "groupName": "QUIC stack",
       "matchFileNames": [
         "versions/ngtcp2.txt",
