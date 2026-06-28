@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   bump-sub:
-    if: github.actor == 'renovate[bot]'
+    if: startsWith(github.event.pull_request.head.ref, 'renovate/')
 
     runs-on: ubuntu-latest
 
