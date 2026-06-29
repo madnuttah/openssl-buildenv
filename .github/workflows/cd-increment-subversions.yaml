@@ -5,13 +5,17 @@ on:
     types: [opened, synchronize]
     branches:
       - main
+    paths:
+      - versions/openssl.txt
+      - versions/ngtcp2.txt
+      - versions/nghttp3.txt
 
 permissions:
   contents: write
 
 jobs:
   bump-sub:
-    if: startsWith(github.event.pull_request.head.ref, 'renovate/')
+    if: startsWith(github.actor, 'renovate')
 
     runs-on: ubuntu-latest
 
