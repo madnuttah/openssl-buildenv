@@ -159,6 +159,10 @@ jobs:
           
           git config --local user.name "${{ steps.IMPORT_GPG.outputs.name }}"
           git config --local user.email "${{ steps.IMPORT_GPG.outputs.email }}"
+          
+          echo "Fetching latest state of $PR_BRANCH..."
+          git fetch origin "$PR_BRANCH:$PR_BRANCH"
+          
           git add versions/*.txt
           
           if git diff --staged --quiet; then
