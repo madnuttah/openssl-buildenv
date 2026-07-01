@@ -15,7 +15,7 @@ permissions:
 
 jobs:
   bump-sub:
-    if: startsWith(github.actor, 'renovate')
+    if: github.event.sender.login == 'renovate[bot]'
 
     runs-on: ubuntu-latest
 
@@ -93,9 +93,10 @@ jobs:
           def get_changed_files():
               """Get files changed compared to main branch base SHA."""
               try:
-                  target_sha = "${{ github.event.pull_request.base.sha }}"
+                  base_ref = "${{ github.event.pull_request.base.ref }}"
+                  subprocess.run(["git", "fetch", "origin", base_ref], check=False)
                   result = subprocess.run(
-                      ["git", "diff", "--name-only", target_sha],
+                      ["git", "diff", "--name-only", f"origin/{base_ref}...HEAD"],
                       capture_output=True,
                       text=True,
                       check=False
@@ -129,10 +130,13 @@ jobs:
               if modify_subversion('versions/openssl-quic-buildenv.txt', reset=False):
                   changed = True
 
+          expected_change = openssl_changed or quic_deps_changed
+
           if not changed:
-              expected_change = openssl_changed or quic_deps_changed              
               if expected_change:
                   print("::error::Expected to bump subversion for a relevant file, but no changes were made. Failing pipeline.")
+                  with open(os.environ['GITHUB_ENV'], 'a') as f:
+                      f.write("HAS_CHANGES=false\n")
                   sys.exit(1)
               else:
                   print("PR does not affect OpenSSL or QUIC dependency versions. Skipping commit step.")
@@ -161,7 +165,7 @@ jobs:
           git config --local user.email "${{ steps.IMPORT_GPG.outputs.email }}"
           
           echo "Fetching latest state of $PR_BRANCH..."
-          git fetch origin "$PR_BRANCH:$PR_BRANCH"
+          git fetch --force origin "$PR_BRANCH:$PR_BRANCH"
           
           git add versions/*.txt
           
