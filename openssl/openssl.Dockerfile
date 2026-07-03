@@ -103,6 +103,21 @@ RUN strip --strip-unneeded /usr/local/lib/*.so* || true && \
 
 FROM alpine:3.23.4@sha256:5b10f432ef3da1b8d4c7eb6c487f2f5a8f096bc91145e68878dd4a5019afde11 AS final
 
+ARG BASE_IMAGE_NAME
+
+LABEL org.opencontainers.image.title="madnuttah/openssl-buildenv" \
+      org.opencontainers.image.description="OpenSSL build environment for Unbound QUIC and non-QUIC builds." \
+      org.opencontainers.image.summary="Minimal Alpine-based OpenSSL build environment with architecture-specific optimizations." \
+      org.opencontainers.image.version="${OPENSSL_VERSION}" \
+      org.opencontainers.image.created="${BUILDENV_BUILD_DATE}" \
+      org.opencontainers.image.source="https://github.com/madnuttah/openssl-buildenv" \
+      org.opencontainers.image.url="https://hub.docker.com/r/madnuttah/openssl-buildenv" \
+      org.opencontainers.image.authors="madnuttah" \
+      org.opencontainers.image.licenses="MIT" \
+      org.opencontainers.image.base.name="${BASE_IMAGE_NAME}" \
+      org.opencontainers.image.vendor="madnuttah" \
+      org.opencontainers.image.revision="${TARGETARCH}"
+
 COPY --from=buildenv /usr/local /usr/local
 
 # hadolint ignore=DL3018
