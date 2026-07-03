@@ -5,6 +5,7 @@
 
 [![Security Analysis (zizmor)](https://github.com/madnuttah/openssl-buildenv/actions/workflows/cd-gh-action-zizmor-scan.yaml/badge.svg)](https://github.com/madnuttah/openssl-buildenv/actions/workflows/cd-gh-action-zizmor-scan.yaml)
 [![StepSecurity Harden Runner](https://img.shields.io/badge/Secured%20by-StepSecurity-blue?style=flat-square)](https://github.com/step-security/harden-runner)
+[![renovate](https://img.shields.io/badge/Maintained%20with-Renovate-blue?logo=renovatebot&style=flat-square)](https://app.renovatebot.com/dashboard)
 
 This repository provides a reproducible, multi‑architecture build environment for:
 
