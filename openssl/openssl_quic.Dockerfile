@@ -256,6 +256,9 @@ RUN strip --strip-unneeded /usr/local/lib/*.so* || true && \
 FROM alpine:3.23.4@sha256:5b10f432ef3da1b8d4c7eb6c487f2f5a8f096bc91145e68878dd4a5019afde11 AS final
 
 ARG BASE_IMAGE_NAME
+ARG TARGETARCH
+ARG BUILDENV_BUILD_DATE
+ARG OPENSSL_VERSION
 
 LABEL org.opencontainers.image.title="madnuttah/openssl-buildenv" \
       org.opencontainers.image.description="OpenSSL build environment for Unbound QUIC and non-QUIC builds." \
