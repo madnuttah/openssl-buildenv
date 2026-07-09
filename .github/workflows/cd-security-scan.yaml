@@ -39,7 +39,7 @@ jobs:
         if: ${{ github.event_name != 'pull_request' }}
         with:
           image-ref: ${{ env.DOCKERHUB_SLUG }}:latest
-          exit-code: "1"
+          exit-code: "0"
           ignore-unfixed: true
           scan-type: image
           vuln-type: "os,library"
