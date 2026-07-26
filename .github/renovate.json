@@ -85,14 +85,6 @@
         "openssl"
       ],
       "allowedVersions": "<4.0.0"
-    },
-    {
-      "groupName": "QUIC stack",
-      "matchFileNames": [
-        "versions/ngtcp2.txt",
-        "versions/nghttp3.txt"
-      ],
-      "automerge": true
     }
   ]
 }
