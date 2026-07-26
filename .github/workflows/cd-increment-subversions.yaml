@@ -8,7 +8,6 @@ on:
     paths:
       - versions/openssl.txt
       - versions/ngtcp2.txt
-      - versions/nghttp3.txt
 
 permissions:
   contents: write
