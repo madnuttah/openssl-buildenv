@@ -110,12 +110,10 @@ jobs:
 
           openssl_changed = "versions/openssl.txt" in changed_files
           ngtcp2_changed = "versions/ngtcp2.txt" in changed_files
-          nghttp3_changed = "versions/nghttp3.txt" in changed_files
-          quic_deps_changed = ngtcp2_changed or nghttp3_changed
 
           print(f"Changed files: {changed_files}")
           print(f"OpenSSL changed: {openssl_changed}")
-          print(f"QUIC deps changed: {quic_deps_changed}")
+          print(f"ngtcp2 changed: {ngtcp2_changed}")
 
           if openssl_changed:
               print("OpenSSL changed → resetting subversions")
@@ -124,12 +122,12 @@ jobs:
               if modify_subversion('versions/openssl-quic-buildenv.txt', reset=True):
                   changed = True
 
-          if quic_deps_changed:
-              print("QUIC deps changed → bumping QUIC subversion")
+          if ngtcp2_changed:
+              print("ngtcp2 changed → bumping QUIC subversion")
               if modify_subversion('versions/openssl-quic-buildenv.txt', reset=False):
                   changed = True
 
-          expected_change = openssl_changed or quic_deps_changed
+          expected_change = openssl_changed or ngtcp2_changed
 
           if not changed:
               if expected_change:
@@ -138,7 +136,7 @@ jobs:
                       f.write("HAS_CHANGES=false\n")
                   sys.exit(1)
               else:
-                  print("PR does not affect OpenSSL or QUIC dependency versions. Skipping commit step.")
+                  print("PR does not affect OpenSSL or ngtcp2 dependency versions. Skipping commit step.")
                   with open(os.environ['GITHUB_ENV'], 'a') as f:
                       f.write("HAS_CHANGES=false\n")
                   sys.exit(0)
