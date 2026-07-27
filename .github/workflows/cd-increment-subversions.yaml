@@ -86,7 +86,7 @@ jobs:
               with open(filepath, 'w') as f:
                   f.write(new_version + "\n")
 
-              print(f"Updated {filepath}: {base}-{old_sub}{suffix} → {base}-{new_sub}{suffix}")
+              print(f"Updated {filepath}: {base}-{old_sub}{suffix} -> {base}-{new_sub}{suffix}")
               return True
 
           def get_changed_files():
@@ -116,14 +116,14 @@ jobs:
           print(f"ngtcp2 changed: {ngtcp2_changed}")
 
           if openssl_changed:
-              print("OpenSSL changed → resetting subversions")
+              print("OpenSSL changed -> resetting subversions")
               if modify_subversion('versions/openssl-buildenv.txt', reset=True):
                   changed = True
               if modify_subversion('versions/openssl-quic-buildenv.txt', reset=True):
                   changed = True
 
           if ngtcp2_changed:
-              print("ngtcp2 changed → bumping QUIC subversion")
+              print("ngtcp2 changed -> bumping QUIC subversion")
               if modify_subversion('versions/openssl-quic-buildenv.txt', reset=False):
                   changed = True
 
@@ -162,7 +162,7 @@ jobs:
           git config --local user.email "${{ steps.IMPORT_GPG.outputs.email }}"
           
           echo "Fetching latest state of $PR_BRANCH..."
-          git fetch --force origin "$PR_BRANCH:$PR_BRANCH"
+          git fetch origin "$PR_BRANCH"
           
           git add versions/*.txt
           
