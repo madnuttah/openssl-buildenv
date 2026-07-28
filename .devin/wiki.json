@@ -1,0 +1,51 @@
+{
+  "repo_notes": "This repository provides a hardened, multi-architecture OpenSSL build environment used as the foundation for madnuttah/unbound Docker images. Key focus areas: 1) The dual-variant build system: 'Standard' (OpenSSL only) and 'QUIC' (OpenSSL + ngtcp2 + nghttp3). 2) The rigorous security model: SHA256/PGP verification of all upstream sources (OpenSSL, ngtcp2, nghttp3), architecture-specific compiler optimizations (CFLAGS, LDFLAGS), and a minimal 'scratch' final image. 3) The automated CI/CD pipeline: StepSecurity hardened runners, GPG-signed commits/tags, SLSA provenance generation, SBOM creation (Syft), and automated tag cleanup. 4) The versioning strategy: Custom Renovate rules and automated subversion bumping logic to track upstream changes while maintaining reproducible builds.",
+  "pages": [
+    {
+      "title": "Build Pipeline & Architecture",
+      "sources": [
+        "openssl.Dockerfile",
+        "openssl_quic.Dockerfile",
+        "cd-build-openssl-buildenv.yaml",
+        "cd-build-openssl-quic-buildenv.yaml"
+      ],
+      "focus": "Explain the multi-stage build process: 1) Using Alpine as the base. 2) Compiling OpenSSL with architecture-specific flags (enable-asm, enable-ktls, no-legacy, no-err). 3) The QUIC variant's additional compilation of ngtcp2 and nghttp3 from source. 4) The stripping and cleanup process to minimize the final image size. 5) How the pipeline handles 8 different architectures (amd64, arm64, 386, armv6, armv7, ppc64le, s390x, riscv64) using QEMU and Buildx."
+    },
+    {
+      "title": "Security & Supply Chain Integrity",
+      "sources": [
+        "cd-security-scan.yaml",
+        "cd-gh-action-zizmor-scan.yaml",
+        "cd-opensff-scorecard.yaml",
+        "cd-github-actions-linting.yaml",
+        "cd-dockerfiles-linting.yaml"
+      ],
+      "focus": "Detail the defense-in-depth strategy: 1) StepSecurity hardening (egress-policy: block) on all runners. 2) Automated vulnerability scanning (Trivy, Docker Scout) and policy enforcement. 3) GitHub Actions security analysis (zizmor, actionlint). 4) OpenSSF Scorecard integration. 5) The strict verification of all upstream tarballs (SHA256 + PGP) during the build process. 6) SLSA provenance generation for every release."
+    },
+    {
+      "title": "Automated Version Management (Renovate)",
+      "sources": [
+        "renovate.json",
+        "cd-increment-subversions.yaml",
+        "cd-tag-and-release.yaml"
+      ],
+      "focus": "Explain the custom Renovate configuration: 1) How custom regex managers track OpenSSL, ngtcp2, and nghttp3 versions. 2) The automated logic in 'cd-increment-subversions.yaml' that resets or bumps subversions when upstream dependencies change. 3) The 'cd-tag-and-release.yaml' workflow that creates GPG-signed git tags and GitHub Releases with detailed changelogs (including new contributors). 4) How the system handles the 'stable' vs 'stable-quic' release streams separately."
+    },
+    {
+      "title": "Release Lifecycle & Artifacts",
+      "sources": [
+        "cd-publish-manifests.yaml",
+        "cd-cleanup-tags.yaml",
+        "cd-build-openssl-buildenv.yaml"
+      ],
+      "focus": "Describe the release process: 1) The parallel build of architecture-specific images. 2) The generation of SBOMs (Syft) for each architecture. 3) The creation of multi-arch manifests and SLSA attestations. 4) The automated cleanup of architecture-specific tags after manifest creation to keep Docker Hub clean. 5) The separation of 'latest' (stable) and 'latest-quic' tags."
+    },
+    {
+      "title": "Usage & Integration",
+      "sources": [
+        "README.md"
+      ],
+      "focus": "Guide users on how to use this build environment: 1) How to pull and use the image as a base for custom builds. 2) The difference between the standard and QUIC variants. 3) How to verify the image integrity (digests, signatures). 4) Best practices for integrating this buildenv into your own CI/CD pipelines."
+    }
+  ]
+}
