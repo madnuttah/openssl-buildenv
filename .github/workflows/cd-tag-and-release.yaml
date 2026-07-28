@@ -140,102 +140,193 @@ jobs:
 
           TAG_NONQUIC="v${NONQUIC}"
           TAG_QUIC="v${QUIC}"
+          TODAY=$(date -u +"%Y-%m-%d")
 
-          git fetch --prune origin --tags
+          PREV_TAG_NONQUIC_OLD=$(git tag --sort=-v:refname | grep -v "^${TAG_NONQUIC}$" | head -n 1 || true)
+          PREV_TAG_QUIC_OLD=$(git tag --sort=-v:refname | grep -v "^${TAG_QUIC}$" | head -n 1 || true)
 
-          if ! git rev-parse "$TAG_NONQUIC" >/dev/null 2>&1; then
-            git tag -a "$TAG_NONQUIC" -m "$TAG_NONQUIC"
-            git push origin "$TAG_NONQUIC"
+          get_old_ver() {
+            local tag="$1"
+            local file="$2"
+            if [ -n "$tag" ]; then
+              git show "$tag:$file" 2>/dev/null | tr -d '\n\r' || echo "none"
+            else
+              echo "none"
+            fi
+          }
 
-            git checkout -b "$NONQUIC" "$TAG_NONQUIC"
-            git push --set-upstream origin "$NONQUIC"
+          OLD_OPENSSL_NONQUIC=$(get_old_ver "$PREV_TAG_NONQUIC_OLD" "versions/openssl.txt")
+          OLD_NGTCP2=$(get_old_ver "$PREV_TAG_QUIC_OLD" "versions/ngtcp2.txt")
+          OLD_NGHTTP3=$(get_old_ver "$PREV_TAG_QUIC_OLD" "versions/nghttp3.txt")
+          OLD_OPENSSL_QUIC=$(get_old_ver "$PREV_TAG_QUIC_OLD" "versions/openssl.txt")
+
+          UPDATED_OPENSSL_NONQUIC=false
+          if [ "$OPENSSL" != "$OLD_OPENSSL_NONQUIC" ] && [ "$OPENSSL" != "none" ]; then
+            UPDATED_OPENSSL_NONQUIC=true
           fi
 
-          if ! git rev-parse "$TAG_QUIC" >/dev/null 2>&1; then
-            git tag -a "$TAG_QUIC" -m "$TAG_QUIC"
-            git push origin "$TAG_QUIC"
-
-            git checkout -b "$QUIC" "$TAG_QUIC"
-            git push --set-upstream origin "$QUIC"
+          UPDATED_OPENSSL_QUIC=false
+          if [ "$OPENSSL" != "$OLD_OPENSSL_QUIC" ] && [ "$OPENSSL" != "none" ]; then
+            UPDATED_OPENSSL_QUIC=true
           fi
 
-          UPDATED_OPENSSL=false
           UPDATED_NGTCP2=false
-          UPDATED_NGHTTP3=false
-          UPDATED_QUIC=false
-
-          if ! git diff --quiet HEAD~1 HEAD -- "versions/openssl.txt"; then
-            UPDATED_OPENSSL=true
-          fi
-
-          if ! git diff --quiet HEAD~1 HEAD -- "versions/ngtcp2.txt"; then
+          if [ "$NGTCP2" != "$OLD_NGTCP2" ] && [ "$NGTCP2" != "none" ]; then
             UPDATED_NGTCP2=true
           fi
 
-          if ! git diff --quiet HEAD~1 HEAD -- "versions/nghttp3.txt"; then
+          UPDATED_NGHTTP3=false
+          if [ "$NGHTTP3" != "$OLD_NGHTTP3" ] && [ "$NGHTTP3" != "none" ]; then
             UPDATED_NGHTTP3=true
           fi
 
-          if ! git diff --quiet HEAD~1 HEAD -- "versions/openssl-quic-buildenv.txt"; then
-            UPDATED_QUIC=true
+          if [ "$UPDATED_NGTCP2" = true ] && [ "$UPDATED_NGHTTP3" = false ]; then
+            UPDATED_NGHTTP3=true
           fi
 
-          rm -f RELEASE_NOTES.md
-          touch RELEASE_NOTES.md
-
-          if [ "$UPDATED_OPENSSL" = true ]; then
-          {
-            printf "## OpenSSL Buildenv\n"
-            printf "OpenSSL: %s\n" "$OPENSSL"
-            printf "Release notes: https://github.com/%s\n" "${OPENSSL#openssl-}"
-            printf "Buildenv version: %s\n\n" "$NONQUIC"
-          } >> RELEASE_NOTES.md
+          CREATE_NONQUIC=false
+          if [ "$UPDATED_OPENSSL_NONQUIC" = true ]; then
+            CREATE_NONQUIC=true
           fi
 
-          if [ "$UPDATED_QUIC" = true ] || [ "$UPDATED_NGTCP2" = true ] || [ "$UPDATED_NGHTTP3" = true ]; then
-          {
-            printf "## OpenSSL QUIC Buildenv\n"
-            printf "Version: %s\n" "$QUIC"
-            printf "OpenSSL: %s\n" "$OPENSSL"
-
-            if [ "$UPDATED_NGTCP2" = true ]; then
-              printf "- ngtcp2: %s\n" "$NGTCP2"
-              printf "  Release notes: https://github.com/%s\n" "$NGTCP2"
-            fi
-
-            if [ "$UPDATED_NGHTTP3" = true ]; then
-              printf "- nghttp3: %s\n" "$NGHTTP3"
-              printf "  Release notes: https://github.com/%s\n" "$NGHTTP3"
-            fi
-
-            printf "\n"
-          } >> RELEASE_NOTES.md
+          CREATE_QUIC=false
+          if [ "$UPDATED_OPENSSL_QUIC" = true ] || [ "$UPDATED_NGTCP2" = true ] || [ "$UPDATED_NGHTTP3" = true ]; then
+            CREATE_QUIC=true
           fi
 
-          gh release create "$TAG_NONQUIC" \
-            -t "$TAG_NONQUIC" \
-            -F RELEASE_NOTES.md \
-            --latest || true
-
-          gh release create "$TAG_QUIC" \
-            -t "$TAG_QUIC" \
-            -F RELEASE_NOTES.md \
-            --latest=false || true
+          REF_PREV_TAG="${PREV_TAG_QUIC_OLD:-$PREV_TAG_NONQUIC_OLD}"
+          
+          NEW_CONTRIB_CONTENT=""
+          if [ -n "$REF_PREV_TAG" ]; then
+            EXISTING_EMAILS=$(git log "$REF_PREV_TAG" --format='%ae' 2>/dev/null | sort -u || true)
+            BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "main")
             
-      - name: Prepare release artifacts
-        run: |
-          set -euo pipefail
+            PRS_JSON=$(gh pr list --base "$BRANCH" --state merged --json author,number,headRefName,mergedAt --limit 200 2>/dev/null || echo "[]")
+            
+            TMP_FILE="/tmp/new_contribs_$$.txt"
+            rm -f "$TMP_FILE"
+            touch "$TMP_FILE"
 
-          mkdir -p release-artifacts
+            if [ "$(echo "$PRS_JSON" | jq -r '. | length')" -gt 0 ]; then
+              echo "$PRS_JSON" | jq -c '.[]' | while read -r pr; do
+                PR_NUM=$(echo "$pr" | jq -r '.number')
+                AUTHOR_LOGIN=$(echo "$pr" | jq -r '.author.login')
+                
+                if [[ "$AUTHOR_LOGIN" == *"github-actions"* ]] || \
+                   [[ "$AUTHOR_LOGIN" == *"madnuttah-bot"* ]] || \
+                   [[ "$AUTHOR_LOGIN" == *"dependabot"* ]] || \
+                   [[ "$AUTHOR_LOGIN" == *"renovate[bot]" ]]; then
+                  continue
+                fi
 
-          if [ -d sbom-artifacts ]; then
-            find sbom-artifacts -type f \( -name "*.json" -o -name "*.cyclonedx.json" \) -print0 |
-            while IFS= read -r -d '' sbom; do
-              cp "$sbom" release-artifacts/ || true
-            done
+                AUTHOR_EMAIL=$(gh api "repos/${{ github.repository }}/contributors" --jq ".[] | select(.login == \"$AUTHOR_LOGIN\") | .email" 2>/dev/null || echo "")
+                if [ -z "$AUTHOR_EMAIL" ]; then
+                  MERGE_COMMIT=$(gh pr view "$PR_NUM" --json mergeCommit --jq '.mergeCommit.oid' 2>/dev/null || echo "")
+                  if [ -n "$MERGE_COMMIT" ]; then
+                    AUTHOR_EMAIL=$(git log -1 --format='%ae' "$MERGE_COMMIT" 2>/dev/null || echo "")
+                  fi
+                fi
+
+                IS_NEW=true
+                if [ -n "$AUTHOR_EMAIL" ]; then
+                  if echo "$EXISTING_EMAILS" | grep -q "^${AUTHOR_EMAIL}$"; then
+                    IS_NEW=false
+                  fi
+                fi
+
+                if [ "$IS_NEW" = true ]; then
+                  printf "* [%s](https://github.com/%s) made their first contribution in #%s\n" "$AUTHOR_LOGIN" "$AUTHOR_LOGIN" "$PR_NUM" >> "$TMP_FILE"
+                fi
+              done
+            fi
+
+            if [ -s "$TMP_FILE" ]; then
+              NEW_CONTRIB_CONTENT=$(printf "\n### New contributors\n\n%s\n" "$(cat "$TMP_FILE")")
+            fi
+            rm -f "$TMP_FILE"
           fi
 
-          cd release-artifacts
-          if [ -n "$(ls -A .)" ]; then
-            find . -type f ! -name "*.sha256" -exec sha256sum {} \; > checksums.sha256
+          if [ "$CREATE_NONQUIC" = true ]; then
+            rm -f RELEASE_NOTES_NONQUIC.md
+            {
+              printf "## %s <madnuttah-bot>\n\n" "$TODAY"
+              printf "### What's changed?\n\n"
+
+              if [ "$UPDATED_OPENSSL_NONQUIC" = true ]; then
+                printf "* Updated OpenSSL to %s\n" "$OPENSSL"
+                printf "  Changelog: https://github.com/openssl/openssl/releases/tag/openssl-%s\n\n" "$OPENSSL"
+              fi
+
+              if [ "$UPDATED_OPENSSL_NONQUIC" = false ]; then
+                 printf "* No component updates in this release.\n\n"
+              fi
+
+              printf "%s" "$NEW_CONTRIB_CONTENT"
+            } >> RELEASE_NOTES_NONQUIC.md
+          fi
+
+          if [ "$CREATE_QUIC" = true ]; then
+            rm -f RELEASE_NOTES_QUIC.md
+            {
+              printf "## %s <madnuttah-bot>\n\n" "$TODAY"
+              printf "### OpenSSL+QUIC Buildenv %s\n\n" "$QUIC"
+              printf "### What's changed?\n\n"
+
+              if [ "$UPDATED_OPENSSL_QUIC" = true ]; then
+                printf "* Updated OpenSSL to %s\n" "$OPENSSL"
+                printf "  Changelog: https://github.com/openssl/openssl/releases/tag/openssl-%s\n\n" "$OPENSSL"
+              fi
+
+              if [ "$UPDATED_NGTCP2" = true ]; then
+                printf "* Updated ngtcp2 to %s\n" "$NGTCP2"
+                printf "  Changelog: https://github.com/ngtcp2/ngtcp2/releases/tag/%s\n\n" "$NGTCP2"
+              fi
+
+              if [ "$UPDATED_NGHTTP3" = true ]; then
+                printf "* Updated nghttp3 to %s\n" "$NGHTTP3"
+                printf "  Changelog: https://github.com/ngtcp2/nghttp3/releases/tag/%s\n\n" "$NGHTTP3"
+              fi
+
+              if [ "$UPDATED_OPENSSL_QUIC" = false ] && [ "$UPDATED_NGTCP2" = false ] && [ "$UPDATED_NGHTTP3" = false ]; then
+                 printf "* No component updates in this release.\n\n"
+              fi
+
+              printf "%s" "$NEW_CONTRIB_CONTENT"
+            } >> RELEASE_NOTES_QUIC.md
+          fi
+
+          if [ "$CREATE_NONQUIC" = true ]; then
+            if ! git rev-parse "$TAG_NONQUIC" >/dev/null 2>&1; then
+              git tag -a "$TAG_NONQUIC" -m "$TAG_NONQUIC"
+              git push origin "$TAG_NONQUIC"
+              if ! git rev-parse --verify "origin/$NONQUIC" >/dev/null 2>&1; then
+                git checkout -b "$NONQUIC" "$TAG_NONQUIC"
+                git push --set-upstream origin "$NONQUIC"
+              fi
+            fi
+
+            gh release create "$TAG_NONQUIC" \
+              -t "$TAG_NONQUIC" \
+              -F RELEASE_NOTES_NONQUIC.md \
+              --latest || true
+          fi
+
+          if [ "$CREATE_QUIC" = true ]; then
+            if ! git rev-parse "$TAG_QUIC" >/dev/null 2>&1; then
+              git tag -a "$TAG_QUIC" -m "$TAG_QUIC"
+              git push origin "$TAG_QUIC"
+              if ! git rev-parse --verify "origin/$QUIC" >/dev/null 2>&1; then
+                git checkout -b "$QUIC" "$TAG_QUIC"
+                git push --set-upstream origin "$QUIC"
+              fi
+            fi
+
+            gh release create "$TAG_QUIC" \
+              -t "$TAG_QUIC" \
+              -F RELEASE_NOTES_QUIC.md \
+              --latest || true
+          fi
+
+          if [ "$CREATE_NONQUIC" = false ] && [ "$CREATE_QUIC" = false ]; then
+            echo "No component updates detected for either variant. Skipping release creation."
           fi
