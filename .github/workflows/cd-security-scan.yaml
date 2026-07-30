@@ -55,7 +55,7 @@ jobs:
           sarif_file: "scan-results-latest.sarif"
 
       - name: Docker Scout CVEs
-        uses: docker/scout-action@2688993af7bafd6ba8c6a74ec652442be91dd82b # v1.23.1
+        uses: docker/scout-action@7c6b6c3f7844478ace1ffd4e7aef649053d1f87d # v1.24.0
         if: ${{ github.event_name != 'pull_request' }}
         with:
           command: cves
