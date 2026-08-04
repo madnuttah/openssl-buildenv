@@ -56,37 +56,39 @@ jobs:
           import os
           import sys
           import subprocess
+          new_openssl_version = ""
+          if os.path.exists("versions/openssl.txt"):
+              with open("versions/openssl.txt", "r") as f:
+                  new_openssl_version = f.read().strip()
+              print(f"Target OpenSSL version from openssl.txt: {new_openssl_version}")
+          else:
+              print("ERROR: versions/openssl.txt not found")
+              sys.exit(1)
 
-          def modify_subversion(filepath, reset=False):
-              """Modify subversion inside 'openssl=X.Y.Z-N[-quic]'."""
+          def update_buildenv_file(filepath, target_version):
+              """Update the buildenv file to the target version and reset subversion to 0."""
               if not os.path.exists(filepath):
                   print(f"File not found: {filepath}")
                   return False
 
               with open(filepath, 'r') as f:
                   content = f.read().strip()
-
               match = re.search(r'openssl=(\d+\.\d+\.\d+)-(\d+)(-quic)?', content)
               if not match:
-                  print(f"No version pattern found in {filepath}")
+                  print(f"ERROR: No version pattern found in {filepath}")
                   return False
 
-              base = match.group(1)
+              old_base = match.group(1)
               old_sub = int(match.group(2))
               suffix = match.group(3) or ""
-
-              new_sub = 0 if reset else old_sub + 1
-
-              if new_sub == old_sub:
-                  print(f"{filepath} already at sub={new_sub}. No change.")
-                  return False
-
-              new_version = f"openssl={base}-{new_sub}{suffix}"
+              new_sub = 0
+              
+              new_version = f"openssl={target_version}-{new_sub}{suffix}"
 
               with open(filepath, 'w') as f:
                   f.write(new_version + "\n")
 
-              print(f"Updated {filepath}: {base}-{old_sub}{suffix} -> {base}-{new_sub}{suffix}")
+              print(f"Updated {filepath}: {old_base}-{old_sub}{suffix} -> {new_version}")
               return True
 
           def get_changed_files():
@@ -116,15 +118,34 @@ jobs:
           print(f"ngtcp2 changed: {ngtcp2_changed}")
 
           if openssl_changed:
-              print("OpenSSL changed -> resetting subversions")
-              if modify_subversion('versions/openssl-buildenv.txt', reset=True):
+              print(f"OpenSSL core changed -> syncing buildenv files to {new_openssl_version} and resetting subversions to 0")
+              if update_buildenv_file('versions/openssl-buildenv.txt', new_openssl_version):
                   changed = True
-              if modify_subversion('versions/openssl-quic-buildenv.txt', reset=True):
+              if update_buildenv_file('versions/openssl-quic-buildenv.txt', new_openssl_version):
                   changed = True
 
-          if ngtcp2_changed:
-              print("ngtcp2 changed -> bumping QUIC subversion")
-              if modify_subversion('versions/openssl-quic-buildenv.txt', reset=False):
+          if ngtcp2_changed:             
+              def increment_subversion(filepath):
+                  if not os.path.exists(filepath):
+                      return False
+                  with open(filepath, 'r') as f:
+                      content = f.read().strip()
+                  match = re.search(r'openssl=(\d+\.\d+\.\d+)-(\d+)(-quic)?', content)
+                  if not match:
+                      print(f"ERROR: No version pattern found in {filepath}")
+                      return False
+                  base = match.group(1)
+                  old_sub = int(match.group(2))
+                  suffix = match.group(3) or ""
+                  new_sub = old_sub + 1
+                  new_version = f"openssl={base}-{new_sub}{suffix}"
+                  with open(filepath, 'w') as f:
+                      f.write(new_version + "\n")
+                  print(f"Incremented {filepath}: {base}-{old_sub}{suffix} -> {new_version}")
+                  return True
+
+              print("ngtcp2 changed -> bumping QUIC subversion only")
+              if increment_subversion('versions/openssl-quic-buildenv.txt'):
                   changed = True
 
           expected_change = openssl_changed or ngtcp2_changed
