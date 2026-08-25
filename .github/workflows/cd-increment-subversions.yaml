@@ -181,6 +181,7 @@ jobs:
           
           git config --local user.name "${{ steps.IMPORT_GPG.outputs.name }}"
           git config --local user.email "${{ steps.IMPORT_GPG.outputs.email }}"
+          git config --local commit.gpgsign false
           
           echo "Fetching latest state of $PR_BRANCH..."
           git fetch origin "$PR_BRANCH"
