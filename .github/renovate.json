@@ -68,6 +68,27 @@
       "matchManagers": [
         "dockerfile"
       ],
+      "matchDepNames": [
+        "alpine"
+      ],
+      "enabled": true,
+      "automerge": true
+    },
+    {
+      "matchManagers": [
+        "dockerfile"
+      ],
+      "matchDepNames": [
+        "openssl",
+        "ngtcp2",
+        "nghttp3"
+      ],
+      "enabled": false
+    },
+    {
+      "matchManagers": [
+        "dockerfile"
+      ],
       "enabled": false
     },
     {
