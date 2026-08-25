@@ -87,12 +87,6 @@
     },
     {
       "matchManagers": [
-        "dockerfile"
-      ],
-      "enabled": false
-    },
-    {
-      "matchManagers": [
         "github-actions"
       ],
       "pinDigests": true,
