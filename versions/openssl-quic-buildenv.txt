@@ -1,1 +1,1 @@
-openssl=3.6.3-3-quic
+openssl=3.6.4-0-quic
