@@ -19,7 +19,7 @@ jobs:
   build:
     runs-on: ${{ matrix.runner }}
     outputs:
-      buildenv_version: ${{ steps.vars.outputs.BUILDENV_VERSION }}
+      buildenv_quic_version: ${{ steps.vars.outputs.BUILDENV_QUIC_VERSION}}
 
     strategy:
       fail-fast: false
