@@ -17,9 +17,9 @@ permissions:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.runner }}
     outputs:
-      buildenv_quic_version: ${{ steps.vars.outputs.BUILDENV_QUIC_VERSION }}
+      buildenv_version: ${{ steps.vars.outputs.BUILDENV_VERSION }}
 
     strategy:
       fail-fast: false
@@ -27,20 +27,31 @@ jobs:
         include:
           - arch: amd64
             platform: linux/amd64
+            runner: ubuntu-latest
           - arch: 386
             platform: linux/386
-          - arch: armv6
-            platform: linux/arm/v6
-          - arch: armv7
-            platform: linux/arm/v7
+            runner: ubuntu-latest
+            
           - arch: arm64
             platform: linux/arm64
-          - arch: ppc64le
-            platform: linux/ppc64le
-          - arch: s390x
-            platform: linux/s390x
+            runner: ubuntu-24.04-arm
+          - arch: armv6
+            platform: linux/arm/v6
+            runner: ubuntu-24.04-arm
+          - arch: armv7
+            platform: linux/arm/v7
+            runner: ubuntu-24.04-arm
+            
           - arch: riscv64
             platform: linux/riscv64
+            runner: ubuntu-26.04-riscv
+            
+          - arch: ppc64le
+            platform: linux/ppc64le
+            runner: ubuntu-latest
+          - arch: s390x
+            platform: linux/s390x
+            runner: ubuntu-latest
 
     steps:
       - name: Harden Runner
