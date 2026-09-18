@@ -1,7 +1,7 @@
 ARG TARGETPLATFORM
 ARG TARGETARCH
 
-FROM alpine:3.24.1@sha256:28bd5fe8b56d1bd048e5babf5b10710ebe0bae67db86916198a6eec434943f8b AS buildenv
+FROM alpine:3.24.2@sha256:3cf95fe0816180395592b8373f3ec60663f076127617bbacb4eacf9667afe2e9 AS buildenv
 
 ARG TARGETARCH
 ARG BUILDENV_BUILD_DATE
@@ -148,7 +148,7 @@ RUN \
          /usr/local/openssl/ssl/certs && \
   rm -rf /src /tmp/* /var/tmp/* /var/log/*
 
-FROM alpine:3.24.1@sha256:28bd5fe8b56d1bd048e5babf5b10710ebe0bae67db86916198a6eec434943f8b AS final
+FROM alpine:3.24.2@sha256:3cf95fe0816180395592b8373f3ec60663f076127617bbacb4eacf9667afe2e9 AS final
 
 ARG BASE_IMAGE_NAME
 ARG TARGETARCH
