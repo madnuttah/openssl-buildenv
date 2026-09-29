@@ -65,10 +65,11 @@ jobs:
           OPENSSL_BUILDENV_TXT = "versions/openssl-buildenv.txt"
           OPENSSL_QUIC_BUILDENV_TXT = "versions/openssl-quic-buildenv.txt"
 
-          OPENSSL_PATTERN = re.compile(r'^(\d+\.\d+\.\d+)$')
+          OPENSSL_PATTERN = re.compile(r'^openssl-(\d+\.\d+\.\d+)$')
+          NGTCP2_PATTERN = re.compile(r'^v(\d+\.\d+\.\d+)$')
           BUILDENV_PATTERN = re.compile(r'^openssl=(\d+\.\d+\.\d+)-(\d+)(-quic)?$')
 
-          def validate_version_file(filepath: str, required_prefix: Optional[str] = None) -> str:
+          def validate_version_file(filepath: str) -> str:
               """Read and validate version file content."""
               if not os.path.exists(filepath):
                   raise FileNotFoundError(f"Version file not found: {filepath}")
@@ -79,24 +80,29 @@ jobs:
               if not content:
                   raise ValueError(f"Version file is empty: {filepath}")
               
-              if required_prefix and not content.startswith(required_prefix):
-                  raise ValueError(f"Version file {filepath} does not start with expected prefix: {required_prefix}")
-              
               return content
 
           def parse_openssl_version(content: str) -> str:
-              """Parse openssl version and validate format."""
+              """Parse openssl version. Expected format: openssl-X.Y.Z"""
               match = OPENSSL_PATTERN.match(content)
               if not match:
-                  raise ValueError(f"Invalid openssl version format: {content}")
+                  raise ValueError(f"Invalid openssl version format: {content!r}. Expected: openssl-X.Y.Z")
+              
+              return match.group(1)
+
+          def parse_ngtcp2_version(content: str) -> str:
+              """Parse ngtcp2 version. Expected format: vX.Y.Z"""
+              match = NGTCP2_PATTERN.match(content)
+              if not match:
+                  raise ValueError(f"Invalid ngtcp2 version format: {content!r}. Expected: vX.Y.Z")
               
               return match.group(1)
 
           def parse_buildenv_version(content: str) -> Tuple[str, int, Optional[str]]:
-              """Parse buildenv version and extract base, subversion, and suffix."""
+              """Parse buildenv version. Expected format: openssl=X.Y.Z-N or openssl=X.Y.Z-N-quic"""
               match = BUILDENV_PATTERN.match(content)
               if not match:
-                  raise ValueError(f"Invalid buildenv version format: {content}")
+                  raise ValueError(f"Invalid buildenv version format: {content!r}. Expected: openssl=X.Y.Z-N[-quic]")
               
               base_version = match.group(1)
               subversion = int(match.group(2))
@@ -208,13 +214,13 @@ jobs:
                       print(f"Target OpenSSL base version: {base_version}")
                       
                       if reset_buildenv_file(OPENSSL_BUILDENV_TXT, base_version, None):
-                          print(f"Updated {OPENSSL_BUILDENV_TXT}: {base_version}-0")
+                          print(f"Updated {OPENSSL_BUILDENV_TXT}: openssl={base_version}-0")
                           changed = True
                       else:
                           print(f"WARNING: Failed to update {OPENSSL_BUILDENV_TXT}")
                       
                       if reset_buildenv_file(OPENSSL_QUIC_BUILDENV_TXT, base_version, "-quic"):
-                          print(f"Updated {OPENSSL_QUIC_BUILDENV_TXT}: {base_version}-0-quic")
+                          print(f"Updated {OPENSSL_QUIC_BUILDENV_TXT}: openssl={base_version}-0-quic")
                           changed = True
                       else:
                           print(f"WARNING: Failed to update {OPENSSL_QUIC_BUILDENV_TXT}")
@@ -228,11 +234,18 @@ jobs:
                       print(">>> NGTCP2 CHANGED")
                       print("Incrementing QUIC subversion\n")
                       
-                      if increment_buildenv_subversion(OPENSSL_QUIC_BUILDENV_TXT):
-                          print(f"Incremented {OPENSSL_QUIC_BUILDENV_TXT}")
-                          changed = True
-                      else:
-                          print(f"WARNING: Failed to increment {OPENSSL_QUIC_BUILDENV_TXT}")
+                      try:
+                          ngtcp2_content = validate_version_file(NGTCP2_TXT)
+                          parse_ngtcp2_version(ngtcp2_content)
+                          
+                          if increment_buildenv_subversion(OPENSSL_QUIC_BUILDENV_TXT):
+                              print(f"Incremented {OPENSSL_QUIC_BUILDENV_TXT}")
+                              changed = True
+                          else:
+                              print(f"WARNING: Failed to increment {OPENSSL_QUIC_BUILDENV_TXT}")
+                      except (FileNotFoundError, ValueError) as e:
+                          print(f"ERROR: {e}")
+                          sys.exit(1)
               
               print("=" * 60)
               
