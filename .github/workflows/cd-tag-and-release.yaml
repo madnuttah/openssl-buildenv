@@ -154,18 +154,29 @@ jobs:
             fi
           }
 
-          OLD_OPENSSL_NONQUIC=$(get_old_ver "$PREV_TAG_NONQUIC_OLD" "versions/openssl.txt")
+          get_old_key_ver() {
+            local tag="$1"
+            local file="$2"
+            local key="$3"
+            if [ -n "$tag" ]; then
+              git show "$tag:$file" 2>/dev/null | grep "^${key}=" | cut -d= -f2 | tr -d '\n\r' || echo "none"
+            else
+              echo "none"
+            fi
+          }
+
+          OLD_OPENSSL_NONQUIC=$(get_old_key_ver "$PREV_TAG_NONQUIC_OLD" "versions/openssl-buildenv.txt" "openssl")
           OLD_NGTCP2=$(get_old_ver "$PREV_TAG_QUIC_OLD" "versions/ngtcp2.txt")
           OLD_NGHTTP3=$(get_old_ver "$PREV_TAG_QUIC_OLD" "versions/nghttp3.txt")
-          OLD_OPENSSL_QUIC=$(get_old_ver "$PREV_TAG_QUIC_OLD" "versions/openssl.txt")
+          OLD_OPENSSL_QUIC=$(get_old_key_ver "$PREV_TAG_QUIC_OLD" "versions/openssl-quic-buildenv.txt" "openssl")
 
           UPDATED_OPENSSL_NONQUIC=false
-          if [ "$OPENSSL" != "$OLD_OPENSSL_NONQUIC" ] && [ "$OPENSSL" != "none" ]; then
+          if [ "$NONQUIC" != "$OLD_OPENSSL_NONQUIC" ] && [ "$NONQUIC" != "none" ]; then
             UPDATED_OPENSSL_NONQUIC=true
           fi
 
           UPDATED_OPENSSL_QUIC=false
-          if [ "$OPENSSL" != "$OLD_OPENSSL_QUIC" ] && [ "$OPENSSL" != "none" ]; then
+          if [ "$QUIC" != "$OLD_OPENSSL_QUIC" ] && [ "$QUIC" != "none" ]; then
             UPDATED_OPENSSL_QUIC=true
           fi
 
