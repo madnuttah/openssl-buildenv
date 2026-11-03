@@ -1,8 +1,8 @@
 name: CD Increment OpenSSL Subversions
 
 on:
-  pull_request:
-    types: [opened, synchronize]
+  pull_request_target:
+    types: [opened, synchronize, reopened]
     branches:
       - main
     paths:
@@ -14,7 +14,9 @@ permissions:
 
 jobs:
   bump-sub:
-    if: github.event.sender.login == 'renovate[bot]'
+    if: >-
+      github.event.pull_request.head.repo.fork == false &&
+      github.event.pull_request.user.login == 'renovate[bot]'
     runs-on: ubuntu-latest
 
     steps:
@@ -27,7 +29,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           persist-credentials: true
-          repository: ${{ github.event.pull_request.head.repo.full_name }}
+          repository: ${{ github.repository }}
           ref: ${{ github.event.pull_request.head.ref }}
           fetch-depth: 0
 
@@ -73,13 +75,13 @@ jobs:
               """Read and validate version file content."""
               if not os.path.exists(filepath):
                   raise FileNotFoundError(f"Version file not found: {filepath}")
-              
+
               with open(filepath, 'r', encoding='utf-8') as f:
                   content = f.read().strip()
-              
+
               if not content:
                   raise ValueError(f"Version file is empty: {filepath}")
-              
+
               return content
 
           def parse_openssl_version(content: str) -> str:
@@ -87,7 +89,7 @@ jobs:
               match = OPENSSL_PATTERN.match(content)
               if not match:
                   raise ValueError(f"Invalid openssl version format: {content!r}. Expected: openssl-X.Y.Z")
-              
+
               return match.group(1)
 
           def parse_ngtcp2_version(content: str) -> str:
@@ -95,7 +97,7 @@ jobs:
               match = NGTCP2_PATTERN.match(content)
               if not match:
                   raise ValueError(f"Invalid ngtcp2 version format: {content!r}. Expected: vX.Y.Z")
-              
+
               return match.group(1)
 
           def parse_buildenv_version(content: str) -> Tuple[str, int, Optional[str]]:
@@ -103,7 +105,7 @@ jobs:
               match = BUILDENV_PATTERN.match(content)
               if not match:
                   raise ValueError(f"Invalid buildenv version format: {content!r}. Expected: openssl=X.Y.Z-N[-quic]")
-              
+
               base_version = match.group(1)
               subversion = int(match.group(2))
               suffix = match.group(3)
@@ -113,7 +115,7 @@ jobs:
               """Update buildenv file with new version."""
               target_suffix = suffix or ""
               new_content = f"openssl={base_version}-{subversion}{target_suffix}\n"
-              
+
               try:
                   with open(filepath, 'w', encoding='utf-8') as f:
                       f.write(new_content)
@@ -127,10 +129,10 @@ jobs:
               if not os.path.exists(filepath):
                   print(f"WARNING: Buildenv file not found: {filepath}")
                   return False
-              
+
               with open(filepath, 'r', encoding='utf-8') as f:
                   content = f.read().strip()
-              
+
               try:
                   base_version, subversion, suffix = parse_buildenv_version(content)
                   new_subversion = subversion + 1
@@ -156,7 +158,7 @@ jobs:
                   if result.returncode != 0:
                       print(f"WARNING: git fetch failed: {result.stderr}")
                       return []
-                  
+
                   result = subprocess.run(
                       ["git", "diff", "--name-only", f"origin/{base_ref}...HEAD"],
                       capture_output=True,
@@ -167,7 +169,7 @@ jobs:
                   if result.returncode != 0:
                       print(f"WARNING: git diff failed: {result.stderr}")
                       return []
-                  
+
                   files = [f.strip() for f in result.stdout.strip().split('\n') if f.strip()]
                   return files
               except subprocess.TimeoutExpired:
@@ -181,50 +183,50 @@ jobs:
               print("=" * 60)
               print("Processing OpenSSL Subversion Logic")
               print("=" * 60)
-              
+
               base_ref = os.environ.get('BASE_REF', 'main')
               if not base_ref:
                   print("ERROR: BASE_REF environment variable not set")
                   sys.exit(1)
-              
+
               changed_files = get_changed_files(base_ref)
               print(f"Changed files: {changed_files}\n")
-              
+
               if not changed_files:
                   print("No files changed. Exiting.")
                   with open(os.environ['GITHUB_ENV'], 'a', encoding='utf-8') as f:
                       f.write("HAS_CHANGES=false\n")
                   sys.exit(0)
-              
+
               openssl_changed = OPENSSL_TXT in changed_files
               ngtcp2_changed = NGTCP2_TXT in changed_files
-              
+
               print(f"OpenSSL changed: {openssl_changed}")
               print(f"ngtcp2 changed: {ngtcp2_changed}\n")
-              
+
               changed = False
 
               if openssl_changed:
                   print(">>> OPENSSL VERSION CHANGED")
                   print("Resetting subversions to 0 for both variants\n")
-                  
+
                   try:
                       openssl_content = validate_version_file(OPENSSL_TXT)
                       base_version = parse_openssl_version(openssl_content)
                       print(f"Target OpenSSL base version: {base_version}")
-                      
+
                       if reset_buildenv_file(OPENSSL_BUILDENV_TXT, base_version, None):
                           print(f"Updated {OPENSSL_BUILDENV_TXT}: openssl={base_version}-0")
                           changed = True
                       else:
                           print(f"WARNING: Failed to update {OPENSSL_BUILDENV_TXT}")
-                      
+
                       if reset_buildenv_file(OPENSSL_QUIC_BUILDENV_TXT, base_version, "-quic"):
                           print(f"Updated {OPENSSL_QUIC_BUILDENV_TXT}: openssl={base_version}-0-quic")
                           changed = True
                       else:
                           print(f"WARNING: Failed to update {OPENSSL_QUIC_BUILDENV_TXT}")
-                      
+
                   except (FileNotFoundError, ValueError) as e:
                       print(f"ERROR: {e}")
                       sys.exit(1)
@@ -233,11 +235,11 @@ jobs:
                   if ngtcp2_changed:
                       print(">>> NGTCP2 CHANGED")
                       print("Incrementing QUIC subversion\n")
-                      
+
                       try:
                           ngtcp2_content = validate_version_file(NGTCP2_TXT)
                           parse_ngtcp2_version(ngtcp2_content)
-                          
+
                           if increment_buildenv_subversion(OPENSSL_QUIC_BUILDENV_TXT):
                               print(f"Incremented {OPENSSL_QUIC_BUILDENV_TXT}")
                               changed = True
@@ -246,9 +248,9 @@ jobs:
                       except (FileNotFoundError, ValueError) as e:
                           print(f"ERROR: {e}")
                           sys.exit(1)
-              
+
               print("=" * 60)
-              
+
               with open(os.environ['GITHUB_ENV'], 'a', encoding='utf-8') as f:
                   if changed:
                       f.write("HAS_CHANGES=true\n")
@@ -256,7 +258,7 @@ jobs:
                   else:
                       f.write("HAS_CHANGES=false\n")
                       print("No changes were made.")
-              
+
               sys.exit(0)
 
           if __name__ == "__main__":
@@ -284,7 +286,7 @@ jobs:
             echo "ERROR: GITHUB_TOKEN is not set"
             exit 1
           fi
-          
+
           if [ -z "${PR_BRANCH}" ]; then
             echo "ERROR: PR_BRANCH is not set"
             exit 1
@@ -294,19 +296,19 @@ jobs:
           git config --local user.name "${GIT_AUTHOR_NAME}"
           git config --local user.email "${GIT_AUTHOR_EMAIL}"
           git config --local commit.gpgsign true
-          
+
           echo "Fetching latest state of ${PR_BRANCH}..."
           git fetch --force origin "${PR_BRANCH}"
-          
+
           git add versions/openssl-buildenv.txt versions/openssl-quic-buildenv.txt
-          
+
           if git diff --staged --quiet; then
             echo "No real differences to commit."
             echo "HAS_CHANGES=false" >> "${GITHUB_ENV}"
             exit 0
           fi
-          
-          git commit -m "fix: auto-manage openssl subversion"
+
+          git commit -S -m "fix: auto-manage openssl subversion"
           git push origin "HEAD:${PR_BRANCH}"
-          
+
           echo "Successfully committed and pushed changes."
